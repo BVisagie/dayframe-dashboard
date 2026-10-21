@@ -1,0 +1,50 @@
+@layer theme {
+  :where([data-theme='tideline']) {
+    --bg-body: light-dark(#f0f8f8, #061c25);
+    --bg-1: light-dark(#ffffff, #092e3a);
+    --fg-body: light-dark(#092e3a, #e5f4f2);
+    --body-font-family: system-ui, sans-serif;
+    --display-font-family: system-ui, sans-serif;
+    --radius-5: .375rem;
+    --radius-6: .5rem;
+    --radius-7: .625rem;
+    --radius-8: .875rem;
+    --radius-9: 1rem;
+    --box-shadow: none;
+    --box-shadow-sm: none;
+
+    --primary-base: light-dark(#086a70, #81d6cc);
+    --accent-base: light-dark(#ad3d35, #ffaea0);
+    --secondary-base: light-dark(#365f7b, #a9c9de);
+    --success-base: light-dark(#1c684d, #8bd7ad);
+    --warning-base: light-dark(#79510b, #e8c982);
+    --danger-base: light-dark(#ad3d35, #ffaea0);
+    --info-base: light-dark(#235d83, #9acded);
+    --inverse-base: light-dark(#092e3a, #e5f4f2);
+    --codex-base: light-dark(#1c684d, #8bd7ad);
+    --claude-base: light-dark(#8d4c36, #ecc1a2);
+    --cursor-base: light-dark(#235d83, #9acded);
+    --grok-base: light-dark(#365f7b, #a9c9de);
+    --opencode-base: light-dark(#6c4c91, #cfb9eb);
+    --antigravity-base: light-dark(#086a70, #81d6cc);
+    --series-1-base: var(--primary-base);
+    --series-2-base: var(--accent-base);
+    --series-3-base: var(--info-base);
+    --series-4-base: var(--opencode-base);
+    --series-5-base: var(--success-base);
+    --series-6-base: var(--warning-base);
+  }
+
+  :where([data-theme='tideline']) .summary-hero {
+    --card-border-color: var(--primary-border);
+    --card-border-radius: var(--radius-9);
+    --card-spacer-x: var(--spacer-7);
+    --card-spacer-y: var(--spacer-7);
+  }
+
+  :where([data-theme='tideline']) .summary-agents {
+    --card-border-radius: var(--radius-5);
+    --card-spacer-x: var(--spacer-5);
+    --card-spacer-y: var(--spacer-5);
+  }
+}
