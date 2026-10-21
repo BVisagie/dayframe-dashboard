@@ -24,12 +24,12 @@ try {
     console.log('A maintenance pull request is already open; its branch is unchanged.');
   } else {
     let title = 'Sync canonical frontend design skill';
-    let body = 'Updates the unmodified canonical skill and licence, records their upstream revision, and retains exact-byte name exceptions for historical copies.\n\n- [ ] Review upstream changes and licence provenance.\n- [ ] Run CI on this branch and require the trusted private history status.\n';
-    const paths = kind === 'skill' ? ['.agents/skills/frontend-design/SKILL.md', '.agents/skills/frontend-design/LICENSE.txt', '.agents/skills/frontend-design/UPSTREAM.md', '.github/privacy-exceptions.json'] : ['package.json', 'package-lock.json', 'docs/bootstrap-log.md', 'docs/roadmap.md'];
+    let body = 'Updates the unmodified canonical skill and licence and records their upstream revision.\n\n- [ ] Review upstream changes and licence provenance.\n- [ ] Run CI on this branch and require the trusted full-history secret check.\n';
+    const paths = kind === 'skill' ? ['.agents/skills/frontend-design/SKILL.md', '.agents/skills/frontend-design/LICENSE.txt', '.agents/skills/frontend-design/UPSTREAM.md'] : ['package.json', 'package-lock.json', 'docs/bootstrap-log.md', 'docs/roadmap.md'];
     if (kind === 'bootstrap') {
       if (JSON.parse(readFileSync('package.json', 'utf8')).dependencies.bootstrap !== candidate) throw new Error();
       title = `Upgrade Bootstrap to ${candidate}`;
-      body = `Pins Bootstrap ${candidate} for a dedicated upgrade review. This draft still requires implementation and visual review before merge.\n\n- [ ] Review every entry in the feature map against the release.\n- [ ] Record renamed tokens, adopted components, removed workarounds and the custom CSS footprint.\n- [ ] Run check, unit, build, full browser and screenshot matrix, and trusted full-history privacy checks.\n- [ ] Keep the CSS browser target at Bootstrap's support floor.\n`;
+      body = `Pins Bootstrap ${candidate} for a dedicated upgrade review. This draft still requires implementation and visual review before merge.\n\n- [ ] Review every entry in the feature map against the release.\n- [ ] Record renamed tokens, adopted components, removed workarounds and the custom CSS footprint.\n- [ ] Run check, unit, build, full browser and screenshot matrix, and the trusted full-history secret check.\n- [ ] Keep the CSS browser target at Bootstrap's support floor.\n`;
       appendFileSync('docs/bootstrap-log.md', `\n## ${candidate} — review pending\n\nCandidate pin prepared by the weekly registry check. Before merge, record token\nchanges, component adoption, workarounds and the app CSS footprint, and review\nthe feature map and full screenshot matrix.\n`);
       const roadmap = readFileSync('docs/roadmap.md', 'utf8');
       const marker = '### Feature map\n';

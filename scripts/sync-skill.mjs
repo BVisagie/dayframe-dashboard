@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { appendFileSync, existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -45,23 +44,12 @@ export async function syncSkill(check = false) {
   if (!files[0].data.toString('utf8').startsWith('---\n') || !files[1].data.toString('utf8').includes('Apache License')) throw new Error('Review the upstream skill or licence format before syncing.');
   const changed = files.some(({ name, data }) => !existsSync(safePath(`${folder}/${name}`)) || !readFileSync(safePath(`${folder}/${name}`)).equals(data));
   if (changed && !check) {
-    const manifestPath = safePath('.github/privacy-exceptions.json');
-    /** @type {{path: string, sha256: string, kind: string}[]} */
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-    if (!Array.isArray(manifest)) throw new Error('Invalid legal exception manifest.');
-    for (const { name, data } of files) {
-      const path = `${folder}/${name}`;
-      const sha256 = createHash('sha256').update(data).digest('hex');
-      if (!manifest.some(entry => entry.path === path && entry.sha256 === sha256)) manifest.push({ path, sha256, kind: name === 'SKILL.md' ? 'vendored-skill' : 'legal-notice' });
-    }
-    // Historical digests remain valid for full-history scans after a sync.
     for (const { name, data } of files) {
       const path = safePath(`${folder}/${name}`);
       mkdirSync(dirname(path), { recursive: true });
       writeFileSync(path, data);
     }
     writeFileSync(safePath(`${folder}/UPSTREAM.md`), `# Upstream\n\n\`SKILL.md\` and \`LICENSE.txt\` are unmodified copies of the canonical\nfrontend-design skill.\n\n- Source: https://github.com/anthropics/skills/tree/${sha}/skills/frontend-design\n- Commit: \`${sha}\`\n- Licence: Apache License 2.0, see \`LICENSE.txt\`\n\nDo not edit these two upstream files. The weekly sync opens a reviewable pull\nrequest when their bytes change.\n`);
-    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   }
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `changed=${changed}\n`);
   console.log(changed ? 'Canonical skill update is available.' : 'Vendored skill matches canonical upstream bytes.');

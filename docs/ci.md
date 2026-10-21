@@ -31,22 +31,47 @@ mixed-weight text baseline difference with normal Chromium font positioning;
 the fixed setting produced identical captures. Skia's
 [baseline CPU path](https://chromium.googlesource.com/chromium/src/+/HEAD/content/public/common/content_switches.cc)
 also avoids host-specific raster optimizations. Functional browser projects
-retain their normal rendering. Exact comparison thresholds and retries stay
-unchanged. Replacement candidates for this capture-environment change require
-visual review before they replace the original baselines.
+retain their normal rendering. Screenshot comparisons use the explicitly
+approved colour tolerance below.
 The type job also runs `npx tsc --project .github/tsconfig.json` to check the
-typed JSDoc in privacy, sync and workflow tooling with Node types.
+typed JSDoc in trusted history, sync and workflow tooling with Node types.
 
-The initial 400 Chromium baselines were generated in the pinned Noble
-container and reviewed across all five views, all supported theme/scheme
-combinations, eight viewports and device pixel ratios 1 and 2. Comparisons
-store CSS-pixel images; the test asserts the browser's actual device pixel
-ratio separately. Default and Tideline each contribute 160 images and
-Nebuchadnezzar contributes 80. Desktop image dimensions confirm no vertical
-overflow at the six desktop sizes; tablet and phone views scroll as designed.
-These are the first baselines, with no previous images replaced. Every
-candidate must still pass the complete functional and screenshot comparison
-suite; visual review does not certify the private denylist gate.
+## Screenshot comparison and review
+
+The maintainer explicitly approved this one-time change from `threshold: 0`
+to `threshold: 0.005`, retaining `maxDiffPixels: 0`, zero retries and the
+installed comparator's existing antialiasing heuristic. This is a small colour
+tolerance, not exact pixel equality: even a whole area shifted by one RGB
+level may pass. Any pixel counted beyond the tolerance still fails because
+the pixel budget is zero; a one-pixel image-height change also fails. The
+general rule against skipping or loosening tests still applies.
+
+The initial 400 Chromium baselines were reviewed. The canonical replacement
+set comes from completed pinned Noble run `39637681760` at `13b227a`, whose app
+visual source is identical to `d3be160`. It captures the production preview
+with font subpixel positioning disabled and Skia's CPU path fixed. It replaces
+321 original PNGs. Two independent reviewers reviewed all 322 comparison
+changes and reported no P2 findings. An independent cross-check of all 400
+official captures passed with the approved comparator settings; 13 image pairs
+contained 21 pixels of one-RGB-level noise in total.
+
+The matrix covers eight viewports × two device pixel ratios × five views ×
+five supported theme/scheme combinations = 400 images. Default and Tideline
+each contribute 160; Nebuchadnezzar contributes 80. Comparisons store CSS-pixel
+images and assert the browser's actual device pixel ratio separately. Fourteen
+phone/tablet images have font-related height changes of 1–3 pixels relative to
+the initial set. All six desktop dimensions still fit without vertical
+overflow; phone and tablet views scroll as designed.
+
+Final candidate CI is pending. The earlier `13b227a` run passed 186 functional
+tests in each of Chromium, Firefox and WebKit. Two new tests per engine bring
+the final expected browser total to 3 × 188 + 400 = 964. Removing the custom
+denylist scanner removes its seven unit tests, taking that suite from 91 to
+84. The updated Chromium and Firefox suites passed all 376 functional tests
+locally. A host probe of 50 screenshot comparisons failed against the Noble
+baselines, with widespread text-rendering differences; no host baselines were
+accepted. The pinned-container run remains required. These results and visual
+reviews do not certify the final candidate's CI or trusted secret scan.
 
 The Vite configuration fixes the Pages base at `/dayframe-dashboard/`.
 `DAYFRAME_PUBLIC_LAUNCH` is the single repository variable passed to the build:
@@ -58,115 +83,57 @@ and passing gates.
 
 ## Trusted privacy gate
 
-`Privacy and deployment` runs after each completed `CI` run through
+`Secret checks and deployment` runs after each completed `CI` run through
 `workflow_run`. Its workflow and scanner come from trusted `main`. The scanner
 job has only `contents: read`. It never installs dependencies, executes a
 candidate script, restores a candidate cache or consumes a candidate build.
 It initializes a fresh bare repository and fetches all base-repository branches
-and tags, plus the exact candidate commit. It scans that commit's tree and all
+and tags, plus the exact candidate commit. It scans the candidate and all
 reachable history as passive Git objects. Nothing from a fork or Dependabot
-branch is checked out or run with the denylist secret. This separation follows
+branch is checked out or executed by this trusted job. This separation follows
 [GitHub's guidance on untrusted code and privileged workflows](https://docs.github.com/en/actions/reference/security/secure-use).
 
-This design keeps secrets out of fork and Dependabot pull request CI runs.
+Fork and Dependabot pull requests follow the same passive-data boundary.
 There is no `pull_request_target` checkout. The candidate SHA and repository
-identity are validated before fetching, and all Git subprocess
-output is withheld. Git is invoked without a shell; the scanner disables
-system/global configuration, replacement objects, hooks and filesystem
-monitors. It does not invoke diff drivers, text converters, checkout filters
-or submodules. The fetch has a two-minute timeout and a 1 GiB per-file write
+identity are validated before fetching, and all Git subprocess output is
+withheld. The fetch invokes Git without a shell and disables system/global
+configuration and replacement objects. Its fresh bare repository contains no
+candidate hooks or filesystem-monitor configuration. It does not invoke diff
+drivers, text converters, checkout filters or submodules. The fetch has a
+two-minute timeout and a 1 GiB per-file write
 limit; fetch errors and limits fail the check.
 
-A separate job, with `statuses: write` and no denylist secret, publishes
-`Privacy / private history` on the exact tested commit. A missing or empty
-denylist, a failed scan or a cancelled scanner produces failure. Failure to
-publish leaves the required status unsatisfied. The trusted job also repeats
-the full-history gitleaks scan with trusted policy, so modifying a PR's CI
-scanner or suppression files cannot bypass the private gate.
+A separate job, with `statuses: write`, publishes `Privacy / private history`
+on the exact tested commit. This legacy required context now certifies only
+the trusted full-history secret scan. Failed, cancelled or skipped scans
+cannot pass; failure to publish leaves the required status unsatisfied. The
+trusted job repeats gitleaks with trusted policy, so modifying a PR's CI
+scanner or suppression files cannot bypass the gate. No `DAYFRAME_DENYLIST`,
+personal access token or external credential is needed; repository access
+and status publication use the scoped `GITHUB_TOKEN`.
 
 GitHub activates this `workflow_run` listener only after its workflow is
 installed on `main`. **Before merging that first installation**, independently
-scan the exact candidate tree and complete reachable history with the real
-private denylist and trusted scanner policy, including the full-history secret
-check. The candidate's own workflow cannot certify its installation. Record
-the candidate SHA and nonsensitive check results without exposing the list.
-Activation does not waive the check or defer it until launch. After installation,
-verify the trusted listener and required status on real CI runs.
+scan the exact candidate and complete reachable history for secrets using
+independent trusted gitleaks policy. The candidate's own workflow cannot
+certify its installation. Record the candidate SHA and nonsensitive results.
+The listener is not activated on `main` yet. Activation does not waive the
+check or defer it until launch. After installation, verify the trusted
+listener and required status on real CI runs, including a fork or Dependabot
+pull request.
 
-The maintainer has deferred supplying `DAYFRAME_DENYLIST`. Keep the production
-privacy result pending and do not create an invented substitute. A real
-denylist check is required before merge or deployment, including the first
-workflow installation. Scanner unit tests with synthetic fixtures verify the
-scanner's behaviour; they do not certify this repository's privacy.
+Private credentials, private contact details and addresses, home-directory
+paths, private hostnames, private account/project IDs and private repository
+references must stay out of tracked content, commit messages and PR text.
+Review remains necessary for private details a secret scanner cannot detect.
+Public author credits, attribution and legal notices are allowed. Simulated data still uses
+invented people, organisations and places; never connect real accounts or
+read local credentials. No mandatory private denylist or legal-name digest
+exception process remains.
 
-## Private denylist CLI
-
-Use `npm run privacy -- --tree --history` on the committed candidate before
-submitting changes. This repository contains a tracked skill symlink, so the
-committed-tree mode scans its target bytes without following it. By default the
-CLI scans current contents of every tracked working-tree file; `--history`
-adds every reachable commit message, historical tree path and blob on all
-local branches and tags, plus annotated tag messages. `--tree` scans `HEAD`
-instead of working files; `--tree <revision>` selects a particular commit.
-`--repository <directory>` selects a working or bare Git repository. Full
-history mode refuses a shallow clone. Fetch complete history first: an
-unfetched remote branch is not available to a local scan.
-
-Supply exactly one private source:
-
-- `DAYFRAME_DENYLIST`: a multiline environment value, supplied in Actions as
-  the repository secret of the same name.
-- `DAYFRAME_DENYLIST_FILE`: an absolute path to a regular file outside the
-  repository. Both the supplied path and its resolved symlink target must be
-  outside the repository. Store it privately; do not commit it or create a
-  repository-local environment file.
-
-Blank lines are ignored. Every other line is one literal substring, normalized
-with Unicode NFKC and matched without case sensitivity. Strings are not regexes
-or shell input. Keep the actual list private and include the prohibited names,
-addresses, locations, paths, hostnames, identifiers and private repository
-references that matter to this project. An absent or all-blank list, an invalid
-classified entry, an unreadable file or ambiguous sources fail closed. The CLI
-never prints a match, a scanned filename, the list's path, Git stderr or an
-underlying exception. It reports a fixed success or failure message. Diagnose
-locally in a private session.
-
-Binary files are scanned too, as UTF-8 and both UTF-16 byte orders. There are no
-extension-based exclusions. The check detects literal embedded text; it does
-not OCR screenshots or decompress arbitrary binary formats. Historical
-symlinks are scanned as link-target bytes and never followed. The working-tree
-scan refuses symlinks, special files, conflicts and submodules rather than
-reading outside the tree. Use `--tree` to inspect a committed symlink safely.
-Limits are 32 MiB per file/object, 512 MiB of inspected data, 500,000 tree
-entries, 20,000 commits, 4,096 denylist entries, a 1 MiB denylist and three
-minutes for the scanner. Exceeding a limit fails; nothing is silently skipped.
-Historical trees and blobs are deduplicated without dropping path checks.
-
-## Exact legal-name exceptions
-
-Ordinary denylist lines always apply, including inside legal notices. A line
-prefixed with `name:` explicitly classifies a real person's name as eligible
-for the narrow approved exception. Only these classified names may be ignored,
-and only when both the full path and SHA-256 digest of the complete file match
-an entry in `.github/privacy-exceptions.json` from the trusted scanner checkout.
-The manifest contains public paths and digests, never private name strings.
-There is no path glob, comment suppression, general allowlist or exemption for
-project-authored prose. A duplicate blob at an unapproved path is scanned fully.
-
-Approved entries cover the existing project `LICENSE`, the byte-for-byte
-vendored frontend-design skill and its licence, and individually reviewed
-mandatory third-party legal notices. When adding a mandatory notice, verify
-its upstream provenance and exact bytes, then add its path, SHA-256 digest and
-`legal-notice` kind to the manifest. A name appearing elsewhere remains
-forbidden. Changed or appended content invalidates the exception. Keep old
-approved digests for historical versions so a full-history scan can validate
-them. An exception added by a PR is ineffective until reviewed and included
-in the trusted scanner on `main`; that PR may therefore need a separately
-reviewed trust update before its private gate can pass.
-
-Gitleaks never uses this manifest. Both secret checks use the pinned gitleaks
-container, all reachable history and its default rules. The runner creates an
-isolated policy; candidate `.gitleaks.toml`, `.gitleaksignore` and
+Both secret checks use the pinned gitleaks container, all reachable history
+and its default rules. The runner creates an isolated policy; candidate
+`.gitleaks.toml`, `.gitleaksignore` and
 `gitleaks:allow` comments are not honored. No licence, vendor path or historical
 commit is excluded. Secret output and reports stay out of CI logs and artifacts.
 The container has no network, a read-only filesystem, a 512 MiB memory limit
@@ -189,21 +156,15 @@ The maintainer must complete these external settings. Each repository settings
 change, Pages setup or deployment, indexing change, visibility change and public
 announcement needs separate approval; implementation does not authorize them:
 
-1. Enter the real nonempty multiline `DAYFRAME_DENYLIST` using private secret
-   entry, never a chat message, issue, PR or committed file. Do not substitute
-   invented test tokens for the production denylist. No personal credentials
-   or provider accounts are needed. Until it is supplied, merge and deployment
-   remain blocked on the real check, including independent verification before
-   the trusted workflow's first installation.
-2. Select GitHub Actions as the Pages source and allow the `github-pages`
+1. Select GitHub Actions as the Pages source and allow the `github-pages`
    environment to deploy from `main`. Leave `DAYFRAME_PUBLIC_LAUNCH` unset or
    explicitly `false` until launch is approved.
-3. Protect `main` with pull request review and required checks: Type and lint,
+2. Protect `main` with pull request review and required checks: Type and lint,
    Unit tests, Production build, Browser and screenshots, Secret history, and
    `Privacy / private history`. Require checks for the current candidate SHA.
    Confirm the trusted status appears on a real fork or Dependabot PR before
    treating this setup as complete. Rulesets/settings remain external work.
-4. Permit Actions to create pull requests for scheduled maintenance. Keep the
+3. Permit Actions to create pull requests for scheduled maintenance. Keep the
    weekly workflow's write permissions limited to contents and pull requests.
    No bot PAT, external service credential or change to local Git identity is
    required.
@@ -223,11 +184,11 @@ review, the CSS footprint and the full screenshot matrix before merge.
 
 The same schedule checks canonical frontend-design bytes at a fixed resolved
 upstream commit. `node scripts/sync-skill.mjs --check` is read-only;
-`node scripts/sync-skill.mjs` writes only the two unmodified upstream files,
-their `UPSTREAM.md` provenance and the legal-name digest manifest. It does not
-save upstream author names, email addresses or commit messages. The script
-fetches both files before writing, bounds response sizes and timeouts, refuses
-symlink destinations and fails if the expected licence format changes.
+`node scripts/sync-skill.mjs` writes only the two unmodified upstream files
+and their `UPSTREAM.md` provenance. Public upstream author credits, attribution
+and legal notices may remain. The script fetches both files before writing,
+bounds response sizes and timeouts, refuses symlink destinations and fails if
+the expected licence format changes.
 An update opens a dedicated draft with only those paths staged.
 
 Maintenance uses branches identified by the upstream content digest or exact

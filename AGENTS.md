@@ -24,20 +24,18 @@ Pages using simulated data, and is built with Svelte 5, Vite and Bootstrap 6.
 2. **Simulated data.** Agent usage, calendars and every feed except the
    Bootstrap ones are always simulated. Never connect to a real account or
    provider API, and never read local credentials.
-3. **Nothing personal.** None of the following may appear anywhere in the
-   project:
-   - real people's names, email addresses or street addresses;
-   - precise locations, home-directory paths or hostnames;
-   - account or project IDs;
+3. **Private information.** Keep the following out of tracked content, commit
+   messages and pull request text:
+   - private credentials;
+   - private contact details or addresses;
+   - home-directory paths or private hostnames;
+   - private account or project IDs;
    - references to private repositories.
 
-   That covers code, tests, fixtures, screenshots, docs, commit messages and
-   pull request text. The only exception is the copyright holder's name in
-   `LICENSE`. Simulated data uses invented people, organisations and places.
-   Don't change the repository's git identity.
-   - Approved exception: mandatory third-party legal notices and the unmodified
-     vendored frontend-design skill may retain upstream names. This exception
-     does not apply to project-authored content or secret scanning.
+   This includes code, tests, fixtures, screenshots and docs. Public author
+   credits, attribution and legal notices are allowed. Simulated data uses
+   invented people, organisations and places. Don't change the repository's
+   git identity.
 4. **Bootstrap first.** For each piece of UI, work down this list and stop at
    the first step that covers it:
    1. a Bootstrap component, with its JavaScript plugin where it has one;

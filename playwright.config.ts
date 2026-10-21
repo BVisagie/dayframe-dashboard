@@ -15,7 +15,8 @@ export default defineConfig({
   // CI runners have two CPU cores; avoid oversubscribing browser processes.
   workers: 2,
   timeout: 45_000,
-  expect: { timeout: 7000, toHaveScreenshot: { maxDiffPixels: 0, threshold: 0 } },
+  // Rounded edges can vary by one RGB level between otherwise identical CI captures.
+  expect: { timeout: 7000, toHaveScreenshot: { maxDiffPixels: 0, threshold: 0.005 } },
   // Missing baselines must fail; creation is an explicit container-only operation.
   updateSnapshots: 'none',
   snapshotPathTemplate: '{testDir}/__screenshots__/{projectName}/{arg}{ext}',
@@ -45,7 +46,7 @@ export default defineConfig({
         browserName: 'chromium' as const,
         viewport,
         deviceScaleFactor,
-        // Canonical rasterization avoids font-cache and host CPU differences.
+        // Pin font positioning and Skia runtime optimization for consistent captures.
         // Functional projects retain the browser's normal rendering settings.
         launchOptions: {
           args: ['--disable-font-subpixel-positioning', '--disable-skia-runtime-opts'],

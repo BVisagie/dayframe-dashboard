@@ -454,8 +454,11 @@ Each viewport runs at device pixel ratios of 1 and 2.
   - all runs in Playwright's pinned container image, so fonts render
     consistently, against the production build;
   - screenshot projects fix font positioning and Skia's CPU path; functional
-    projects keep normal browser rendering. Exact pixel comparisons remain
-    required after review of the revised capture-environment candidates.
+    projects keep normal browser rendering. The explicitly approved colour
+    threshold is `0.005` with `maxDiffPixels: 0` and the existing antialiasing
+    heuristic. Tiny colour differences may pass; counted pixels beyond the
+    tolerance and image-dimension changes fail. This is not exact pixel
+    equality. See [CI and review evidence](ci.md#screenshot-comparison-and-review).
 - **Accessibility:** keyboard-only operation, visible focus, reduced motion,
   forced colours and the contrast checks above.
 - **Bootstrap-first review:** the pull request template asks two questions.
@@ -464,13 +467,20 @@ Each viewport runs at device pixel ratios of 1 and 2.
 - **Privacy checks** run on every push and pull request, and before every
   deploy once the trusted listener is installed on `main`:
   - `gitleaks` scans the complete reachable history for secrets;
-  - a trusted check scans the candidate tree and complete reachable history
-    against a real private denylist. Supply it through the GitHub Actions
-    secret or a private local file outside the repository; never commit it.
-    Missing input fails closed. The maintainer has deferred supplying the list,
-    so no production privacy pass is claimed. Synthetic scanner fixtures are
-    not a substitute. See [CI and privacy](ci.md) for the first-installation
-    requirement before merge.
+  - the trusted listener fetches the exact candidate and complete history as
+    passive Git objects, then repeats the secret scan using trusted `main`
+    policy. Candidate configuration and suppressions cannot bypass it;
+  - the legacy required status `Privacy / private history` now certifies only
+    that trusted secret scan. No `DAYFRAME_DENYLIST`, personal access token or
+    provider account is needed. See [CI and privacy](ci.md) for the independent
+    trusted full-history scan required before the listener's first merge.
+- **Content privacy:** keep private credentials, private contact details and
+  addresses, home-directory paths, private hostnames, private account/project
+  IDs and private repository references out of tracked content, commits and
+  PR text.
+  Public author credits, attribution and legal notices are allowed. Simulated
+  data uses invented people, organisations and places; never connect real
+  accounts or read local credentials.
 - **Commits** use a GitHub noreply address.
 
 ## Deployment and launch
@@ -479,9 +489,9 @@ The implemented workflows build and test pushes to `main`. A trusted listener
 then scans the exact candidate and permits Pages deployment only when every
 required job and privacy status succeeds. Vite's `base` is
 `/dayframe-dashboard/`. Pull request builds are configured as workflow artifacts.
-The initial 400 container-generated screenshot baselines are reviewed and
-committed. Every candidate still requires green CI, the real full-history
-private denylist check and separately approved Pages setup before deployment.
+The canonical 400-image replacement set has been reviewed; final candidate CI
+remains pending. Every candidate still requires green CI, the trusted
+full-history secret scan and separately approved Pages setup before deployment.
 
 Prelaunch builds exclude search engines with `noindex` and `robots.txt`. A
 single build flag controls both. Pages setup/deployment, repository settings,
@@ -489,12 +499,12 @@ enabling indexing, making the repository public and public announcements each
 require separate maintainer approval.
 
 The trusted `workflow_run` listener activates only after installation on
-`main`. Before that first installation merges, an independent check must scan
-the exact candidate tree and full reachable history with the real private
-denylist and trusted secret-scanning policy. This requirement applies before
-merge and deployment, not only before public launch. Verify the listener and
-its status publication after installation; never treat activation as a privacy
-pass.
+`main`. It is not activated yet. Before that first installation merges, an
+independent check must scan the exact candidate and full reachable history for
+secrets using trusted policy. This requirement applies before merge and
+deployment, not only before public launch. Verify the listener and its exact-SHA
+status publication after installation, including on a fork or Dependabot PR;
+never treat activation as a secret-scan pass.
 
 Launch checklist:
 
@@ -510,14 +520,21 @@ Launch checklist:
 
 ### Implementation evidence
 
+Pinned Noble run `39637681760` at `13b227a` passed 186 functional tests per
+browser. The revised candidate expects 188 per browser plus 400 screenshot
+comparisons (964 browser tests total), and 84 unit tests after removing the
+seven custom-scanner tests. Final candidate CI remains pending. The
+[baseline review evidence](ci.md#screenshot-comparison-and-review) records the
+400-image replacement set and the approved comparison tolerance.
+
 | Area                   | Implemented                                                                                                                                                                  | Pending proof or external setup                                                                                                                          |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Views and state        | All five views, Settings, navigation, rotation and deterministic scenarios; independent persisted date format                                                                | Complete functional browser suite in Chromium, Firefox and WebKit                                                                                        |
-| Bootstrap integration  | Real plugins through Svelte actions; Datepicker updates and NavOverflow clone navigation/active-state synchronization                                                        | Hosted browser CI and reviewed screenshot comparisons                                                                                                    |
-| Layout and themes      | Default, Nebuchadnezzar and Tideline; height-aware row limits and paging; all five views locally fit 1280×720 and 1920×1080 at default scale without lowering the root floor | Reviewed initial 400-image matrix committed; exact comparisons required for every candidate                                                              |
+| Views and state        | All five views, Settings, navigation, rotation and deterministic scenarios; independent persisted date format                                                                | Final 188-test functional suite per browser in Chromium, Firefox and WebKit                                                                               |
+| Bootstrap integration  | Real plugins through Svelte actions; Datepicker updates and NavOverflow clone navigation/active-state synchronization                                                        | Final candidate browser CI and screenshot comparisons                                                                                                    |
+| Layout and themes      | Default, Nebuchadnezzar and Tideline; reviewed 400-image canonical replacement set; all six desktop dimensions fit without lowering the root floor                            | Final 400 screenshot comparisons with approved `threshold: 0.005` and `maxDiffPixels: 0`                                                                   |
 | Sources                | Allowed live adapters, caching, fallbacks, backoff and default ten-second deadlines                                                                                          | Hosted checks; no real account connections are needed                                                                                                    |
 | Bootstrap tracking     | Exact `6.0.0-alpha.1` pin, lens, About panel, gap log and measured app CSS footprint                                                                                         | Hosted maintenance workflow verification                                                                                                                 |
-| Privacy and deployment | Fail-closed scanner, trusted history gate and gated static artifact deployment workflows                                                                                     | Real denylist deferred; independent full-history check before first merge, trusted status verification and separately approved repository/Pages settings |
+| Privacy and deployment | Trusted full-history secrets gate and gated static artifact deployment workflows                                                                                            | Independent trusted secrets scan before first merge, listener/status verification on `main` and separately approved repository/Pages settings              |
 
 Milestone completion requires the proof in each definition below. Implemented
 code and local fitting checks do not complete pending CI, privacy or launch work.

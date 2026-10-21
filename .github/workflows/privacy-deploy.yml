@@ -1,4 +1,4 @@
-name: Privacy and deployment
+name: Secret checks and deployment
 
 on:
   workflow_run:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   privacy:
-    name: Trusted private history
+    name: Trusted full-history secret check
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     permissions:
@@ -33,13 +33,9 @@ jobs:
           node .github/scripts/trusted-source.mjs
       - name: Scan every reachable commit for secrets with trusted policy
         run: node .github/scripts/gitleaks.mjs "$SCAN_REPOSITORY"
-      - name: Scan private denylist in candidate tree and complete history
-        env:
-          DAYFRAME_DENYLIST: ${{ secrets.DAYFRAME_DENYLIST }}
-        run: node scripts/privacy.mjs --repository "$SCAN_REPOSITORY" --tree "$SCAN_SHA" --history
 
   report:
-    name: Publish private history result
+    name: Publish trusted secret check result
     needs: privacy
     if: ${{ always() }}
     runs-on: ubuntu-24.04

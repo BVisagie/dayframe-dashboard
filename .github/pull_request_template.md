@@ -15,8 +15,12 @@ Acceptance:
       screenshot changes. List changed baselines and why below.
 - [ ] Keyboard focus, WCAG 2.2 AA contrast, reduced motion and forced colours
       remain correct in every supported scheme and standard viewport.
-- [ ] The trusted full-history private denylist and secret scans pass. No
-      personal details appear in project-authored content, commits or PR text.
+- [ ] The trusted full-history secret scan passes. Tracked content, commits
+      and PR text contain no private credentials, private contact details or
+      addresses, home-directory paths, private hostnames, private account or
+      project IDs, or private repository references. Public credits, attribution
+      and legal notices are allowed; simulated people, organisations and places
+      remain invented.
 - [ ] The site remains static, uses simulated account/calendar data, bundles
       assets locally, and adds no unapproved browser request origin.
 - [ ] The roadmap feature map, Bootstrap log and theme documentation reflect

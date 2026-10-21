@@ -78,19 +78,27 @@ npm run check
 npm test
 npm run build
 npm run test:browser
-npm run privacy -- --tree --history
 ```
 
 Browser validation uses Playwright 1.64.1 and its pinned Noble container. The
 functional suite runs in Chromium, Firefox and WebKit. Chromium screenshots
 cover all views and supported theme/scheme combinations at eight viewports,
 each at device pixel ratios 1 and 2. Clock, seed, locale and time zone are
-fixed. Remote APIs are mocked in tests. Initial baselines and intentional
-visual updates require review; missing snapshots fail comparisons.
+fixed. Remote APIs are mocked in tests. Screenshot projects fix font subpixel
+positioning and Skia's CPU path. The approved colour threshold is `0.005`,
+with `maxDiffPixels: 0`; this permits tiny colour noise, not exact pixel
+equality. Initial baselines and intentional visual updates require review;
+missing snapshots fail comparisons. See [CI setup](docs/ci.md) for the reviewed
+400-image replacement set and pending final validation.
 
-Privacy scanning requires the real private denylist through an external file
-or the Actions secret documented in [CI setup](docs/ci.md). Missing input fails
-closed. Never put that list or credentials in this repository or a chat.
+Full-history gitleaks checks run in CI and in the trusted deployment gate. No
+`DAYFRAME_DENYLIST`, personal access token or provider account is needed.
+Keep private credentials, private contact details and addresses, home-directory
+paths, private hostnames, private account/project IDs and private repository
+references out of tracked content, commits and PR text. Public author credits,
+attribution and legal notices are allowed; simulated data still uses invented people,
+organisations and places. [CI setup](docs/ci.md) records the independent secret
+scan required before the trusted listener's first installation on `main`.
 
 ## Licence
 

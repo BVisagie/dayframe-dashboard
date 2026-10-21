@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["scripts/**/*.mjs", "../scripts/privacy.mjs", "../scripts/sync-skill.mjs"]
+  "include": ["scripts/**/*.mjs", "../scripts/sync-skill.mjs"]
 }

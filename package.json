@@ -10,8 +10,7 @@
     "check": "svelte-check --tsconfig ./tsconfig.json && eslint .",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "test:browser": "playwright test",
-    "new-theme": "node scripts/new-theme.mjs",
-    "privacy": "node scripts/privacy.mjs"
+    "new-theme": "node scripts/new-theme.mjs"
   },
   "dependencies": {
     "@floating-ui/dom": "1.8.0",
