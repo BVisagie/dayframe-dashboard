@@ -7,6 +7,10 @@ project. Node is 26. All browser and screenshot tests use
 Chromium, Firefox and WebKit run in separate functional jobs. Four screenshot
 shards cover every screenshot project. Each browser first performs a launch
 preflight so environment failures are visible before the full test report.
+Firefox [rejects root when the home directory belongs to another user](https://github.com/mozilla/gecko-dev/blob/master/toolkit/xre/nsAppRunner.cpp#L3544-L3570).
+Its job changes only the runner-mounted home directory's owner to the container
+user before preflight, without recursion or overriding `HOME`. The full suite
+still runs when preflight fails.
 The aggregate `Browser and screenshots` job succeeds only when every browser
 and screenshot shard succeeds; failed, cancelled or skipped groups block it.
 Reports are named per browser or screenshot shard. They and the
@@ -19,6 +23,17 @@ intentional visual changes can request candidates through the workflow's
 Jobs use two Playwright workers to limit CPU contention. Scale checks keep
 each view/viewport/scale combination as an independent test, preserving the
 same assertions without combining twenty navigations under one timeout.
+Every suite builds and serves the production bundle on a dedicated port;
+an existing development server cannot supply stale CSS or modules.
+Screenshot projects alone disable font subpixel positioning and Skia runtime
+CPU optimizations. Fresh-load and reload probes reproduced a one-pixel
+mixed-weight text baseline difference with normal Chromium font positioning;
+the fixed setting produced identical captures. Skia's
+[baseline CPU path](https://chromium.googlesource.com/chromium/src/+/HEAD/content/public/common/content_switches.cc)
+also avoids host-specific raster optimizations. Functional browser projects
+retain their normal rendering. Exact comparison thresholds and retries stay
+unchanged. Replacement candidates for this capture-environment change require
+visual review before they replace the original baselines.
 The type job also runs `npx tsc --project .github/tsconfig.json` to check the
 typed JSDoc in privacy, sync and workflow tooling with Node types.
 

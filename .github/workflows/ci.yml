@@ -94,6 +94,10 @@ jobs:
         with:
           node-version: '26'
       - run: npm ci
+      - name: Match Firefox home ownership to the container user
+        if: matrix.browser == 'firefox'
+        # Firefox refuses root when the runner-mounted home belongs to another user.
+        run: chown "$(id -u)" "$HOME"
       - name: Check browser launch
         env:
           PLAYWRIGHT_BROWSER: ${{ matrix.browser }}

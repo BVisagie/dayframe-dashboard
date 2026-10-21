@@ -41,13 +41,22 @@ export default defineConfig({
     ...viewports.flatMap(viewport => [1, 2].map(deviceScaleFactor => ({
       name: `screenshots-${viewport.width}x${viewport.height}-dpr${deviceScaleFactor}`,
       testMatch: /screenshots\.spec\.ts/,
-      use: { browserName: 'chromium' as const, viewport, deviceScaleFactor },
+      use: {
+        browserName: 'chromium' as const,
+        viewport,
+        deviceScaleFactor,
+        // Canonical rasterization avoids font-cache and host CPU differences.
+        // Functional projects retain the browser's normal rendering settings.
+        launchOptions: {
+          args: ['--disable-font-subpixel-positioning', '--disable-skia-runtime-opts'],
+        },
+      },
     }))),
   ],
   webServer: {
-    command: 'npm run dev -- --port 5173 --strictPort',
+    command: 'npm run build && npm run preview -- --port 5173 --strictPort',
     url: 'http://localhost:5173/dayframe-dashboard/',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
 });

@@ -1,5 +1,12 @@
+import type { Page } from '@playwright/test';
 import { test, expect, visit, settings, closeSettings, expectView, noHorizontalOverflow } from './fixtures';
 import { themes, views, referenceClock } from './matrix';
+
+async function browserDate(page: Page, date: string, locale: string, options: Intl.DateTimeFormatOptions = {}) {
+  // Locale punctuation and padding come from the tested browser's Intl data.
+  return page.evaluate(({ date, locale, options }) => new Intl.DateTimeFormat(locale, options)
+    .format(new Date(`${date}T12:00:00`)), { date, locale, options });
+}
 
 test('all views navigate by controls, letters, numbers and wrapping arrows', async ({ page, audit }) => {
   await visit(page);
@@ -270,9 +277,12 @@ test('calendar changes months, keeps the datepicker input in sync and opens even
   await page.getByRole('button', { name: 'Next month', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'December 2026', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Previous month', exact: true }).click();
-  await page.getByRole('button', { name: /^Wednesday, 4 November 2026,/ }).click();
+  const wednesday = page.getByRole('button', {
+    name: `${await browserDate(page, '2026-11-04', 'en-GB', { dateStyle: 'full' })}, 5 events`, exact: true,
+  });
+  await wednesday.click();
   await expect(page.getByRole('heading', { name: 'Wednesday 4 Nov', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Wednesday, 4 November 2026,/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(wednesday).toHaveAttribute('aria-pressed', 'true');
   await expect(input).toHaveValue('04/11/2026');
   await page.getByRole('button', { name: 'Today', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Tuesday 3 Nov', exact: true })).toBeVisible();
@@ -298,7 +308,9 @@ test('calendar changes months, keeps the datepicker input in sync and opens even
   await picker.locator('[data-vc-date="2026-11-05"] button').click();
   await expect(page.getByRole('heading', { name: 'Thursday 5 Nov', exact: true })).toBeVisible();
   await expect(input).toHaveValue('05/11/2026');
-  await expect(page.getByRole('button', { name: /^Thursday, 5 November 2026,/ })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', {
+    name: `${await browserDate(page, '2026-11-05', 'en-GB', { dateStyle: 'full' })}, 2 events`, exact: true,
+  })).toHaveAttribute('aria-pressed', 'true');
   await expect(picker).toHaveAttribute('aria-hidden', 'true');
   await input.click();
   await expect(picker).toHaveCSS('opacity', '1');
@@ -309,22 +321,24 @@ test('calendar changes months, keeps the datepicker input in sync and opens even
 
 test('datepicker locale and first weekday follow Settings without losing the selected date', async ({ page }) => {
   await visit(page, { view: 'calendar' });
-  await page.getByRole('button', { name: /^Wednesday, 4 November 2026,/ }).click();
+  await page.getByRole('button', {
+    name: `${await browserDate(page, '2026-11-04', 'en-GB', { dateStyle: 'full' })}, 5 events`, exact: true,
+  }).click();
   const input = page.getByLabel('Jump to a date', { exact: true });
   const picker = page.locator('.vc');
   await input.click();
   await expect(picker.locator('[data-vc-week-day]')).toHaveText(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
   await page.keyboard.press('Escape');
   for (const config of [
-    { locale: 'en-US', firstDay: '0', input: '11/4/2026', month: 'November', weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] },
-    { locale: 'fr-FR', firstDay: '1', input: '04/11/2026', month: 'Novembre', weekdays: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'] },
+    { locale: 'en-US', firstDay: '0', month: 'November', weekdays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] },
+    { locale: 'fr-FR', firstDay: '1', month: 'Novembre', weekdays: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'] },
   ]) {
     const dialog = await settings(page, 'Display');
     await dialog.getByLabel('Date and number locale', { exact: true }).selectOption(config.locale);
     await dialog.getByRole('tab', { name: 'Calendar', exact: true }).click();
     await dialog.getByLabel('First day of the week', { exact: true }).selectOption(config.firstDay);
     await closeSettings(page);
-    await expect(input).toHaveValue(config.input);
+    await expect(input).toHaveValue(await browserDate(page, '2026-11-04', config.locale));
     await input.click();
     await expect(picker).toHaveCount(1);
     await expect(picker).toHaveCSS('opacity', '1');

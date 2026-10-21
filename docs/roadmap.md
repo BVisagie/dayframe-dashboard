@@ -452,7 +452,10 @@ Each viewport runs at device pixel ratios of 1 and 2.
   - screenshot comparisons in Chromium only, for the full matrix of view ×
     theme × scheme × standard viewport, using a fixed `?clock` and `?seed`;
   - all runs in Playwright's pinned container image, so fonts render
-    consistently.
+    consistently, against the production build;
+  - screenshot projects fix font positioning and Skia's CPU path; functional
+    projects keep normal browser rendering. Exact pixel comparisons remain
+    required after review of the revised capture-environment candidates.
 - **Accessibility:** keyboard-only operation, visible focus, reduced motion,
   forced colours and the contrast checks above.
 - **Bootstrap-first review:** the pull request template asks two questions.
