@@ -167,7 +167,8 @@ test('live weather maps mocked current, daily and hourly fields; units and city 
     dialog.locator('p').filter({ hasText: /^Location:/ }),
   ).toContainText('Cloudfern');
   await closeSettings(page);
-  await expect(page.getByText('Cloudfern', { exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Seven-day forecast' })
+    .getByText('Cloudfern', { exact: true })).toBeVisible();
   expect(state.geocoding).toHaveLength(1);
   expect(
     new Set(audit.external.map((request) => new URL(request.url()).origin)),

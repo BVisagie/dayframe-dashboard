@@ -66,6 +66,15 @@ changes and reported no P2 findings. An independent cross-check of all 400
 official captures passed with the approved comparator settings; 13 image pairs
 contained 21 pixels of one-RGB-level noise in total.
 
+The footer build credit added at `ed6da29` intentionally updates all 400
+baselines, using pinned Noble capture run `39648459626`. All 400 capture cases
+passed. Visual review covered all 16 routine screenshots, plus footer samples
+at every viewport and device pixel ratio and the compact console Weather view.
+All six desktop image dimensions still fit their viewports. These images add
+the exact stack versions and tighten existing footer spacing; no theme or
+capture settings changed. Candidate generation does not replace the normal
+comparison check.
+
 The matrix covers eight viewports × two device pixel ratios × five views ×
 five supported theme/scheme combinations = 400 images. Default and Tideline
 each contribute 160; Nebuchadnezzar contributes 80. Comparisons store CSS-pixel
