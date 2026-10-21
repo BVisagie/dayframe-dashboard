@@ -11,6 +11,10 @@ there is no registry list, stylesheet list or view code to edit.
 | Nebuchadnezzar | Dark | Console | Black, phosphor green and olive instruments |
 | Tideline | Light, dark | Standard | Nautical daylight and deep ocean, teal and coral |
 
+The shared footer includes the exact build-stack versions. Its credit inherits
+the footer's secondary foreground and body font in every theme; themes need no
+additional token or style for it.
+
 ## Folder contract
 
 ```text

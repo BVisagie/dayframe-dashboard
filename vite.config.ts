@@ -2,8 +2,18 @@ import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { compileString } from 'sass';
 import postcss from 'postcss';
+import { readFileSync } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+
+const stackVersions = Object.fromEntries(
+  ['bootstrap', 'svelte', 'vite'].map((name) => [
+    name,
+    JSON.parse(
+      readFileSync(resolve('node_modules', name, 'package.json'), 'utf8'),
+    ).version,
+  ]),
+);
 
 const order =
   'bootstrap, theme-base, theme, app, layout, theme-effects, bootstrap-utilities';
@@ -36,6 +46,9 @@ const roleMap = roles
 
 export default defineConfig(({ command }) => ({
   base: '/dayframe-dashboard/',
+  define: {
+    __STACK_VERSIONS__: JSON.stringify(stackVersions),
+  },
   plugins: [
     svelte(),
     {

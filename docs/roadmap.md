@@ -105,6 +105,9 @@ views, so it isn't a carousel. `stepper` could suit a first-visit tour.
   renders and what is custom.
 - **About Bootstrap.** Shows the bundled version, the components and plugins in
   use, and the latest Bootstrap releases.
+- **Build credits.** A subdued footer line shows the exact installed Bootstrap,
+  Svelte and Vite versions used to build the dashboard. About Bootstrap shares
+  those build-time values, so upgrades update both automatically.
 - **Custom CSS footprint.** The size of the `app`-layer CSS is recorded with
   every Bootstrap upgrade. It should shrink as Bootstrap grows.
 

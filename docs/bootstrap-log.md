@@ -85,6 +85,12 @@ The switch token gap is a confirmed Bootstrap defect and is reported in
 as required by the project's Bootstrap-first rule. Other entries describe
 dashboard needs rather than replacement framework components.
 
+The footer credits the exact installed Bootstrap, Svelte and Vite versions.
+Vite reads package metadata at build time; About Bootstrap uses the same
+values. Bootstrap's stack and spacing utilities arrange the credit under the
+demo disclosure, using the existing footer typography and theme colours.
+This adds no custom CSS or runtime request.
+
 ### CSS footprint
 
 `npm run build` writes `dist/css-footprint.json` with the source app-layer CSS

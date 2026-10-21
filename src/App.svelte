@@ -41,6 +41,7 @@
   import Calendar from './components/Calendar.svelte';
   import Feeds from './components/Feeds.svelte';
 
+  const stack = __STACK_VERSIONS__;
   const views: { id: View; name: string; icon: string; key: string }[] = [
     { id: 'summary', name: 'Summary', icon: 'grid-1x2', key: 's' },
     { id: 'agents', name: 'Agents', icon: 'cpu', key: 'a' },
@@ -793,12 +794,17 @@
       />{/if}
   </main>
   <footer
-    class="dashboard-footer border-top mt-4 pt-3 d-flex flex-wrap align-items-start justify-content-between gap-3"
+    class="dashboard-footer border-top mt-2 pt-2 d-flex flex-wrap align-items-start justify-content-between gap-3"
   >
-    <p class="m-0" style="max-width: 79ch">
-      <strong>Demo data.</strong> Agent usage, accounts, calendars and non-Bootstrap
-      feeds are simulated. Product names belong to their owners. Dayframe is unaffiliated.
-    </p>
+    <div class="vstack gap-1" style="max-width: 79ch">
+      <p class="m-0">
+        <strong>Demo data.</strong> Agent usage, accounts, calendars and non-Bootstrap
+        feeds are simulated. Product names belong to their owners. Dayframe is unaffiliated.
+      </p>
+      <p class="m-0">
+        Built with Bootstrap {stack.bootstrap}, Svelte {stack.svelte} and Vite {stack.vite}.
+      </p>
+    </div>
     <div class="d-flex align-items-center gap-3">
       <button class="btn btn-link btn-sm p-0" onclick={() => (aboutOpen = true)}
         >About Bootstrap</button
@@ -836,7 +842,8 @@
     </div>
     <div class="dialog-body prose">
       <p class="fs-5">
-        Built with Bootstrap <strong>6.0.0-alpha.1</strong>, Svelte 5 and Vite.
+        Built with Bootstrap <strong>{stack.bootstrap}</strong>, Svelte {stack.svelte}
+        and Vite {stack.vite}.
       </p>
       <p>
         Cards, nav overflow, progress, badges, avatars, lists, tables, menus,
