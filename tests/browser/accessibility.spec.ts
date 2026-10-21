@@ -56,6 +56,21 @@ for (const { theme, scheme } of themeSchemes) {
     }
   });
 
+  for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]) {
+    test(`${theme.id} ${scheme} fits every view vertically at 100% scale at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      for (const view of views) {
+        await visit(page, { theme: theme.id, scheme, view, scale: '100' });
+        await noHorizontalOverflow(page);
+        await expect.poll(() => page.evaluate(() => Math.max(
+          document.documentElement.scrollHeight, document.body.scrollHeight,
+        ) - window.innerHeight), `${view} must fit without vertical scrolling`).toBeLessThanOrEqual(0);
+        await expect(page.locator('main')).toBeInViewport({ ratio: 1 });
+        await expect(page.locator('footer')).toBeInViewport({ ratio: 1 });
+      }
+    });
+  }
+
   test(`${theme.id} ${scheme} fits every view at both display scale extremes on desktop and phone`, async ({ page }) => {
     for (const viewport of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
       await page.setViewportSize(viewport);

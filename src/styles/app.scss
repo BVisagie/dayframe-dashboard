@@ -1,3 +1,5 @@
+@use 'bootstrap/scss/layout/breakpoints' as bs;
+
 @layer app {
   /* Bootstrap alpha.1 declares the checked switch thumb token without consuming it. */
   .switch:has(input:checked) {
@@ -54,8 +56,22 @@
   .agenda-list .btn-link {
     --btn-min-height: auto;
   }
+  .agent-panel {
+    @include bs.set-container(inline-size, agent);
+  }
   .agent-row .d-flex {
     flex-wrap: wrap;
+  }
+  @include bs.container-breakpoint-up(
+    wide,
+    agent,
+    (
+      wide: 30rem,
+    )
+  ) {
+    .agent-row .d-flex {
+      flex-wrap: nowrap;
+    }
   }
   .agent-name {
     font-size: 1rem;

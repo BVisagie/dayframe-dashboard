@@ -6,13 +6,13 @@ the next event and weather. Calm instrumentation makes that action clear.
 
 ## Palette
 
-| Name | Hex | Role |
-| --- | --- | --- |
-| Cool porcelain | `#f3f6fa` | Light canvas |
-| Midnight navy | `#13243b` | Light ink and dark surfaces |
-| Cobalt | `#224cbb` | Navigation and primary action |
-| Ocean | `#176776` | Accent and calm information |
-| Steel | `#52647c` | Secondary information |
+| Name           | Hex       | Role                          |
+| -------------- | --------- | ----------------------------- |
+| Cool porcelain | `#f3f6fa` | Light canvas                  |
+| Midnight navy  | `#13243b` | Light ink and dark surfaces   |
+| Cobalt         | `#224cbb` | Navigation and primary action |
+| Ocean          | `#176776` | Accent and calm information   |
+| Steel          | `#52647c` | Secondary information         |
 
 Dark mode uses deeper navy surfaces, porcelain ink and lighter accessible
 variants of the same role colours. Semantic state colours are derived for
@@ -28,23 +28,29 @@ with tabular figures; labels stay in the body face. Body copy is left aligned.
 
 ## Layout
 
-A two-column instrument desk gives the urgent item room to explain the next
-action. Adjacent modules have different densities; the news strip is a quiet
-list rather than another equally weighted card. Ultrawide screens gain a
-third working column. Narrow screens preserve reading order and scroll.
+A three-column instrument desk gives the urgent item two columns beside
+weather. Capacity, a brief agenda and a quiet headline list sit below, with
+different densities and card tokens to show hierarchy. Ultrawide screens move
+the agenda beside the hero and give capacity two columns below. Narrow screens
+preserve reading order and scroll.
 
 ```text
 +--------------------------------------------------------------+
 | Dayframe / view navigation                    clock / settings |
-+------------------------------------+-------------------------+
-| Urgent Summary item                | Next event              |
-| Action + useful explanation        | Time + brief agenda     |
-+------------------------------------+-------------------------+
-| Agent capacity: compact readings   | Weather now + outlook   |
-+------------------------------------+-------------------------+
-| Latest headlines: quiet list                                 |
++----------------------------------------+---------------------+
+| Urgent Summary item                    | Weather now         |
+| Action + useful explanation            | Outlook when roomy  |
++---------------------+------------------+---------------------+
+| Agent capacity      | Coming up        | Latest headlines    |
+| Compact readings    | Brief agenda     | Quiet list          |
 +--------------------------------------------------------------+
 ```
+
+Short desktop viewports show two agents, one agenda entry and one headline,
+with controls for the remaining content. Taller viewports show six agents,
+two agenda entries and three headlines. The root floor stays at `0.875rem`
+(14 CSS pixels at the default browser size); density changes through row
+limits rather than smaller root text.
 
 ## Principles
 
@@ -57,19 +63,23 @@ third working column. Narrow screens preserve reading order and scroll.
 ## Plan review
 
 Equal rounded cards would obscure urgency, so the plan uses an asymmetric
-hero, a narrow agenda and an unboxed feed strip. A decorative monospace label
+hero, compact capacity readings and a quiet feed list. A decorative monospace label
 system would resemble a generic developer template; only numeric instruments
 use that face. Porcelain and navy belong to this mission-control brief, and
 cobalt is reserved for decisions rather than every heading.
 
 ## Screenshot critique
 
-Captured Summary in both schemes at all eight roadmap viewports with fixed
-clock and seed; none had horizontal overflow. The urgent action reads first,
-and the numeric instruments remain quiet and legible on the phone. The long
-agenda currently sets the first desktop row's height, leaving space below
-the hero and pushing the feed below the fold. App-level fitting should limit
-the agenda rows with its existing more-events control. The app also currently
-overrides the hero's theme-defined radius and padding; remove that duplication
-so Bootstrap's card tokens can carry the intended hierarchy. No screenshot
-baselines were created or accepted during this review.
+Reviewed fixed-clock, fixed-seed Summary captures at 1280×720 and 1920×1080
+in light and dark. The broad hero reads first beside weather; capacity,
+agenda and feeds stay above the footer. At 1280×720 the one-entry agenda and
+more-events control keep the lower row compact. At 1920×1080 the additional
+readings use the available space without competing with the action. Theme
+card tokens now control the hero radius and padding, preserving its distinction
+from the supporting panels.
+
+Local fitting checks cover all five views at both desktop sizes in this theme
+at the default display scale. These captures support the layout critique;
+the full viewport/DPR screenshot
+matrix, hosted browser CI and baseline review remain pending. No screenshot
+baselines were created, updated or accepted during this review.

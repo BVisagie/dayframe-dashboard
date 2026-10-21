@@ -1,0 +1,151 @@
+# Themes
+
+Dayframe themes are self-contained folders discovered by Vite. Add a theme with
+`npm run new-theme <id>`, review its generated brief, then change only that
+folder. The starter copies Default's accessible light and dark seed system;
+there is no registry list, stylesheet list or view code to edit.
+
+| Theme | Schemes | Layout | Direction |
+| --- | --- | --- | --- |
+| Default | Light, dark | Standard | Cool porcelain, navy and cobalt mission control |
+| Nebuchadnezzar | Dark | Console | Black, phosphor green and olive instruments |
+| Tideline | Light, dark | Standard | Nautical daylight and deep ocean, teal and coral |
+
+## Folder contract
+
+```text
+src/themes/<id>/
+  theme.js     JavaScript manifest, typed through defineTheme
+  theme.css    Bootstrap seeds and any token overrides
+  brief.md     Palette, type roles, ASCII layout, principles and plan review
+  effects.css  Optional, automatically discovered
+```
+
+The manifest imports `defineTheme` from `../define.ts`. Keeping manifests as
+JavaScript lets Vite and Node's TypeScript stripping import the same source.
+`themeSchema` and `validateTheme` describe and enforce supported schemes
+(`light`, `dark`), layouts (`standard`, `console`), Boolean options and the four
+six-digit preview colours (`canvas`, `surface`, `ink`, `accent`). The registry
+also rejects duplicate IDs and IDs that differ from their folder names.
+
+Settings generates Boolean switches from each option's `label` and `default`.
+Options apply as root attributes, for example `data-theme-crt="on"` or `"off"`.
+Unknown options are ignored, and switching themes clears previous option
+attributes. Nebuchadnezzar clamps every colour preference to dark.
+
+## API and discovery
+
+`registry.ts` exports `themes: Theme[]`, `getTheme(id): Theme`, `themeSchema`,
+`requiredTokens`, `roleNames`, `roleKeys`, `resolveScheme` and the theme types.
+Unknown IDs throw so callers can explicitly recover to a valid stored default.
+
+```ts
+applyTheme(themeId, scheme, options?, sun?, now?): void
+```
+
+`scheme` accepts `light`, `dark`, `system` or `auto`. System consults the
+browser's `prefers-color-scheme`; without a browser it defaults to light before
+clamping to supported schemes. Auto uses valid sunrise and sunset values for
+the supplied date, as local `HH:mm[:ss]` or ISO timestamps. It falls back to
+07:00–19:00 in the browser's local time zone when data is missing, invalid or
+stale. Sunrise is inclusive; sunset starts dark mode. Supplying `now` allows
+the app's fixed clock to control this presentation deterministically. The app
+calls the function again when its clock, system preference or settings change.
+`applyTheme` validates the ID and safely avoids DOM work in Node.
+
+The applied root attributes are `data-theme`, `data-bs-theme`, `data-layout`
+and one `data-theme-<option>` per declared option. `registry-core.ts` offers
+`createThemeRegistry`, `validateThemes` and `findTheme` without Vite imports.
+`apply.ts` offers `resolveScheme` and `applyThemeToRoot` independently. Build
+scripts can import each static manifest without evaluating `import.meta.glob`.
+
+## Tokens and layers
+
+```css
+@layer bootstrap, theme-base, theme, app, layout, theme-effects, bootstrap-utilities;
+```
+
+Bootstrap remains the component and utility system. The shared `theme-base`
+layer derives values with `color-mix(in oklch, …)`; themes use `light-dark()`
+for their supported schemes and can override any derived token in `theme`.
+Utilities remain last. Do not use extra specificity or importance overrides.
+
+1. Set Bootstrap's `--bg-body`, `--bg-1`, `--fg-body`, `--body-font-family` and
+   every role's `--<role>-base`. Shared derivations complete `--bg-2` through
+   `--bg-4`, `--fg-1` through `--fg-4`, borders, type, radii and shadows.
+2. Every role supplies all nine Bootstrap keys: `base`, `fg`, `fg-emphasis`,
+   `bg`, `bg-subtle`, `bg-muted`, `border`, `focus-ring`, `contrast`. The roles
+   are `primary`, `accent`, `secondary`, `success`, `warning`, `danger`, `info`,
+   `inverse`, six agents (`codex`, `claude`, `cursor`, `grok`, `opencode`,
+   `antigravity`) and `series-1` through `series-6`. Bootstrap's Sass map must
+   include the dashboard roles to generate their `.theme-*` utilities.
+3. App-only tokens cover gaps with no Bootstrap equivalent:
+   `--calendar-weekend-bg`, `--calendar-outside-bg`, `--clock-face` and
+   `--display-font-family`. Use Bootstrap spacing, shape and component tokens
+   for everything else. Theme-specific card hierarchy sets Bootstrap's own
+   card radius, spacing, border and shadow tokens.
+
+Form controls use the emphasized border token so their boundaries meet 3:1
+without strengthening every decorative panel divider. Switch thumbs use body
+ink when off and the primary contrast colour when on. Alpha.1 declares
+`--switch-checked-indicator-bg` but does not consume it; the shared layer
+bridges it to `--switch-indicator-bg` in the checked state. This token bridge
+can be removed when Bootstrap consumes its checked-indicator token directly.
+
+System font roles download no assets. Body and display stacks are deliberate
+generic families; monospace is reserved for readings except in the console.
+
+## Layout integration
+
+Use Bootstrap layout and spacing utilities inside and around these classes:
+
+| Class | Responsibility |
+| --- | --- |
+| `.dashboard-shell` | Full-height page shell and optional CRT overlay anchor |
+| `.grid.dashboard-grid` | Summary's named areas; switches with `data-layout` |
+| `.summary-hero` | Urgent Summary item; use on a Bootstrap card |
+| `.summary-agents` | Compact Summary capacity panel |
+| `.summary-calendar` (or `.summary-agenda`) | Summary agenda panel |
+| `.summary-weather` | Summary forecast panel |
+| `.summary-feeds` | Quiet Summary feed strip |
+| `.grid.agents-grid` | Agent cards in automatically fitting columns |
+| `.grid.calendar-grid` | Asymmetric month and selected-day agenda columns |
+| `.grid.weather-grid` | Bootstrap's `--columns: 2` for forecast and hourly panels |
+| `.calendar-cell` | Minimum readable month cell height |
+| `.dashboard-panel.contains-inline` | Optional Bootstrap inline-size query container |
+| `.dashboard-clock` | Optional static CRT glow target |
+
+The four layout classes require Bootstrap's `.grid`; they configure its
+columns and gap tokens. DOM order should be hero, agents, calendar, weather,
+feeds. The standard layout
+uses two columns, and console gives the hero a full first row with instruments
+beneath. At 21:9 and wider, additional columns use the available width. Below
+68.75rem viewport width, both Summary layouts become one scrolling column.
+The Calendar view's outer month and agenda become a single column. Inside the
+month, use Bootstrap's `.grid` with `--columns: 7`; calendar cells can use shorter
+minimum heights on narrow screens.
+
+Root font scaling is `max(.875rem, min(100dvh / 1080, 100vw / 1920) * 16 *
+var(--display-scale, 1))`: the nominal 1920×1080 view has a 1rem root, all
+Bootstrap rem dimensions scale together, and the floor remains legible.
+Set `--display-scale` to a ratio such as `1` or `.85`. There is no upper cap.
+
+## Accessibility and validation
+
+Body and small text require 4.5:1 contrast; large text and interface colours
+require 3:1. Role foregrounds, emphasis, muted surfaces, solid backgrounds,
+contrast text, borders and focus rings must be checked as actual resolved
+browser colours in every supported scheme. Keep state words or icons alongside
+colour. Required token names are exported for the browser contract.
+
+The CRT finish is static and ignores pointer input. It and its glow switch off
+under both reduced motion and forced colours. Theme CSS never removes focus
+outlines or opts out of the browser's forced colours.
+
+Run `npm run check`, `npm test` and the relevant `npm run test:browser` projects.
+The Node suite checks every discovered manifest, schema failures, option
+cleanup, scheme boundaries and the generator's no-overwrite behaviour. Browser
+checks own resolved tokens, contrast, focus and screenshots across the roadmap
+viewport matrix. Review screenshots in both schemes before accepting a theme;
+record intentional baseline changes. A generated starter still needs its own
+design review and full browser verification before acceptance.

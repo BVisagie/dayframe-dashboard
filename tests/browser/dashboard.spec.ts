@@ -483,3 +483,22 @@ test('rotation advances views and pauses during interaction with Settings', asyn
   await page.clock.runFor(12_000);
   await expectView(page, 'agents');
 });
+
+test('rotation pauses while the full agenda dialog is open and resumes after closing', async ({ page }) => {
+  await page.clock.install({ time: new Date(referenceClock) });
+  await visit(page, { view: 'calendar' });
+  const dialog = await settings(page, 'Display');
+  await dialog.getByLabel('Seconds per view', { exact: true }).fill('10');
+  await dialog.getByLabel('Seconds per view', { exact: true }).press('Tab');
+  await dialog.getByRole('switch', { name: 'Rotate views', exact: true }).check();
+  await closeSettings(page);
+  await page.getByRole('button', { name: /^\+\d+ more events$/ }).click();
+  const agenda = page.getByRole('dialog', { name: /^All events for / });
+  await expect(agenda).toBeVisible();
+  await page.clock.runFor(12_000);
+  await expectView(page, 'calendar');
+  await expect(agenda).toBeVisible();
+  await agenda.getByRole('button', { name: 'Close all events', exact: true }).click();
+  await page.clock.runFor(12_000);
+  await expectView(page, 'weather');
+});

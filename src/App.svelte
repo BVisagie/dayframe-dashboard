@@ -30,7 +30,7 @@
     settingsDialog,
     toast,
   } from './lib/bootstrap';
-  import appCss from './styles/app.css?raw';
+  import appCss from './styles/app.scss?raw';
   import brand from './assets/dayframe.svg';
   import Panel from './components/Panel.svelte';
   import Icon from './components/Icon.svelte';
@@ -258,8 +258,7 @@
       event.ctrlKey ||
       event.metaKey ||
       event.altKey ||
-      settingsOpen ||
-      aboutOpen ||
+      document.querySelector('dialog[open]') ||
       (target instanceof HTMLElement &&
         (target.matches('input, select, textarea, [contenteditable="true"]') ||
           target.closest('[role="listbox"], .menu, .popover, .vc, dialog')))
@@ -342,6 +341,12 @@
     if (replay) return;
     const units = settings.units;
     const selectedLocation = settings.location;
+    // A previous location or unit system must not be labelled as the new one
+    // while its replacement source is resolving.
+    sourceWeather = null;
+    weatherLive = false;
+    weatherStatus = 'fresh';
+    const lifetime = new AbortController();
     let cancelled = false;
     let current: Source<Weather> | undefined;
     let unsubscribe: (() => void) | undefined;
@@ -352,6 +357,8 @@
           selectedLocation ??
           (await resolveDefaultLocation(
             Intl.DateTimeFormat().resolvedOptions().timeZone,
+            undefined,
+            { signal: lifetime.signal },
           ));
         if (cancelled) return;
         current = createWeatherSource({ location, units, fallback, storage });
@@ -375,6 +382,7 @@
     }, 60000);
     return () => {
       cancelled = true;
+      lifetime.abort();
       clearInterval(timer);
       unsubscribe?.();
       current?.destroy();
