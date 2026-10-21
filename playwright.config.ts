@@ -4,7 +4,7 @@ import { viewports } from './tests/browser/matrix';
 
 const require = createRequire(import.meta.url);
 if (require('@playwright/test/package.json').version !== '1.64.1') {
-  throw new Error('Browser validation requires @playwright/test 1.64.1 and mcr.microsoft.com/playwright:v1.64.1-noble.');
+  throw new Error('Browser validation requires @playwright/test 1.64.1 and mcr.microsoft.com/playwright:v1.64.1-resolute.');
 }
 
 export default defineConfig({
