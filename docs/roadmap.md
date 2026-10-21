@@ -592,8 +592,10 @@ type, lint, tooling, build and all 100 unit checks. Chromium and Firefox passed
 corrected, and all 22 app/live-source cases passed on the targeted rerun.
 Pinned Noble capture run `39656395929` supplied all 400 intended baseline
 updates. Independent visual review and root hash verification accepted the
-complete set. Fresh comparisons and full final container validation remain
-pending; historical passes do not certify these changes.
+complete set. Routine CI passed all three jobs and 34 selected browser cases
+at `0556e33` in run `39660061306`. The subsequent dependency/environment
+upgrade is tracked in the [dependency audit](dependencies.md); its full final
+container validation remains pending.
 
 | Area                   | Implemented                                                                                                                                                  | Pending proof or external setup                                                                                                               |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |

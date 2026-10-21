@@ -18,7 +18,7 @@ and [CI setup](docs/ci.md) for pending release operations.
 
 ## Run locally
 
-Use Node 26 and npm:
+Use Node 26.12.1 and npm:
 
 ```sh
 npm ci
@@ -87,7 +87,7 @@ The complete suite remains available through `npm run test:browser` or manual
 CI with `full_suite` enabled. Run it for Bootstrap upgrades and substantial
 theme changes before merging. See [CI setup](docs/ci.md) for exact commands.
 
-Browser validation uses Playwright 1.64.1 and its pinned Noble container. The
+Browser validation uses Playwright 1.64.1 and its pinned Resolute container. The
 complete suite includes Chromium, Firefox and WebKit and 400 Chromium screenshots
 at eight viewports, each at device pixel ratios 1 and 2. Clock, seed, locale and
 time zone are fixed. Remote APIs are mocked in tests. Screenshot projects fix font subpixel

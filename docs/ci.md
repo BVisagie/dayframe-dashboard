@@ -14,9 +14,10 @@ Routine `CI` runs on pull requests and pushes to `main`, with three jobs:
 Feature-branch pushes do not start a second copy of PR CI. Concurrency groups
 include the event name and branch. A new run cancels an older run only within
 that group; manual dispatches cannot cancel PR or push runs, or be cancelled
-by them. Node is 26; browser tests run in
-`mcr.microsoft.com/playwright:v1.64.1-noble`, matching Playwright
-1.64.1. The browser report, build and requested screenshot candidates are
+by them. Jobs use Ubuntu 26.04 and exact Node 26.12.1; browser tests run in
+`mcr.microsoft.com/playwright:v1.64.1-resolute`, matching Playwright 1.64.1.
+The workflow pins its OCI digest, and capture guards require Resolute.
+The browser report, build and requested screenshot candidates are
 retained for seven days. Every browser run builds and serves the production
 bundle, uses two workers and has zero retries.
 
@@ -89,6 +90,11 @@ byte-identical across jobs. Changes reflect supported Bootstrap controls,
 theme-owned hero tokens, today's agenda and compact feed pagination. The 32
 narrow-layout height changes preserve content; all desktop dimensions remain
 unchanged. Comparison checks against the refreshed baselines remain required.
+
+Routine [run `39660061306`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39660061306)
+at `0556e33` passed Quality, all 34 selected browser/screenshot cases and
+Secret history against that accepted Noble set. The later dependency upgrade
+moves capture to Resolute; its screenshot review and full suite remain pending.
 
 The matrix covers eight viewports × two device pixel ratios × five views ×
 five supported theme/scheme combinations = 400 images. Default and Tideline
@@ -209,6 +215,11 @@ announcement needs separate approval; implementation does not authorize them:
    required.
 
 ## Weekly maintenance
+
+The [dependency audit](dependencies.md) records the current package, action,
+runtime and container pins, plus upstream-managed compatibility exceptions.
+TypeScript 7 supplies the tooling CLI while Svelte retains its supported
+TypeScript 6 API through the official compatibility aliases.
 
 Dependabot checks npm dependencies and Actions weekly, excluding `bootstrap`
 and `@playwright/test`. Bootstrap stays an exact pin and uses a dedicated
