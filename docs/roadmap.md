@@ -590,7 +590,9 @@ That run predates the current review fixes. The review candidate passes local
 type, lint, tooling, build and all 100 unit checks. Chromium and Firefox passed
 402 of 404 functional cases; the two stale singular-copy expectations were
 corrected, and all 22 app/live-source cases passed on the targeted rerun.
-Fresh container validation and intended screenshot baseline updates remain
+Pinned Noble capture run `39656395929` supplied all 400 intended baseline
+updates. Independent visual review and root hash verification accepted the
+complete set. Fresh comparisons and full final container validation remain
 pending; historical passes do not certify these changes.
 
 | Area                   | Implemented                                                                                                                                                  | Pending proof or external setup                                                                                                               |

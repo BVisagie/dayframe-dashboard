@@ -129,8 +129,10 @@ The review candidate measures **5,937 source bytes / 1,846 gzip bytes** with
 Bootstrap **6.0.0-alpha.1**. The report is included in the build artifact;
 compare the same metric on future upgrades.
 
-Current review fixes still need fresh validation and any intended baseline
-updates; historical browser passes do not certify this candidate.
+All 400 intended baseline updates for the review fixes were visually reviewed
+and accepted from Noble capture run `39656395929`, with exact artifact hashes
+verified before copying. Fresh comparisons and full final container
+validation remain required; historical passes do not certify this candidate.
 
 ### Upgrade checklist
 

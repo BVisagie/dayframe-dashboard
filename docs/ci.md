@@ -79,12 +79,23 @@ the exact stack versions and tighten existing footer spacing; no theme or
 capture settings changed. Candidate generation does not replace the normal
 comparison check.
 
+The review fixes at `e9f6780` replace all 400 images from pinned Noble
+[capture run `39656395929`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39656395929).
+Independent visual reviews covered Default's 160, Tideline's 160 and
+Nebuchadnezzar's 80 candidates, with no P1/P2 findings. Root verified every
+accepted PNG's SHA-256 against that artifact. All 16 previously reviewed
+routine cases also match under the unchanged comparator settings; 11 are
+byte-identical across jobs. Changes reflect supported Bootstrap controls,
+theme-owned hero tokens, today's agenda and compact feed pagination. The 32
+narrow-layout height changes preserve content; all desktop dimensions remain
+unchanged. Comparison checks against the refreshed baselines remain required.
+
 The matrix covers eight viewports × two device pixel ratios × five views ×
 five supported theme/scheme combinations = 400 images. Default and Tideline
 each contribute 160; Nebuchadnezzar contributes 80. Comparisons store CSS-pixel
-images and assert the browser's actual device pixel ratio separately. Fourteen
-phone/tablet images have font-related height changes of 1–3 pixels relative to
-the initial set. All six desktop dimensions still fit without vertical
+images and assert the browser's actual device pixel ratio separately. In the
+earlier font-normalization set, fourteen phone/tablet images changed height by
+1–3 pixels relative to the initial set. All six desktop dimensions still fit without vertical
 overflow; phone and tablet views scroll as designed.
 
 Pinned Noble [run `39643918557`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39643918557)
@@ -95,8 +106,9 @@ before routine CI was reduced; later candidates still need their applicable
 checks. The current review candidate passes local type, lint, tooling, build
 and all 100 unit checks. Chromium and Firefox passed 402 of 404 functional
 cases; the two stale singular-copy expectations were corrected, and all 22
-app/live-source cases passed on the targeted rerun. Full container validation
-and intended baseline updates are pending. A local probe of 50 screenshot comparisons differed
+app/live-source cases passed on the targeted rerun. All 400 intended baseline
+updates are reviewed and accepted; fresh comparison and full final container
+validation remain pending. A local probe of 50 screenshot comparisons differed
 from the Noble baselines across text rendering, so host captures were not
 accepted.
 
