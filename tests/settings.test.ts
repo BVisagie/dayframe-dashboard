@@ -27,6 +27,7 @@ test('defaults follow supported locale conventions without browser globals', () 
   assert.equal(british.startupView, 'summary');
   assert.equal(british.scale, 100);
   assert.equal(british.location, null);
+  assert.equal(british.keyboardShortcuts, true);
   assert.equal(SETTINGS_KEY, 'dayframe.settings.v1');
   assert.doesNotThrow(() => defaultSettings('not_a_locale'));
   assert.doesNotThrow(() => defaultSettings(''));
@@ -58,7 +59,7 @@ test('valid version-one settings round-trip under the single settings key', () =
   const settings: Settings = {
     ...defaultSettings('de-DE'),
     theme: 'future-theme', scheme: 'auto', scale: 120, startupView: 'calendar',
-    rotation: true, rotationSeconds: 45, dateFormat: 'iso', hourCycle: 'h23', firstDay: 0,
+    rotation: true, rotationSeconds: 45, keyboardShortcuts: false, dateFormat: 'iso', hourCycle: 'h23', firstDay: 0,
     units: 'fahrenheit', reminders: false, reminderMinutes: 5,
     categories: ['science', 'bootstrap'], scenario: 'running-low',
     themeOptions: { 'future-theme': { crt: false, glow: true } }, lens: true,
@@ -173,6 +174,53 @@ test('location validation rejects nonfinite coordinates and invalid timezones', 
   }
   const stored = loadSettings(storageFor({ version: 1, location: { name: ' Cloud meadow ', latitude: 0, longitude: 0, timezone: 'Invalid/Zone' } }));
   assert.deepEqual(stored.location, { name: 'Cloud meadow', latitude: 0, longitude: 0 });
+});
+
+test('location region labels are trimmed, validated and preserved on save', () => {
+  const location = { name: 'Mossquay', latitude: 0, longitude: 0, timezone: 'UTC',
+    country: 'Cloudfern Isles', admin1: 'North Mossreach' };
+  const storage = storageFor({ version: 1, location: { ...location,
+    country: ` ${location.country} `, admin1: ` ${location.admin1} ` } });
+  const settings = loadSettings(storage);
+  assert.deepEqual(settings.location, location);
+  assert.equal(saveSettings(storage, settings), true);
+  assert.deepEqual(loadSettings(storage).location, location);
+  for (const invalid of ['', ' ', 3, true, [], {}, 'x'.repeat(121)]) {
+    assert.deepEqual(loadSettings(storageFor({ version: 1, location: {
+      ...location, country: invalid, admin1: invalid,
+    } })).location, { name: 'Mossquay', latitude: 0, longitude: 0, timezone: 'UTC' });
+  }
+});
+
+test('older settings enable shortcuts without writing storage and invalid values fall back safely', () => {
+  for (const version of [undefined, 0, 1]) {
+    const storage = storageFor({ version, theme: 'tideline', keyboardShortcuts: undefined });
+    const before = storage.values.get(SETTINGS_KEY);
+    const settings = loadSettings(storage);
+    assert.equal(settings.keyboardShortcuts, true);
+    assert.equal(settings.theme, 'tideline');
+    assert.equal(settings.version, 1);
+    assert.equal(storage.values.get(SETTINGS_KEY), before);
+    assert.equal(loadSettings(storageFor({ version, keyboardShortcuts: false })).keyboardShortcuts, false);
+  }
+  for (const keyboardShortcuts of ['', 'false', 0, 1, null, [], {}]) {
+    const storage = storageFor({ version: 1, keyboardShortcuts });
+    const settings = loadSettings(storage);
+    assert.equal(settings.keyboardShortcuts, true);
+    assert.equal(saveSettings(storage, { ...settings, keyboardShortcuts } as unknown as Settings), true);
+    assert.equal(loadSettings(storage).keyboardShortcuts, true);
+  }
+});
+
+test('shortcut preferences persist without leaking visit-only URL overrides', () => {
+  const base = { ...defaultSettings('en-GB'), startupView: 'calendar' as const };
+  const storage = storageFor(base);
+  const loaded = loadSettings(storage);
+  const visit = applyUrlSettings(loaded, new URLSearchParams('theme=tideline&scheme=dark&view=feeds&scale=140&scenario=offline'));
+  assert.equal(saveSettings(storage, { ...loaded, keyboardShortcuts: false }), true);
+  assert.deepEqual(loadSettings(storage), { ...base, keyboardShortcuts: false });
+  assert.equal(visit.keyboardShortcuts, true);
+  assert.equal(visit.startupView, 'feeds');
 });
 
 test('theme options cannot introduce prototype properties', () => {

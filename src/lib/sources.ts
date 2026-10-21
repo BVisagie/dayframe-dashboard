@@ -177,7 +177,8 @@ export function createSource<T>(options: SourceOptions<T>): Source<T> {
 
   function status(): SourceStatus {
     if (failed) return updatedAt === null ? 'offline' : 'stale';
-    return updatedAt !== null && now() - updatedAt < ttl ? 'fresh' : 'stale';
+    if (updatedAt === null) return 'loading';
+    return now() - updatedAt < ttl ? 'fresh' : 'stale';
   }
 
   function snapshot(): SourceSnapshot<T> {
@@ -564,7 +565,8 @@ export function createBootstrapSource(options: BootstrapSourceOptions): Source<S
     return {
       data,
       status: states.every((state) => state.status === 'fresh') ? 'fresh'
-        : !available.length && errors.length ? 'offline' : 'stale',
+        : errors.length ? (available.length ? 'stale' : 'offline')
+        : states.some((state) => state.status === 'loading') ? 'loading' : 'stale',
       updatedAt: available.length ? Math.min(...available.map((state) => state.updatedAt as number)) : null,
       error: errors.length ? errors.join(' ') : null,
     };
@@ -601,13 +603,13 @@ export function createBootstrapSource(options: BootstrapSourceOptions): Source<S
   };
 }
 
-export async function searchCities(query: string, fetcher: SourceFetch = globalThis.fetch,
-  options: SourceRequestOptions = {}): Promise<Location[]> {
+async function geocodeCities(query: string, count: number, fetcher: SourceFetch,
+  options: SourceRequestOptions): Promise<Location[]> {
   const timeoutMs = deadline(options.timeoutMs);
   const name = query.trim().replace(/\s+/g, ' ');
   if (name.length < 2 || name.length > 100) return [];
   const url = new URL('https://geocoding-api.open-meteo.com/v1/search');
-  url.search = new URLSearchParams({ name, count: '10', language: 'en', format: 'json' }).toString();
+  url.search = new URLSearchParams({ name, count: String(count), language: 'en', format: 'json' }).toString();
   const value: unknown = await request(url, fetcher, 'City search', clock(options.now),
     (response) => response.json(), timeoutMs, options.signal);
   if (!record(value) || value.error || (value.results !== undefined && !Array.isArray(value.results))) {
@@ -619,6 +621,11 @@ export async function searchCities(query: string, fetcher: SourceFetch = globalT
     if (!record(item)) continue;
     const candidate = { name: item.name, latitude: item.latitude, longitude: item.longitude,
       ...(item.timezone === undefined ? {} : { timezone: item.timezone }) };
+    for (const field of ['country', 'admin1'] as const) {
+      if (typeof item[field] === 'string' && item[field].trim() && item[field].length <= 120) {
+        Object.assign(candidate, { [field]: item[field].trim() });
+      }
+    }
     if (validLocation(candidate) && !locations.some((location) => location.name === candidate.name
       && location.latitude === candidate.latitude && location.longitude === candidate.longitude)) {
       locations.push(candidate);
@@ -627,17 +634,35 @@ export async function searchCities(query: string, fetcher: SourceFetch = globalT
   if ((value.results as unknown[]).length && !locations.length) {
     throw new SourceError('City search returned invalid locations.');
   }
-  return locations.slice(0, 10);
+  return locations.slice(0, count);
+}
+
+export function searchCities(query: string, fetcher: SourceFetch = globalThis.fetch,
+  options: SourceRequestOptions = {}): Promise<Location[]> {
+  return geocodeCities(query, 10, fetcher, options);
+}
+
+function canonicalTimezone(value: string | undefined): string | null {
+  if (!value || value.length > 100) return null;
+  try { return new Intl.DateTimeFormat('en', { timeZone: value }).resolvedOptions().timeZone; }
+  catch { return null; }
 }
 
 export async function resolveDefaultLocation(timezone: string,
   fetcher: SourceFetch = globalThis.fetch, options: SourceRequestOptions = {}): Promise<Location> {
   deadline(options.timeoutMs);
   const fallback: Location = { name: 'Harborview', latitude: 0, longitude: 0, timezone: 'UTC' };
-  const segment = timezone.split('/').at(-1) ?? '';
-  if (!timezone.includes('/') || timezone.startsWith('Etc/') || !/^[A-Za-z]+(?:_[A-Za-z]+)*$/.test(segment)) {
+  const canonical = canonicalTimezone(timezone);
+  if (!canonical || !timezone.includes('/') || timezone.startsWith('Etc/')) return fallback;
+  // Geographic aliases keep city names; regional aliases such as US/Pacific need the canonical city.
+  const cityZone = timezone.split('/')[0] === canonical.split('/')[0] ? timezone : canonical;
+  const segment = cityZone.split('/').at(-1) ?? '';
+  if (!/^[A-Za-z]+(?:_[A-Za-z]+)*$/.test(segment)) {
     return fallback;
   }
-  try { return (await searchCities(segment.replaceAll('_', ' '), fetcher, options))[0] ?? fallback; }
+  try {
+    const locations = await geocodeCities(segment.replaceAll('_', ' '), 8, fetcher, options);
+    return locations.find((location) => canonicalTimezone(location.timezone) === canonical) ?? fallback;
+  }
   catch { return fallback; }
 }

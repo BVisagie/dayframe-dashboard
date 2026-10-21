@@ -49,6 +49,7 @@ export function defaultSettings(locale?: string): Settings {
     startupView: 'summary',
     rotation: false,
     rotationSeconds: 30,
+    keyboardShortcuts: true,
     locale: resolvedLocale,
     dateFormat: 'locale',
     hourCycle: 'locale',
@@ -81,6 +82,11 @@ function locationValue(value: unknown): Location | null {
   if (typeof value.latitude !== 'number' || !Number.isFinite(value.latitude) || Math.abs(value.latitude) > 90) return null;
   if (typeof value.longitude !== 'number' || !Number.isFinite(value.longitude) || Math.abs(value.longitude) > 180) return null;
   const location: Location = { name: value.name.trim(), latitude: value.latitude, longitude: value.longitude };
+  for (const field of ['country', 'admin1'] as const) {
+    if (typeof value[field] === 'string' && value[field].trim() && value[field].length <= 120) {
+      location[field] = value[field].trim();
+    }
+  }
   if (typeof value.timezone === 'string' && value.timezone.length <= 100) {
     try {
       new Intl.DateTimeFormat('en', { timeZone: value.timezone });
@@ -136,6 +142,7 @@ function validate(value: unknown, locale?: string): Settings {
     startupView: choice(migrated.startupView, VIEWS, fallback.startupView),
     rotation: typeof migrated.rotation === 'boolean' ? migrated.rotation : fallback.rotation,
     rotationSeconds: boundedNumber(migrated.rotationSeconds, fallback.rotationSeconds, 10, 3600),
+    keyboardShortcuts: typeof migrated.keyboardShortcuts === 'boolean' ? migrated.keyboardShortcuts : fallback.keyboardShortcuts,
     locale: fallback.locale,
     dateFormat: choice(migrated.dateFormat, DATE_FORMATS, fallback.dateFormat),
     hourCycle: choice(migrated.hourCycle, ['locale', 'h12', 'h23'], fallback.hourCycle),

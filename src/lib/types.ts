@@ -1,7 +1,7 @@
 export type View = 'summary' | 'agents' | 'calendar' | 'weather' | 'feeds';
 export type Scenario =
   'steady' | 'running-low' | 'reconnect' | 'reminder-due' | 'stale' | 'offline';
-export type SourceStatus = 'fresh' | 'stale' | 'offline' | 'reconnect';
+export type SourceStatus = 'loading' | 'fresh' | 'stale' | 'offline' | 'reconnect';
 export interface Agent {
   id: string;
   name: string;
@@ -64,6 +64,8 @@ export interface Weather {
 }
 export interface Location {
   name: string;
+  country?: string;
+  admin1?: string;
   latitude: number;
   longitude: number;
   timezone?: string;
@@ -76,6 +78,7 @@ export interface Settings {
   startupView: View;
   rotation: boolean;
   rotationSeconds: number;
+  keyboardShortcuts: boolean;
   locale: string;
   dateFormat: 'locale' | 'day-month' | 'month-day' | 'iso';
   hourCycle: 'locale' | 'h12' | 'h23';

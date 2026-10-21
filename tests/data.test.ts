@@ -4,6 +4,8 @@ import { simulate, simulateWeather } from '../src/lib/data.ts';
 import { formatDate, formatNumber, formatRelative, formatTemperature, formatTime, quotaPercent } from '../src/lib/format.ts';
 import type { Settings } from '../src/lib/types.ts';
 import type { Scenario } from '../src/lib/types.ts';
+import { resolveScheme } from '../src/themes/apply.ts';
+import defaultTheme from '../src/themes/default/theme.js';
 
 const NOW = new Date('2026-11-03T09:30:00.000Z');
 const SEED = 'test-garden';
@@ -24,14 +26,19 @@ test('the same explicit clock, seed and scenario reproduce all simulated data', 
 test('the engine does not depend on random values or the runtime clock', () => {
   const random = Math.random;
   const clock = Date.now;
+  const timezoneOffset = Date.prototype.getTimezoneOffset;
   const expected = simulate(NOW, SEED, 'steady');
+  const shifted = simulate(NOW, SEED, 'steady', -345);
   try {
     Math.random = () => { throw new Error('Unexpected random read'); };
     Date.now = () => { throw new Error('Unexpected clock read'); };
+    Date.prototype.getTimezoneOffset = () => { throw new Error('Unexpected viewer timezone read'); };
     assert.deepEqual(simulate(NOW, SEED, 'steady'), expected);
+    assert.deepEqual(simulate(NOW, SEED, 'steady', -345), shifted);
   } finally {
     Math.random = random;
     Date.now = clock;
+    Date.prototype.getTimezoneOffset = timezoneOffset;
   }
 });
 
@@ -159,6 +166,90 @@ test('weather produces consistent seven-day and hourly forecasts across date tra
   }
 });
 
+test('explicit fixed offsets place demo events on wall dates without shifting all-day membership or quotas', () => {
+  for (const date of ['2026-11-03T02:30:00Z', '2026-11-03T23:30:00Z']) {
+    const now = new Date(date);
+    const utc = simulate(now, SEED, 'reminder-due');
+    assert.deepEqual(simulate(now, SEED, 'reminder-due', 0), utc);
+    for (const offsetMinutes of [-840, -345, 480, 720]) {
+      const offset = offsetMinutes * 60_000;
+      const wallTime = now.getTime() - offset;
+      const wallDate = new Date(wallTime).toISOString().slice(0, 10);
+      const result = simulate(now, SEED, 'reminder-due', offsetMinutes);
+      assert.deepEqual(result.agents, utc.agents);
+      assert.deepEqual(result.stories, utc.stories);
+      const expectedEvents = simulate(new Date(wallTime), SEED, 'reminder-due').events;
+      assert.equal(result.events.length, expectedEvents.length);
+      for (const expected of expectedEvents) {
+        const event = result.events.find(({ id }) => id === expected.id)!;
+        assert.ok(event);
+        const shift = event.allDay ? 0 : offset;
+        assert.equal(Date.parse(event.start), Date.parse(expected.start) + shift);
+        assert.equal(Date.parse(event.end), Date.parse(expected.end) + shift);
+      }
+      const focus = result.events.find(({ title }) => title === 'Quiet build time')!;
+      assert.equal(new Date(Date.parse(focus.start) - offset).toISOString(), `${wallDate}T10:00:00.000Z`);
+      const due = result.events.find(({ title }) => title === 'Release readiness check')!;
+      assert.equal(Date.parse(due.start) - now.getTime(), 3 * 60_000);
+    }
+  }
+});
+
+test('weather offsets keep the heat peak, daily labels, hourly instants and solar boundaries consistent', () => {
+  const now = new Date('2026-11-03T23:30:00Z');
+  for (const offsetMinutes of [-840, -345, 480, 720]) {
+    const offset = offsetMinutes * 60_000;
+    const wallNow = new Date(now.getTime() - offset);
+    const expected = simulateWeather(wallNow, SEED);
+    const weather = simulateWeather(now, SEED, offsetMinutes);
+    assert.deepEqual(weather, simulate(now, SEED, 'steady', offsetMinutes).weather);
+    assert.equal(weather.days[0].date, wallNow.toISOString().slice(0, 10));
+    assert.equal(weather.temperature, expected.temperature);
+    for (const [index, day] of weather.days.entries()) {
+      assert.equal(day.date, expected.days[index].date);
+      assert.equal(day.low, expected.days[index].low);
+      assert.equal(day.high, expected.days[index].high);
+      assert.equal(Date.parse(day.sunrise), Date.parse(expected.days[index].sunrise) + offset);
+      assert.equal(Date.parse(day.sunset), Date.parse(expected.days[index].sunset) + offset);
+    }
+    for (const [index, hour] of weather.hours.entries()) {
+      assert.equal(hour.temperature, expected.hours[index].temperature);
+      assert.equal(Date.parse(hour.time), Date.parse(expected.hours[index].time) + offset);
+      const wallHour = new Date(Date.parse(hour.time) - offset);
+      if (wallHour.getUTCHours() === 15) {
+        const day = weather.days.find(({ date }) => date === wallHour.toISOString().slice(0, 10))!;
+        assert.equal(hour.temperature, day.high);
+      }
+    }
+  }
+});
+
+test('auto schemes use simulated solar boundaries across UTC dates and extreme offsets', () => {
+  const original = process.env.TZ;
+  try {
+    for (const [timezone, offsetMinutes, suffix] of [
+      ['America/Los_Angeles', 480, '-08:00'], ['Pacific/Kiritimati', -840, '+14:00'],
+    ] as const) {
+      process.env.TZ = timezone;
+      const now = new Date('2026-11-03T18:00:00');
+      const day = simulateWeather(now, SEED, offsetMinutes).days[0];
+      assert.ok(Date.parse(day.sunset) < now.getTime());
+      assert.ok(now.getHours() < 19);
+      assert.ok(day.sunrise.startsWith(`${day.date}T`) && day.sunrise.endsWith(suffix));
+      assert.ok(day.sunset.startsWith(`${day.date}T`) && day.sunset.endsWith(suffix));
+      assert.equal(resolveScheme(defaultTheme, 'auto', undefined, now), 'light');
+      assert.equal(resolveScheme(defaultTheme, 'auto', day, now), 'dark');
+      const beforeSunrise = new Date(Date.parse(day.sunrise) - 60_000);
+      assert.equal(beforeSunrise.getHours(), 7);
+      assert.equal(resolveScheme(defaultTheme, 'auto', day, beforeSunrise), 'dark');
+      assert.equal(resolveScheme(defaultTheme, 'auto', day, new Date(day.sunrise)), 'light');
+    }
+  } finally {
+    if (original === undefined) delete process.env.TZ;
+    else process.env.TZ = original;
+  }
+});
+
 test('simulated feeds cover each category and contain no invented external links', () => {
   const { stories } = simulate(NOW, SEED, 'steady');
   assert.deepEqual([...new Set(stories.map(({ category }) => category))].sort(), ['bootstrap', 'design', 'science', 'technology']);
@@ -170,6 +261,13 @@ test('simulated feeds cover each category and contain no invented external links
 test('invalid simulation clocks fail explicitly', () => {
   assert.throws(() => simulate(new Date('invalid'), SEED, 'steady'), /valid date/);
   assert.throws(() => simulateWeather(new Date('invalid'), SEED), /valid date/);
+});
+
+test('simulation offsets reject nonfinite, fractional and unsupported values', () => {
+  for (const offset of [NaN, Infinity, -Infinity, 1.5, -841, 721]) {
+    assert.throws(() => simulate(NOW, SEED, 'steady', offset), /UTC offset/);
+    assert.throws(() => simulateWeather(NOW, SEED, offset), /UTC offset/);
+  }
 });
 
 test('formatters respect explicit locales, units and clocks and handle missing values', () => {

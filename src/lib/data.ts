@@ -10,6 +10,13 @@ function timestamp(now: Date): number {
   return value;
 }
 
+function utcOffset(offsetMinutes: number): number {
+  if (!Number.isInteger(offsetMinutes) || offsetMinutes < -840 || offsetMinutes > 720) {
+    throw new RangeError('Simulation requires an integer UTC offset from -840 to 720 minutes.');
+  }
+  return offsetMinutes * MINUTE;
+}
+
 function hash(value: string): number {
   let result = 2166136261;
   for (let index = 0; index < value.length; index += 1) {
@@ -125,17 +132,20 @@ function simulateAgents(time: number, seed: string, scenario: Scenario): Agent[]
   });
 }
 
-function simulateEvents(time: number, seed: string, scenario: Scenario): CalendarEvent[] {
-  const today = dayStart(time);
-  const weekStart = monday(time);
+function simulateEvents(time: number, seed: string, scenario: Scenario, offset: number): CalendarEvent[] {
+  const wallTime = time - offset;
+  const today = dayStart(wallTime);
+  const weekStart = monday(wallTime);
   const events: CalendarEvent[] = [];
   const add = (id: string, title: string, start: number, duration: number, calendar: string, location: string, attendees: string[], description: string, allDay = false) => {
+    // All-day membership uses the calendar date; only timed events need an offset.
+    if (!allDay) start += offset;
     events.push({ id, title, start: new Date(start).toISOString(), end: new Date(start + duration).toISOString(), allDay, calendar, location, attendees, description });
   };
   const crew = ['Pip Mosswing', 'Tavi Cloudfern', 'Neri Pebblebrook'];
-  const planningHour = 13 + hash(`${isoWeek(time)}:${seed}:planning`) % 3;
+  const planningHour = 13 + hash(`${isoWeek(wallTime)}:${seed}:planning`) % 3;
 
-  // UTC dates keep recurrence and exclusive all-day ends stable across DST and devices.
+  // Explicit wall dates keep recurrence deterministic without reading the viewer's zone.
   for (let offset = -7; offset < 14; offset += 1) {
     const date = today + offset * DAY;
     const weekday = new Date(date).getUTCDay();
@@ -155,8 +165,8 @@ function simulateEvents(time: number, seed: string, scenario: Scenario): Calenda
   add(`next-week-${weekStart}`, 'Next cycle planning', weekStart + 7 * DAY + 11 * HOUR, HOUR, 'Studio', 'Cloudfern room', crew, 'Choose a small, testable goal for the coming week.');
 
   const reminderStart = scenario === 'reminder-due'
-    ? Math.floor(time / MINUTE) * MINUTE + 3 * MINUTE
-    : (Math.floor(time / (15 * MINUTE)) + 1) * 15 * MINUTE;
+    ? Math.floor(wallTime / MINUTE) * MINUTE + 3 * MINUTE
+    : (Math.floor(wallTime / (15 * MINUTE)) + 1) * 15 * MINUTE;
   add(`reminder-${today}`, scenario === 'reminder-due' ? 'Release readiness check' : 'Pause and plan', reminderStart, 15 * MINUTE, 'Reminders', 'Fernlight nook', [], scenario === 'reminder-due' ? 'A reminder is due now: gather the checklist for the short release review.' : 'A short reminder to stretch, review progress and choose the next step.');
 
   return events.sort((left, right) => left.start.localeCompare(right.start) || left.id.localeCompare(right.id));
@@ -187,7 +197,16 @@ function simulateStories(time: number, seed: string): Story[] {
   }));
 }
 
-function weatherDay(day: number, seed: string): WeatherDay {
+function solarTime(wallTime: number, offset: number): string {
+  const local = new Date(wallTime).toISOString();
+  if (offset === 0) return local;
+  const minutes = Math.abs(offset) / MINUTE;
+  const suffix = `${offset > 0 ? '-' : '+'}${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+  // The encoded local date lets auto-scheme freshness checks recognize both solar boundaries.
+  return `${local.slice(0, -1)}${suffix}`;
+}
+
+function weatherDay(day: number, seed: string, offset: number): WeatherDay {
   const date = new Date(day);
   const yearStart = Date.UTC(date.getUTCFullYear(), 0, 1);
   const season = Math.sin(((day - yearStart) / DAY - 80) / 365.25 * 2 * Math.PI);
@@ -204,24 +223,25 @@ function weatherDay(day: number, seed: string): WeatherDay {
     high,
     code,
     precipitation: code >= 50 ? 40 + hash(`${key}:rain`) % 56 : hash(`${key}:rain`) % 24,
-    sunrise: new Date(day + sunriseMinutes * MINUTE).toISOString(),
-    sunset: new Date(day + sunsetMinutes * MINUTE).toISOString(),
+    sunrise: solarTime(day + sunriseMinutes * MINUTE, offset),
+    sunset: solarTime(day + sunsetMinutes * MINUTE, offset),
   };
 }
 
-/** A fictional metric forecast, anchored to UTC dates and the supplied clock. */
-export function simulateWeather(now: Date, seed: string): Weather {
-  const time = timestamp(now);
+/** Fictional metric weather; fixed offsetMinutes uses Date#getTimezoneOffset's sign (UTC+2 is -120). */
+export function simulateWeather(now: Date, seed: string, offsetMinutes = 0): Weather {
+  const offset = utcOffset(offsetMinutes);
+  const time = timestamp(now) - offset;
   const today = dayStart(time);
-  const days = Array.from({ length: 7 }, (_, offset) => weatherDay(today + offset * DAY, seed));
+  const days = Array.from({ length: 7 }, (_, index) => weatherDay(today + index * DAY, seed, offset));
   const hourStart = Math.floor(time / HOUR) * HOUR;
-  const hours = Array.from({ length: 24 }, (_, offset) => {
-    const hour = hourStart + offset * HOUR;
-    const day = weatherDay(dayStart(hour), seed);
+  const hours = Array.from({ length: 24 }, (_, index) => {
+    const hour = hourStart + index * HOUR;
+    const day = weatherDay(dayStart(hour), seed, offset);
     const hourOfDay = new Date(hour).getUTCHours();
     const warmth = (1 + Math.cos((hourOfDay - 15) / 24 * 2 * Math.PI)) / 2;
     return {
-      time: new Date(hour).toISOString(),
+      time: new Date(hour + offset).toISOString(),
       temperature: Math.round((day.low + (day.high - day.low) * warmth) * 10) / 10,
       code: day.code,
       precipitation: day.precipitation,
@@ -242,12 +262,14 @@ export function simulateWeather(now: Date, seed: string): Weather {
   };
 }
 
-export function simulate(now: Date, seed: string, scenario: Scenario): { agents: Agent[]; events: CalendarEvent[]; weather: Weather; stories: Story[] } {
+/** Fixed offsetMinutes follows Date#getTimezoneOffset (UTC+2 is -120); replay callers use zero. */
+export function simulate(now: Date, seed: string, scenario: Scenario, offsetMinutes = 0): { agents: Agent[]; events: CalendarEvent[]; weather: Weather; stories: Story[] } {
   const time = timestamp(now);
+  const offset = utcOffset(offsetMinutes);
   return {
     agents: simulateAgents(time, seed, scenario),
-    events: simulateEvents(time, seed, scenario),
-    weather: simulateWeather(now, seed),
+    events: simulateEvents(time, seed, scenario, offset),
+    weather: simulateWeather(now, seed, offsetMinutes),
     stories: simulateStories(time, seed),
   };
 }

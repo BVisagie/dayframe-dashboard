@@ -99,9 +99,11 @@ test('sources immediately expose fallback, dedupe concurrent refreshes, and expi
   const source = createSource({ id: 'counts', fallback: { count: 0 }, ttl: minute, storage,
     now: () => time, load: () => { calls += 1; return result.promise; } });
   const state = observe(source);
-  assert.deepEqual(state.latest(), { data: { count: 0 }, status: 'stale', updatedAt: null, error: null });
+  assert.deepEqual(state.latest(), { data: { count: 0 }, status: 'loading', updatedAt: null, error: null });
   const first = source.refresh();
   assert.equal(source.refresh(true), first);
+  assert.equal(source.status, 'loading');
+  assert.equal(state.latest().error, null);
   result.resolve({ count: 7 });
   await first;
   assert.equal(calls, 1);
@@ -181,6 +183,28 @@ test('a first failure exposes offline fallback and exponential backoff is not by
   await source.refresh();
   assert.equal(calls, 3);
   source.destroy();
+});
+
+test('a cached first failure stays offline until a retry begins and recovers to fresh', async (t) => {
+  let time = start;
+  const storage = new MemoryStorage();
+  const initial = createSource({ id: 'first-failure', fallback: 0, ttl: minute, storage,
+    now: () => time, load: () => { throw new Error('offline'); } });
+  t.after(() => initial.destroy());
+  await initial.refresh();
+  time += minute;
+  const result = deferred<number>();
+  const source = createSource({ id: 'first-failure', fallback: 0, ttl: minute, storage,
+    now: () => time, load: () => result.promise });
+  t.after(() => source.destroy());
+  const state = observe(source);
+  assert.equal(state.latest().status, 'offline');
+  const pending = source.refresh();
+  assert.equal(source.status, 'loading');
+  assert.equal(state.latest().error, null);
+  result.resolve(7);
+  await pending;
+  assert.deepEqual(state.latest(), { data: 7, status: 'fresh', updatedAt: time, error: null });
 });
 
 test('the default deadline settles an uncooperative loader after ten seconds with offline fallback',
@@ -597,6 +621,30 @@ test('weather deadlines cover stalled fetches and JSON bodies and allow recovery
     }
   });
 
+test('Bootstrap cold loads stay neutral until both endpoints settle and still expose failures', async (t) => {
+  for (const fail of [false, true]) {
+    const blog = deferred<Response>();
+    const releases = deferred<Response>();
+    const source = createBootstrapSource({ fallback: storiesFallback, storage: null, now: () => start,
+      fetch: mockFetch((url) => url.hostname === 'blog.getbootstrap.com' ? blog.promise : releases.promise) });
+    t.after(() => source.destroy());
+    const state = observe(source);
+    assert.deepEqual(state.latest(), { data: storiesFallback, status: 'loading', updatedAt: null, error: null });
+    const pending = source.refresh();
+    assert.equal(source.status, 'loading');
+    blog.resolve(new Response(rss()));
+    await setImmediate();
+    assert.equal(state.latest().data[0].publication, 'Bootstrap blog');
+    assert.equal(source.status, 'loading');
+    assert.equal(state.latest().error, null);
+    releases.resolve(fail ? json({}, { status: 503 }) : json([release()]));
+    await pending;
+    assert.equal(source.status, fail ? 'stale' : 'fresh');
+    assert.equal(Boolean(state.latest().error), fail);
+    assert.equal(state.latest().data.length, fail ? 1 : 2);
+  }
+});
+
 test('Bootstrap maps headline-only RSS and prereleases, sorting newest first', async () => {
   const requests: URL[] = [];
   const source = createBootstrapSource({ fallback: storiesFallback, storage: null, now: () => start,
@@ -856,8 +904,8 @@ test('factory caches are validated again before use, including official destinat
   const badBootstrap = createBootstrapSource(bootstrapOptions);
   assert.equal(observe(badWeather).latest().data, weatherFallback);
   assert.equal(observe(badBootstrap).latest().data, storiesFallback);
-  assert.equal(badWeather.status, 'stale');
-  assert.equal(badBootstrap.status, 'stale');
+  assert.equal(badWeather.status, 'loading');
+  assert.equal(badBootstrap.status, 'loading');
   weather.destroy(); bootstrap.destroy(); badWeather.destroy(); badBootstrap.destroy();
 });
 
@@ -924,6 +972,18 @@ test('city search handles no matches and rejects malformed responses and HTTP fa
   await assert.rejects(searchCities('Mossquay', mockFetch(() => json({}, { status: 503 }))), /HTTP 503/);
 });
 
+test('city search preserves validated regions to distinguish repeated city names', async () => {
+  const first = { ...location, country: 'Cloudfern Isles', admin1: 'North Mossreach' };
+  const second = { ...location, latitude: 1, country: 'Willowglass Coast', admin1: 'South Mossreach' };
+  assert.deepEqual(await searchCities('Mossquay', mockFetch(() => json({ results: [
+    { ...first, country: ` ${first.country} `, admin1: ` ${first.admin1} `, population: 1000 }, second,
+    { name: 'Fernquay', latitude: 2, longitude: 0, country: 4, admin1: ' ' },
+    { name: 'Bramblequay', latitude: 3, longitude: 0, country: 'x'.repeat(121), admin1: {} },
+  ] }))), [first, second,
+    { name: 'Fernquay', latitude: 2, longitude: 0 },
+    { name: 'Bramblequay', latitude: 3, longitude: 0 }]);
+});
+
 test('city search deadlines release consumer pending state for stalled fetches and JSON bodies',
   { timeout: 1000 }, async (t) => {
     t.mock.timers.enable({ apis: ['setTimeout'] });
@@ -975,7 +1035,7 @@ test('location requests compose lifetime cancellation, skip aborted fetches and 
     await setImmediate();
     assert.equal(reads, 0);
     await assert.rejects(searchCities('Mossquay', fetcher, options), (reason) => reason === cancelled);
-    assert.deepEqual(await resolveDefaultLocation('Region/Mossquay', fetcher, options),
+    assert.deepEqual(await resolveDefaultLocation('America/Port_of_Spain', fetcher, options),
       { name: 'Harborview', latitude: 0, longitude: 0, timezone: 'UTC' });
     assert.equal(calls, 1);
     t.mock.timers.tick(25);
@@ -993,7 +1053,7 @@ test('default location deadlines return the neutral fallback for stalled fetches
     t.mock.timers.enable({ apis: ['setTimeout'] });
     for (const stage of ['fetch', 'body']) {
       let signal: AbortSignal | undefined;
-      const pending = resolveDefaultLocation('Region/Mossquay', mockFetch((_, init) => {
+      const pending = resolveDefaultLocation('America/Port_of_Spain', mockFetch((_, init) => {
         signal = init.signal as AbortSignal;
         return stage === 'fetch' ? new Promise<Response>(() => {}) : stalledBody();
       }), { timeoutMs: 25, now: () => start });
@@ -1006,19 +1066,63 @@ test('default location deadlines return the neutral fallback for stalled fetches
 
 test('default location derives a timezone city, with a neutral fallback and no permission prompts', async () => {
   let calls = 0;
+  const zone = 'America/Port_of_Spain';
+  const resolved = { ...location, latitude: 1, longitude: 1, timezone: zone };
   const fetcher = mockFetch((url) => {
     calls += 1;
-    assert.equal(url.searchParams.get('name'), 'North Mossquay');
-    return json({ results: [location] });
+    assert.equal(url.searchParams.get('name'), zone.split('/').at(-1)?.replaceAll('_', ' '));
+    assert.equal(url.searchParams.get('count'), '8');
+    return json({ results: [location, resolved] });
   });
-  assert.deepEqual(await resolveDefaultLocation('Region/North_Mossquay', fetcher), location);
+  assert.deepEqual(await resolveDefaultLocation(zone, fetcher), resolved);
   const fallback: Location = { name: 'Harborview', latitude: 0, longitude: 0, timezone: 'UTC' };
-  for (const timezone of ['UTC', 'Etc/GMT+1', '', 'Region/123']) {
+  for (const timezone of ['UTC', 'Etc/GMT+1', '', 'Region/123', 'Region/North_Mossquay']) {
     assert.deepEqual(await resolveDefaultLocation(timezone, fetcher), fallback);
   }
   assert.equal(calls, 1);
-  assert.deepEqual(await resolveDefaultLocation('Region/North_Mossquay', mockFetch(() => json({}))), fallback);
-  assert.deepEqual(await resolveDefaultLocation('Region/North_Mossquay', mockFetch(() => {
+  assert.deepEqual(await resolveDefaultLocation(zone, mockFetch(() => json({}))), fallback);
+  assert.deepEqual(await resolveDefaultLocation(zone, mockFetch(() => {
     throw new Error('offline');
   })), fallback);
+});
+
+test('default locations match canonical IANA aliases in either direction', async () => {
+  for (const pair of [
+    ['Asia/Calcutta', 'Asia/Kolkata'], ['Asia/Saigon', 'Asia/Ho_Chi_Minh'],
+    ['Asia/Katmandu', 'Asia/Kathmandu'], ['Europe/Kiev', 'Europe/Kyiv'],
+  ]) {
+    for (const [browserZone, resultZone] of [pair, [...pair].reverse()]) {
+      const matching = { name: 'Willowmere', latitude: 1, longitude: 1, timezone: resultZone,
+        country: 'Cloudfern Isles', admin1: 'North Mossreach' };
+      const fetcher = mockFetch((url) => {
+        assert.equal(url.searchParams.get('count'), '8');
+        assert.equal(url.searchParams.get('name'), browserZone.split('/').at(-1)?.replaceAll('_', ' '));
+        return json({ results: [
+          { name: 'Willowmere', latitude: 0, longitude: 0, timezone: 'Africa/Johannesburg' },
+          { name: 'Willowmere', latitude: 2, longitude: 2 }, matching,
+        ] });
+      });
+      assert.deepEqual(await resolveDefaultLocation(browserZone, fetcher), matching);
+    }
+  }
+});
+
+test('regional timezone aliases geocode the canonical city instead of the alias label', async () => {
+  for (const timezone of ['US/Pacific', 'US/Eastern', 'Canada/Pacific', 'Brazil/East']) {
+    const canonical = new Intl.DateTimeFormat('en', { timeZone: timezone }).resolvedOptions().timeZone;
+    const matching = { ...location, timezone: canonical };
+    assert.deepEqual(await resolveDefaultLocation(timezone, mockFetch((url) => {
+      assert.equal(url.searchParams.get('name'), canonical.split('/').at(-1)?.replaceAll('_', ' '));
+      assert.equal(url.searchParams.get('count'), '8');
+      return json({ results: [matching] });
+    })), matching);
+  }
+});
+
+test('default locations use the neutral fallback when no result has the visitor timezone', async () => {
+  for (const result of [location, { ...location, timezone: 'Region/Mossquay' },
+    { ...location, timezone: undefined }]) {
+    assert.deepEqual(await resolveDefaultLocation('Asia/Kolkata', mockFetch(() => json({ results: [result] }))),
+      { name: 'Harborview', latitude: 0, longitude: 0, timezone: 'UTC' });
+  }
 });
