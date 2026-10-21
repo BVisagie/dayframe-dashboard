@@ -9,7 +9,11 @@ updates:
       timezone: Etc/UTC
     versioning-strategy: increase
     open-pull-requests-limit: 10
-    # Bootstrap stays a dedicated upgrade PR, never a grouped dependency update.
+    ignore:
+      # The weekly registry check prepares dedicated Bootstrap upgrades.
+      - dependency-name: bootstrap
+      # Upgrade Playwright with its container image and screenshot baselines.
+      - dependency-name: '@playwright/test'
     groups:
       development-tools:
         dependency-type: development

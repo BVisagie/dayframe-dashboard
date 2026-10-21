@@ -66,8 +66,8 @@ Run `npm run new-theme <id>` to create a theme. The registry and tests discover
 its folder automatically. The [theme contract](docs/themes.md) describes the
 tokens, supported schemes, options and accessibility requirements.
 
-About Bootstrap reports the pinned release and custom CSS footprint. Enable
-the Bootstrap lens there, in Settings → Demo, or with `?lens=1` to inspect
+About Bootstrap reports the bundled stack versions and app SCSS source
+footprint. Enable the Bootstrap lens there, in Settings → Demo, or with `?lens=1` to inspect
 components. The [Bootstrap log](docs/bootstrap-log.md) records custom gaps and
 upstream findings.
 

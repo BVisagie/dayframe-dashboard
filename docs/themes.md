@@ -5,11 +5,11 @@ Dayframe themes are self-contained folders discovered by Vite. Add a theme with
 folder. The starter copies Default's accessible light and dark seed system;
 there is no registry list, stylesheet list or view code to edit.
 
-| Theme | Schemes | Layout | Direction |
-| --- | --- | --- | --- |
-| Default | Light, dark | Standard | Cool porcelain, navy and cobalt mission control |
-| Nebuchadnezzar | Dark | Console | Black, phosphor green and olive instruments |
-| Tideline | Light, dark | Standard | Nautical daylight and deep ocean, teal and coral |
+| Theme          | Schemes     | Layout   | Direction                                        |
+| -------------- | ----------- | -------- | ------------------------------------------------ |
+| Default        | Light, dark | Standard | Cool porcelain, navy and cobalt mission control  |
+| Nebuchadnezzar | Dark        | Console  | Black, phosphor green and olive instruments      |
+| Tideline       | Light, dark | Standard | Nautical daylight and deep ocean, teal and coral |
 
 The shared footer includes the exact build-stack versions. Its credit inherits
 the footer's secondary foreground and body font in every theme; themes need no
@@ -57,6 +57,10 @@ the app's fixed clock to control this presentation deterministically. The app
 calls the function again when its clock, system preference or settings change.
 `applyTheme` validates the ID and safely avoids DOM work in Node.
 
+The prepaint script applies the stored theme, scheme and layout before the app
+starts. Auto uses the local 07:00–19:00 fallback at that point, so it can
+briefly differ from the cached or live solar-time choice after initialization.
+
 The applied root attributes are `data-theme`, `data-bs-theme`, `data-layout`
 and one `data-theme-<option>` per declared option. `registry-core.ts` offers
 `createThemeRegistry`, `validateThemes` and `findTheme` without Vite imports.
@@ -73,6 +77,9 @@ Bootstrap remains the component and utility system. The shared `theme-base`
 layer derives values with `color-mix(in oklch, …)`; themes use `light-dark()`
 for their supported schemes and can override any derived token in `theme`.
 Utilities remain last. Do not use extra specificity or importance overrides.
+The hero's `--card-bg` and `--card-border-color` defaults are on `.hero-panel`
+in `theme-base`. Override them on the theme's `.summary-hero` in `theme`;
+the shared defaults cannot block the theme's choices.
 
 1. Set Bootstrap's `--bg-body`, `--bg-1`, `--fg-body`, `--body-font-family` and
    every role's `--<role>-base`. Shared derivations complete `--bg-2` through
@@ -103,31 +110,35 @@ generic families; monospace is reserved for readings except in the console.
 
 Use Bootstrap layout and spacing utilities inside and around these classes:
 
-| Class | Responsibility |
-| --- | --- |
-| `.dashboard-shell` | Full-height page shell and optional CRT overlay anchor |
-| `.grid.dashboard-grid` | Summary's named areas; switches with `data-layout` |
-| `.summary-hero` | Urgent Summary item; use on a Bootstrap card |
-| `.summary-agents` | Compact Summary capacity panel |
-| `.summary-calendar` (or `.summary-agenda`) | Summary agenda panel |
-| `.summary-weather` | Summary forecast panel |
-| `.summary-feeds` | Quiet Summary feed strip |
-| `.grid.agents-grid` | Agent cards in automatically fitting columns |
-| `.grid.calendar-grid` | Asymmetric month and selected-day agenda columns |
-| `.grid.weather-grid` | Bootstrap's `--columns: 2` for forecast and hourly panels |
-| `.calendar-cell` | Minimum readable month cell height |
-| `.dashboard-panel.contains-inline` | Optional Bootstrap inline-size query container |
-| `.dashboard-clock` | Optional static CRT glow target |
+| Class                                                        | Responsibility                                               |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| `.dashboard-shell`                                           | Full-height page shell and optional CRT overlay anchor       |
+| `.grid.dashboard-grid`                                       | Summary's named areas; switches with `data-layout`           |
+| `.summary-hero`                                              | Urgent Summary item; use on a Bootstrap card                 |
+| `.summary-agents`                                            | Compact Summary capacity panel                               |
+| `.summary-calendar`                                          | Summary's today-only "Coming up" panel                       |
+| `.summary-weather`                                           | Summary forecast panel                                       |
+| `.summary-feeds`                                             | Quiet Summary feed strip                                     |
+| `.grid.agents-grid`                                          | Agent cards in automatically fitting columns                 |
+| `.grid` with `g-col-12 lg:g-col-8` and `g-col-12 lg:g-col-4` | Calendar's month and selected-day agenda columns             |
+| `.grid` with `g-col-12 lg:g-col-7` and `g-col-12 lg:g-col-5` | Weather's forecast and hourly columns                        |
+| `.month-grid` and `.month-day`                               | Seven equal month columns and readable day-button dimensions |
+| `.dashboard-panel`                                           | Allows panel content to shrink within a grid column          |
+| `.dashboard-clock`                                           | Optional static CRT glow target                              |
 
-The four layout classes require Bootstrap's `.grid`; they configure its
-columns and gap tokens. DOM order should be hero, agents, calendar, weather,
-feeds. The standard layout
-uses two columns, and console gives the hero a full first row with instruments
-beneath. At 21:9 and wider, additional columns use the available width. Below
-68.75rem viewport width, both Summary layouts become one scrolling column.
-The Calendar view's outer month and agenda become a single column. Inside the
-month, use Bootstrap's `.grid` with `--columns: 7`; calendar cells can use shorter
-minimum heights on narrow screens.
+Only `.dashboard-grid` and `.agents-grid` add custom column definitions to
+Bootstrap's `.grid`. Both Summary layouts use three columns at ordinary
+desktop widths: the hero spans the first two beside weather, with capacity,
+calendar and feeds beneath. At 21:9 and wider, the standard layout moves the
+agenda beside the hero and gives capacity two columns below; console uses four
+columns. Below 68.75rem viewport width, both Summary layouts become one
+scrolling column in hero, agents, calendar, weather, feeds order.
+
+Calendar and Weather use Bootstrap's default 12-column grid and responsive
+`g-col-*` utilities, stacking their panels below `lg`. The calendar's inner
+`.month-grid` is the custom seven-column event grid; `.month-day` sets its day
+buttons' minimum height, with smaller dimensions in compact and narrow views.
+These views have no separate calendar-grid or weather-grid layout contract.
 
 Root font scaling is `max(.875rem, min(100dvh / 1080, 100vw / 1920) * 16 *
 var(--display-scale, 1))`: the nominal 1920×1080 view has a 1rem root, all

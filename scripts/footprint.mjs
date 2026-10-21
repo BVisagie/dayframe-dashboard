@@ -1,8 +1,11 @@
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { gzipSync } from 'node:zlib';
+const { version: bootstrap } = JSON.parse(
+  await readFile('node_modules/bootstrap/package.json', 'utf8'),
+);
 const css = await readFile('src/styles/app.scss', 'utf8');
 const result = {
-  bootstrap: '6.0.0-alpha.1',
+  bootstrap,
   appCssBytes: Buffer.byteLength(css),
   appCssGzipBytes: gzipSync(css).length,
 };

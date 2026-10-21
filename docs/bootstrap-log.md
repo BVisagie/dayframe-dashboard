@@ -27,7 +27,17 @@ The Datepicker action updates selected dates in place and recreates the
 plugin when configuration such as locale or first weekday changes. Svelte
 continues to own the selected day and input node when the calendar peer restores
 a clone during disposal. Global shortcuts yield to the datepicker and open
-dialogs, and resume when the native dialog closes.
+dialogs, and resume when the native dialog closes. Settings can disable all
+single-character shortcuts, and modified keys, including Shift, are ignored.
+About, Settings and the full agenda use scrollable Dialog bodies on desktop
+and Drawer bodies on narrow screens. Dismiss buttons close through Bootstrap's
+plugin before Svelte unmounts the dialog, preserving focus restoration.
+
+The feature map lists only components and helpers used by the app. Alpha.1
+buttons use `btn-text` or a themed `btn-outline`; loading indicators use
+`spinner-border spinner-sm`. Display scale uses `form-range` with a
+`form-range-input` child, so Bootstrap's Range plugin attaches. Unused helpers
+remain explicitly listed as available rather than demonstrated.
 
 Combobox alpha.1 registers itself and its internal Menu on the same toggle,
 which Bootstrap's instance registry rejects. This emits one construction
@@ -57,6 +67,9 @@ Bootstrap does not provide these dashboard-specific capabilities:
   container queries and Pagination remain the layout primitives. Agent readings
   use Bootstrap’s `set-container` and `container-breakpoint-up` Sass mixins
   to keep wide panels on one line while narrow readings wrap.
+- Feed page windowing. Bootstrap's Pagination supplies styling and semantics;
+  application state limits the numbered pages to the first, last and current
+  page with its neighbours, separated by ellipses, so long feeds fit phones.
 - Svelte state integration for NavOverflow's cloned menu items and changing
   Datepicker options. Bootstrap owns both controls; the actions bridge their
   lifecycle and updates to application state.
@@ -79,11 +92,22 @@ Bootstrap does not provide these dashboard-specific capabilities:
   pseudo-element. The app layer bridges it to the indicator token; the theme
   layer supplies accessible role values. A minimal upstream reproduction uses
   different checked and unchecked thumb colours without any Dayframe code.
+- Alpha.1's Range plugin writes `--bs-range-fill`, while its Sass reads
+  `--range-fill`. The app layer bridges those tokens on `.form-range` so the
+  plugin's fill follows the display-scale value. Remove the bridge when the
+  plugin and Sass agree on the token name.
 
 The switch token gap is a confirmed Bootstrap defect and is reported in
 [Bootstrap issue 43143](https://github.com/twbs/bootstrap/issues/43143)
-as required by the project's Bootstrap-first rule. Other entries describe
-dashboard needs rather than replacement framework components.
+as required by the project's Bootstrap-first rule. The dashboard-specific
+entries add capabilities rather than replace framework components.
+
+Calendar and Weather use Bootstrap's `.grid` with responsive `g-col-*`
+utilities. Unused `.calendar-grid`, `.weather-grid` and `.calendar-cell` rules
+and the unused `.contains-inline` claim were removed; the custom month cells
+use `.month-day`.
+Hero card background and border defaults moved to `theme-base`, below `theme`,
+so themes can override those component tokens from their own folders.
 
 The footer credits the exact installed Bootstrap, Svelte and Vite versions.
 Vite reads package metadata at build time; About Bootstrap uses the same
@@ -93,15 +117,20 @@ This adds no custom CSS or runtime request.
 
 ### CSS footprint
 
-`npm run build` writes `dist/css-footprint.json` with the source app-layer CSS
-bytes and gzip bytes from `src/styles/app.scss`. About Bootstrap shows the source byte count. This
-machine-readable measurement is included in every build artifact and must be
-compared on future upgrades. The theme and Bootstrap bundles are counted
-separately from the app footprint.
+`npm run build` writes `dist/css-footprint.json`. `appCssBytes` measures the
+UTF-8 source bytes of `src/styles/app.scss`, including comments;
+`appCssGzipBytes` measures gzip of that same source. It is an SCSS source metric,
+not the compiled CSS size or the complete custom CSS footprint: `layout.css`,
+theme styles and Bootstrap are excluded. About Bootstrap shows the source byte
+count. The report's `bootstrap` version comes from the installed
+`node_modules/bootstrap/package.json`, so it follows dedicated upgrades.
 
-The current measurement is **5,881 source bytes / 1,813 gzip bytes** for
-Bootstrap `6.0.0-alpha.1`. Remeasure the final candidate if application CSS
-changes; screenshot review and the full browser matrix remain separate checks.
+The review candidate measures **5,937 source bytes / 1,846 gzip bytes** with
+Bootstrap **6.0.0-alpha.1**. The report is included in the build artifact;
+compare the same metric on future upgrades.
+
+Current review fixes still need fresh validation and any intended baseline
+updates; historical browser passes do not certify this candidate.
 
 ### Upgrade checklist
 

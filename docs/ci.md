@@ -5,13 +5,17 @@ Routine `CI` runs on pull requests and pushes to `main`, with three jobs:
 - **Quality:** types, Svelte, lint, workflow-tooling types, unit tests and the
   production build. It uploads the `dayframe-build` artifact.
 - **Browser and screenshots:** selected existing Chromium tests tagged
-  `@smoke`: 18 functional cases and 16 screenshots, eight each at 1280×720 and
-  390×844, at device pixel ratio 1. These cover all five Default views and
-  Summary in the other themes' supported schemes.
+  `@smoke`: 34 cases, comprising 18 functional cases and 16 screenshots. Eight
+  screenshots run at each of 1280×720 and 390×844, at device pixel ratio 1.
+  These cover all five Default views and Summary in the other themes'
+  supported schemes.
 - **Secret history:** full-history gitleaks with the isolated default policy.
 
-Feature-branch pushes do not start a second copy of PR CI. Node is 26; browser
-tests run in `mcr.microsoft.com/playwright:v1.64.1-noble`, matching Playwright
+Feature-branch pushes do not start a second copy of PR CI. Concurrency groups
+include the event name and branch. A new run cancels an older run only within
+that group; manual dispatches cannot cancel PR or push runs, or be cancelled
+by them. Node is 26; browser tests run in
+`mcr.microsoft.com/playwright:v1.64.1-noble`, matching Playwright
 1.64.1. The browser report, build and requested screenshot candidates are
 retained for seven days. Every browser run builds and serves the production
 bundle, uses two workers and has zero retries.
@@ -88,8 +92,13 @@ at `8c58cba` passed 84 unit tests, 188 functional tests in each of Chromium,
 Firefox and WebKit, and all 400 screenshot comparisons: 964 browser tests.
 GitGuardian also passed on that commit. This validates the complete suite
 before routine CI was reduced; later candidates still need their applicable
-checks. A local probe of 50 screenshot comparisons differed from the Noble
-baselines across text rendering, so host captures were not accepted.
+checks. The current review candidate passes local type, lint, tooling, build
+and all 100 unit checks. Chromium and Firefox passed 402 of 404 functional
+cases; the two stale singular-copy expectations were corrected, and all 22
+app/live-source cases passed on the targeted rerun. Full container validation
+and intended baseline updates are pending. A local probe of 50 screenshot comparisons differed
+from the Noble baselines across text rendering, so host captures were not
+accepted.
 
 The Vite configuration fixes the Pages base at `/dayframe-dashboard/`.
 `DAYFRAME_PUBLIC_LAUNCH` is the single repository variable passed to the build:
@@ -189,9 +198,10 @@ announcement needs separate approval; implementation does not authorize them:
 
 ## Weekly maintenance
 
-Dependabot checks npm dependencies and Actions weekly. Bootstrap stays an
-exact pin and a dedicated upgrade PR. A separate Monday registry check reads
-all published Bootstrap 6 versions, including alpha/beta/rc releases, compares
+Dependabot checks npm dependencies and Actions weekly, excluding `bootstrap`
+and `@playwright/test`. Bootstrap stays an exact pin and uses a dedicated
+upgrade PR. A separate Monday registry check reads all published Bootstrap 6
+versions, including alpha/beta/rc releases, compares
 them using SemVer precedence, and selects only a version greater than the
 current pin. This avoids relying on Dependabot to discover a prerelease from
 a default-version range. It never selects Bootstrap 5 or downgrades the pin.
@@ -200,6 +210,12 @@ Bootstrap log and a pending feature-map review note. Lockfile generation
 disables lifecycle scripts. The draft explicitly requires token/component
 review, the CSS footprint and a manual `CI` run with `full_suite` enabled before
 merge, covering the complete browser and screenshot matrix.
+
+Playwright updates are manual and coordinated: change the exact
+`@playwright/test` package pin and the matching CI container image together,
+run the complete suite, and review any screenshot baseline refresh in that
+upgrade. Dependabot's development-tools group cannot update Playwright by
+itself.
 
 The same schedule checks canonical frontend-design bytes at a fixed resolved
 upstream commit. `node scripts/sync-skill.mjs --check` is read-only;

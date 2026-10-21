@@ -63,39 +63,42 @@ component that Bootstrap ships.
 This table shows how the dashboard uses Bootstrap `6.0.0-alpha.1`. It is
 reviewed with every Bootstrap release.
 
-| Dashboard need                               | Bootstrap 6                                                                                                  |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Page shell and view layouts                  | CSS grid (`.grid`), grid and gap utilities, containers                                                       |
-| Panels that adapt to their own size          | Container-query breakpoint mixins                                                                            |
-| Panels, agent cards, event details           | `card`                                                                                                       |
-| View navigation                              | `nav` with `nav-overflow`; delegated clicks reach cloned menu items, and active state stays synchronized     |
-| Header controls                              | `button-group`, `vr`, stack helpers, `tooltip`                                                               |
-| Quota meters                                 | `progress`, coloured by theme roles                                                                          |
-| Plan, status and account labels              | `badge`, `chip`                                                                                              |
-| Agent marks and event attendees              | `avatar` and avatar stacks, showing initials instead of logos                                                |
-| Agenda, headlines and story lists            | `list-group`, `stretched-link`, text truncation, `icon-link`                                                 |
-| Story excerpts and event descriptions        | `prose`                                                                                                      |
-| Seven-day forecast and hourly details        | `table`                                                                                                      |
-| Event details on the calendar                | `popover`                                                                                                    |
-| Jumping to a date                            | `datepicker`; the Svelte action synchronizes selection and applies locale and first-weekday changes          |
-| Feed and hourly forecast paging              | `pagination`; compact desktop views reduce rows per page                                                     |
-| Loading states                               | `placeholder`, `spinner`                                                                                     |
-| Reminders                                    | `toast`                                                                                                      |
-| "Demo data" notice, offline and stale states | `alert`                                                                                                      |
-| Settings                                     | `dialog`, or `drawer` on narrow screens, with `tab` between sections                                         |
-| Theme, view and scenario pickers             | `menu`                                                                                                       |
-| City search                                  | `combobox`; known alpha.1 instance warnings and listener accumulation are tracked in the Bootstrap log       |
-| Display scale                                | `range`                                                                                                      |
-| Toggles, choices and numbers                 | `switch`, `check`, `radio`, `form-field`, floating labels, `form-adorn` for units, `input-group`, validation |
-| Feed categories                              | `chip` buttons (the editable `Chips` plugin is for input)                                                    |
-| Colour schemes                               | `data-bs-theme`, `color-scheme` and `light-dark()`                                                           |
-| Theme colours                                | Bootstrap's theme roles and `.theme-*` classes. See [Token tiers](#token-tiers)                              |
-| Focus, hover and motion                      | `focus-ring` and `hover-lift` helpers, transition and animation utilities, `$enable-reduced-motion`          |
-| Icons, including weather                     | Bootstrap Icons                                                                                              |
+| Dashboard need                               | Bootstrap 6                                                                                              |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Page shell and view layouts                  | CSS grid (`.grid`), `g-col-*` and responsive column utilities, gap utilities                             |
+| Agent readings that adapt to panel size      | Container-query breakpoint mixins                                                                        |
+| Panels and agent cards                       | `card`                                                                                                   |
+| View navigation                              | `nav` with `nav-overflow`; delegated clicks reach cloned menu items, and active state stays synchronized |
+| Header controls                              | `btn-group`, `vr`, flex utilities, `tooltip`                                                             |
+| Quota meters                                 | `progress`, coloured by theme roles                                                                      |
+| Status and simulation labels                 | `badge`                                                                                                  |
+| Agent marks                                  | `avatar`, showing initials instead of logos                                                              |
+| Agenda, headlines and story lists            | `list-group`, `icon-link`                                                                                |
+| Story excerpts and About content             | `prose`                                                                                                  |
+| Seven-day forecast and hourly details        | `table`                                                                                                  |
+| Event details on the calendar                | `popover`                                                                                                |
+| Jumping to a date                            | `datepicker`; the Svelte action synchronizes selection and applies locale and first-weekday changes      |
+| Feed and hourly forecast paging              | `pagination`; feed pages are windowed with ellipses, and compact desktop views reduce rows per page      |
+| Initial source loading and refresh           | `spinner-border` with `spinner-sm`                                                                       |
+| Reminders                                    | `toast`                                                                                                  |
+| "Demo data" notice, offline and stale states | `alert`                                                                                                  |
+| Settings, About and the full agenda          | `dialog dialog-scrollable`, or `drawer` on narrow screens; Settings uses `tab` between sections          |
+| Theme and navigation overflow menus          | `menu`                                                                                                   |
+| City search                                  | `combobox`; known alpha.1 instance warnings and listener accumulation are tracked in the Bootstrap log   |
+| Display scale                                | `form-range` and `form-range-input`, with the Range plugin                                               |
+| Toggles, choices and numbers                 | `switch`, `check`, `form-field`, `form-control`                                                          |
+| Feed categories                              | `chip` buttons (the editable `Chips` plugin is for input)                                                |
+| Colour schemes                               | `data-bs-theme`, `color-scheme` and `light-dark()`                                                       |
+| Theme colours                                | Bootstrap's theme roles and `.theme-*` classes. See [Token tiers](#token-tiers)                          |
+| Focus and motion                             | Focus-ring tokens, component `:focus-visible` styles and reduced-motion support                          |
+| Icons, including weather                     | Bootstrap Icons                                                                                          |
 
-Not used yet, and reconsidered with each release: `accordion`, `breadcrumb`,
-`carousel`, `otp-input`, `strength` and `stepper`. Rotation switches whole
-views, so it isn't a carousel. `stepper` could suit a first-visit tour.
+Available but unused, and reconsidered with each release: `accordion`,
+`breadcrumb`, `carousel`, `otp-input`, `strength`, `stepper`, `stretched-link`,
+text-truncation helpers, `placeholder`, `radio`, `form-floating`, `form-adorn`,
+`input-group`, validation states, `hover-lift` and the `focus-ring` helper class.
+Rotation switches whole views, so it isn't a carousel. `stepper` could suit a
+first-visit tour.
 
 ### Showing Bootstrap at work
 
@@ -108,8 +111,10 @@ views, so it isn't a carousel. `stepper` could suit a first-visit tour.
 - **Build credits.** A subdued footer line shows the exact installed Bootstrap,
   Svelte and Vite versions used to build the dashboard. About Bootstrap shares
   those build-time values, so upgrades update both automatically.
-- **Custom CSS footprint.** The size of the `app`-layer CSS is recorded with
-  every Bootstrap upgrade. It should shrink as Bootstrap grows.
+- **App SCSS footprint.** Every build records the bytes of
+  `src/styles/app.scss`, including comments, and the gzip size of that source.
+  It excludes `layout.css`, themes, Bootstrap and compiled CSS. Compare the
+  same metric on each Bootstrap upgrade; it should shrink as Bootstrap grows.
 
 ## Stack
 
@@ -142,20 +147,34 @@ views, so it isn't a carousel. `stepper` could suit a first-visit tour.
 
 The app is a single page with five views: Summary, Agents, Calendar, Weather
 and Feeds. Settings open from any view. Arrow keys, number keys and the existing
-single-key shortcuts (`s`, `a`, `c`, `w`, `f`) navigate between views. Shortcuts
-ignore editable controls, and `,` opens Settings. Optional rotation cycles through
-the views and pauses during interaction.
+single-key shortcuts (`s`, `a`, `c`, `w`, `f`) navigate between views, and `,`
+opens Settings. Settings → Display → Keyboard shortcuts disables the
+single-character shortcuts, including numbers and comma; arrow navigation stays
+available. Shortcuts ignore modified keys, including Shift, editable controls,
+open dialogs and active popup controls. Optional rotation cycles through the
+views and pauses during interaction. Summary's "Coming up" panel contains only
+today's all-day and unfinished timed events, matching the Calendar's initial
+day.
 
 ### Data sources
 
-Every source implements one small contract, so views never know whether data is
-live or simulated:
+Live adapters implement one small contract; views receive data and status
+rather than issuing requests themselves:
 
-```js
-{
-  (id, subscribe(listener), refresh(), status);
-} // status: fresh | stale | offline | reconnect
+```ts
+interface Source<T> {
+  readonly id: string;
+  readonly status: SourceStatus;
+  subscribe(listener: (snapshot: SourceSnapshot<T>) => void): () => void;
+  refresh(force?: boolean): Promise<void>;
+  destroy(): void;
+} // SourceStatus: loading | fresh | stale | offline | reconnect
 ```
+
+Snapshots include data, status, the last update time and a nullable error.
+Before an initial load succeeds or fails, an uncached source reports `loading`;
+the views show a spinner and loading text rather than a failure warning. A
+failed load reports `offline` without a saved response, or `stale` with one.
 
 | View                    | Source                                                         | Fallback                         |
 | ----------------------- | -------------------------------------------------------------- | -------------------------------- |
@@ -175,16 +194,24 @@ Source and location requests have a default ten-second deadline, covering both
 the request and response-body reading. Expiry settles pending state, retains
 validated cached data or labelled simulated fallbacks, and respects backoff.
 Cancellation and late responses cannot overwrite a disposed source.
+Live Bootstrap stories sort before simulated stories in Summary and Feeds;
+each group then sorts newest first.
 
 ### Weather location
 
 - **Default:** the city in the browser's time zone (for example `America/Chicago`
-  gives Chicago), resolved through Open-Meteo geocoding. This needs no
+  gives Chicago), resolved through Open-Meteo geocoding. Candidates must match
+  the browser's zone after IANA alias canonicalisation. This needs no
   permission prompt.
-- **Fallback:** a fixed, neutral city when the time zone has no city, such as
-  `UTC`.
+- **Fallback:** a fixed, neutral location when the time zone has no city, such
+  as `UTC`, or geocoding finds no matching zone.
 - **Alternatives:** visitors can search for a city, or choose "Use my location".
-  The browser asks for permission only after that click.
+  Search results retain the optional region (`admin1`) and country for labels
+  that distinguish cities with the same name. The browser asks for permission
+  only after "Use my location" is clicked.
+- **Source lifetime:** while live sources are active, only location or unit
+  changes replace the weather source; unrelated appearance and display
+  settings keep its data and subscription.
 - **Privacy:** Dayframe sends coordinates only to Open-Meteo, and stores them
   only in the visitor's browser.
 - **Attribution:** every live weather panel credits Open-Meteo and links its
@@ -208,8 +235,19 @@ Cancellation and late responses cannot overwrite a disposed source.
   fictional publications.
 - **Determinism:** the seed is the ISO week plus an optional `?seed=` value.
   `?clock=2026-11-03T09:30` freezes time, and the tests and screenshots use it.
+  Replay clocks accept valid ISO date-times with `Z`, an explicit `±HH:mm`
+  offset, or no offset; no offset means UTC. Invalid dates and other formats
+  are ignored, leaving the normal clock running.
   A frozen clock also selects simulated sources so a replay never depends on
   changing live responses. Other scenarios likewise use controlled demo data.
+- **Simulation wall time:** `simulate(now, seed, scenario, offsetMinutes = 0)`
+  and `simulateWeather(now, seed, offsetMinutes = 0)` accept a fixed integer
+  offset using `Date#getTimezoneOffset`'s sign (UTC+2 is `-120`). Ordinary visits
+  pass the viewer's current offset so timed meetings and simulated weather's
+  daily cycle follow local wall-clock hours. Frozen replays always pass zero
+  for reproducible UTC simulation data; the viewer's locale and time zone still
+  control display formatting. The fixed offset is not an IANA-zone rule set
+  for daylight-saving changes within the generated window.
 - **Scenarios:** Settings → Demo, or `?scenario=`, switches between `steady`,
   `running-low`, `reconnect`, `reminder-due`, `stale` and `offline`. Each
   scenario shows UI states a visitor would rarely see otherwise.
@@ -223,7 +261,7 @@ All settings live in the browser under one versioned `localStorage` key, with
 migrations between versions. Settings has six sections:
 
 - Appearance
-- Display: scale, startup view and rotation
+- Display: scale, keyboard shortcuts, startup view and rotation
 - Weather: location and units
 - Calendar: first day of the week and reminders
 - Feeds: categories
@@ -359,12 +397,16 @@ the contract checks fail and the release log records the change.
 
 - Bootstrap's own sub-layers sit inside `bootstrap`.
 - Utilities load last, so utility classes keep working as Bootstrap intends.
+- Hero card background and border defaults live in `theme-base`, so a theme's
+  component token overrides in `theme` take precedence.
 - Themes never need extra specificity or `!important`.
 
 ### Loading and persistence
 
-- **No flash on load:** a small inline script, generated at build time from the
-  registry, applies the stored theme, scheme and layout before first paint.
+- **Prepaint selection:** a small inline script, generated at build time from
+  the registry, applies the stored theme, scheme and layout before first paint.
+  Auto initially uses the local 07:00–19:00 fallback. It may briefly differ
+  from the cached or live solar-time choice applied when the app initializes.
 - **Fonts:** themes load fonts with `@font-face`, which the browser downloads
   only when that font is used. All theme CSS can ship in one bundle while each
   visitor downloads only the active theme's fonts.
@@ -428,11 +470,13 @@ Each viewport runs at device pixel ratios of 1 and 2.
 
 ## Tracking Bootstrap
 
-- **Pinned version:** Bootstrap is pinned to an exact version. Dependabot opens
-  a pull request for each new 6.x release, including pre-releases.
-- **Upgrade checks:** every upgrade pull request runs the unit tests, browser
-  tests, theme contract checks and screenshot comparisons. The diffs show what
-  the release changed.
+- **Pinned version:** Bootstrap is pinned to an exact version and excluded from
+  Dependabot updates. A dedicated weekly registry check prepares upgrade
+  drafts for newer 6.x releases, including pre-releases.
+- **Upgrade checks:** manually dispatch CI with `full_suite` on each upgrade
+  candidate before merging. It runs unit tests, all three functional browser
+  projects, theme contract checks and the full screenshot matrix. Review the
+  diffs to see what the release changed.
 - **Release log:** `docs/bootstrap-log.md` records, per Bootstrap release, what
   changed in Dayframe. That covers renamed tokens, adopted components,
   workarounds added or removed, and issues reported upstream.
@@ -451,8 +495,8 @@ Each viewport runs at device pixel ratios of 1 and 2.
 - **Unit tests** (`node:test`) cover the simulation engine, date and recurrence
   handling, formatting, settings migrations and the theme registry.
 - **Browser tests** (Playwright):
-  - routine CI selects existing Chromium tests and a small desktop/phone
-    screenshot set tagged `@smoke`;
+  - routine CI selects 34 cases tagged `@smoke`: 18 Chromium functional cases
+    and 16 desktop/phone screenshots;
   - the complete functional suite in Chromium, Firefox and WebKit remains
     available, together with the full screenshot matrix, through manual CI
     with `full_suite` enabled. Run it on the current candidate before merging
@@ -475,6 +519,8 @@ Each viewport runs at device pixel ratios of 1 and 2.
 - **Routine CI** has three jobs: Quality (types, lint, unit tests and build),
   Browser and screenshots, and Secret history. It runs on pull requests and
   pushes to `main`; feature-branch pushes do not duplicate PR runs.
+  Concurrency groups include event name and branch, so manual dispatches do not
+  cancel pull-request or push runs, or get cancelled by those runs.
 - **Privacy checks** run with routine CI, and before every
   deploy once the trusted listener is installed on `main`:
   - `gitleaks` scans the complete reachable history for secrets;
@@ -540,14 +586,21 @@ substantial theme changes. The
 [baseline review evidence](ci.md#screenshot-comparison-and-review) records the
 400-image replacement set and the approved comparison tolerance.
 
-| Area                   | Implemented                                                                                                                                                                  | Pending proof or external setup                                                                                                                          |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Views and state        | All five views, Settings, navigation, rotation and deterministic scenarios; independent persisted date format; full three-browser checks passed at `8c58cba`                    | Routine CI on later changes                                                                                                                              |
-| Bootstrap integration  | Real plugins through Svelte actions; Datepicker updates and NavOverflow clone navigation/active-state synchronization; full browser checks passed                               | Full mode for Bootstrap upgrades                                                                                                                         |
-| Layout and themes      | Default, Nebuchadnezzar and Tideline; reviewed 400-image canonical set passed at `8c58cba`; all six desktop dimensions fit without lowering the root floor                        | Full mode for substantial theme changes; routine desktop/phone selection otherwise                                                                         |
-| Sources                | Allowed live adapters, caching, fallbacks, backoff and default ten-second deadlines; hosted adapter checks passed                                                               | No real account connections are needed                                                                                                                    |
-| Bootstrap tracking     | Exact `6.0.0-alpha.1` pin, lens, About panel, gap log and measured app CSS footprint                                                                                         | Hosted maintenance workflow verification                                                                                                                 |
-| Privacy and deployment | Trusted full-history secrets gate and gated static artifact deployment workflows                                                                                            | Independent trusted secrets scan before first merge, listener/status verification on `main` and separately approved repository/Pages settings              |
+That run predates the current review fixes. The review candidate passes local
+type, lint, tooling, build and all 100 unit checks. Chromium and Firefox passed
+402 of 404 functional cases; the two stale singular-copy expectations were
+corrected, and all 22 app/live-source cases passed on the targeted rerun.
+Fresh container validation and intended screenshot baseline updates remain
+pending; historical passes do not certify these changes.
+
+| Area                   | Implemented                                                                                                                                                  | Pending proof or external setup                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Views and state        | All five views, Settings, navigation, rotation and deterministic scenarios; independent persisted date format; full three-browser checks passed at `8c58cba` | Routine CI on later changes                                                                                                                   |
+| Bootstrap integration  | Real plugins through Svelte actions; Datepicker updates and NavOverflow clone navigation/active-state synchronization; full browser checks passed            | Full mode for Bootstrap upgrades                                                                                                              |
+| Layout and themes      | Default, Nebuchadnezzar and Tideline; reviewed 400-image canonical set passed at `8c58cba`; all six desktop dimensions fit without lowering the root floor   | Full mode for substantial theme changes; routine desktop/phone selection otherwise                                                            |
+| Sources                | Allowed live adapters, caching, fallbacks, backoff and default ten-second deadlines; hosted adapter checks passed                                            | No real account connections are needed                                                                                                        |
+| Bootstrap tracking     | Exact `6.0.0-alpha.1` pin, lens, About panel, gap log and measured app CSS footprint                                                                         | Hosted maintenance workflow verification                                                                                                      |
+| Privacy and deployment | Trusted full-history secrets gate and gated static artifact deployment workflows                                                                             | Independent trusted secrets scan before first merge, listener/status verification on `main` and separately approved repository/Pages settings |
 
 Milestone completion requires the proof in each definition below. Implemented
 code and local fitting checks do not complete pending CI, privacy or launch work.
@@ -558,7 +611,7 @@ code and local fitting checks do not complete pending CI, privacy or launch work
 | M1  | Views on simulated data | All five views, Settings, keyboard navigation, rotation and scenarios work on simulated data. They are built from Bootstrap components and plugins as the feature map lists. A fixed clock gives identical renders                                                          |
 | M2  | Token architecture      | Theme registry, token tiers, layers, scale unit, and the `standard` and `console` layouts. Default and Nebuchadnezzar built from their recorded briefs. Contract checks and screenshot matrix pass                                                                          |
 | M3  | Live sources            | Weather and Bootstrap feeds are live, with caching and fallbacks. They degrade gracefully offline and under rate limits                                                                                                                                                     |
-| M4  | Bootstrap tracking      | Dependabot and the release log are running. The Bootstrap lens and About Bootstrap panel are built, and the custom CSS footprint is recorded                                                                                                                                |
+| M4  | Bootstrap tracking      | The dedicated weekly registry check and release log are running. The Bootstrap lens and About Bootstrap panel are built, and the app SCSS source footprint is recorded                                                                                                      |
 | M5  | Launch                  | Launch checklist complete                                                                                                                                                                                                                                                   |
 | M6  | New theme               | A third theme built only through the theme contract                                                                                                                                                                                                                         |
 
