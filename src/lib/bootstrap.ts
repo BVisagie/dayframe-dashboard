@@ -13,6 +13,7 @@ import {
   Toast,
 } from 'bootstrap';
 import type { Action } from 'svelte/action';
+import { tick } from 'svelte';
 
 type Plugin = { dispose(): void };
 type Factory = new (node: HTMLElement, config?: never) => Plugin;
@@ -52,7 +53,23 @@ export const navOverflow: Action<HTMLElement> = (node) => {
     },
   };
 };
-export const tooltip = attach(Tooltip as Factory);
+export const tooltip: Action<HTMLElement, { title: string }> = (
+  node,
+  options,
+) => {
+  const plugin = new Tooltip(node, options);
+  let title = options.title;
+  return {
+    update(next) {
+      if (next.title === title) return;
+      title = next.title;
+      plugin.setContent({ '.tooltip-inner': title });
+    },
+    destroy() {
+      plugin.dispose();
+    },
+  };
+};
 export const popover = attach(Popover as Factory);
 type DatepickerOptions = NonNullable<
   ConstructorParameters<typeof Datepicker>[1]
@@ -99,7 +116,22 @@ export const datepicker: Action<HTMLElement, DatepickerOptions> = (
   };
 };
 export const combobox = attach(Combobox as Factory);
-export const range = attach(Range as Factory);
+export const range: Action<HTMLElement, number> = (node) => {
+  const plugin = new Range(node);
+  let disposed = false;
+  return {
+    update() {
+      // The parent action updates before Svelte writes the child input's value.
+      void tick().then(() => {
+        if (!disposed) plugin.update();
+      });
+    },
+    destroy() {
+      disposed = true;
+      plugin.dispose();
+    },
+  };
+};
 export const chips = attach(Chips as Factory);
 export const tab = attach(Tab as Factory);
 export const toast: Action<HTMLElement> = (node) => {
@@ -143,6 +175,8 @@ export const lens: Action<HTMLElement, boolean> = (node, enabled) => {
     node
       .querySelectorAll<HTMLElement>('[data-bs-component]')
       .forEach((target) => {
+        // Dialogs need Bootstrap's fixed positioning in the browser's top layer.
+        if (target instanceof HTMLDialogElement) return;
         if (labels.has(target)) return;
         const label = document.createElement('a');
         const name = target.dataset.bsComponent!;

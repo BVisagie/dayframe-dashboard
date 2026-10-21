@@ -185,6 +185,11 @@
     color: var(--info-fg);
     padding: 0.15rem 0.3rem;
   }
+  /* Inspection labels must leave compact button groups available to the pointer. */
+  .btn-group > .lens-label {
+    inset-block-start: auto;
+    inset-block-end: 100%;
+  }
   /* Bootstrap tokens size Settings and theme previews; no component behavior is replaced. */
   .settings-content {
     display: grid;

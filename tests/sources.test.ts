@@ -126,6 +126,30 @@ test('sources immediately expose fallback, dedupe concurrent refreshes, and expi
   source.destroy(); cached.destroy();
 });
 
+test('expired successful data stays available with neutral loading during refresh, including after remount', async (t) => {
+  for (const remount of [false, true]) {
+    let time = start;
+    let calls = 0;
+    const result = deferred<number>();
+    const options = { id: 'expired-success', fallback: 0, ttl: minute, storage: new MemoryStorage(),
+      now: () => time, load: () => ++calls === 1 ? 7 : result.promise };
+    let source = createSource(options);
+    t.after(() => source.destroy());
+    await source.refresh();
+    time += minute;
+    if (remount) { source.destroy(); source = createSource(options); }
+    const state = observe(source);
+    const pending = source.refresh();
+    assert.equal(source.refresh(true), pending);
+    assert.deepEqual(state.latest(), { data: 7, status: 'loading', updatedAt: start, error: null });
+    assert.equal(source.status, 'loading');
+    result.resolve(8);
+    await pending;
+    assert.deepEqual(state.latest(), { data: 8, status: 'fresh', updatedAt: time, error: null });
+    source.destroy();
+  }
+});
+
 test('offline refresh retains validated data and timestamp, backs off, and recovers', async () => {
   let time = start;
   let calls = 0;
@@ -151,12 +175,20 @@ test('offline refresh retains validated data and timestamp, backs off, and recov
 
   const remounted = createSource({ id: 'retained', fallback: { count: 0 }, ttl: minute, storage,
     now: () => time, load: () => { calls += 1; return { count: 9 }; } });
-  assert.equal(observe(remounted).latest().data.count, 1);
+  const remountedState = observe(remounted);
+  assert.equal(remountedState.latest().data.count, 1);
+  assert.equal(remounted.status, 'stale');
+  assert.ok(remountedState.latest().error);
   await remounted.refresh(true);
   assert.equal(calls, 2);
+  assert.equal(remounted.status, 'stale');
+  assert.ok(remountedState.latest().error);
   time += minute;
   fail = false;
-  await source.refresh();
+  const retry = source.refresh();
+  assert.equal(source.status, 'stale');
+  assert.ok(state.latest().error);
+  await retry;
   assert.equal(state.latest().data.count, 3);
   assert.equal(state.latest().error, null);
   assert.equal(source.status, 'fresh');
@@ -415,6 +447,50 @@ test('destroying before a refresh begins prevents the load from running', async 
   source.destroy();
   await pending;
   assert.equal(calls, 0);
+});
+
+test('an interrupted first attempt remounts offline and keeps its minimum refresh interval', async (t) => {
+  let time = start;
+  let calls = 0;
+  let signal: AbortSignal | undefined;
+  const late = deferred<number>();
+  const options = { id: 'interrupted', fallback: 0, ttl: hour, minimumInterval: hour,
+    storage: new MemoryStorage(), now: () => time, load: (requestSignal: AbortSignal) => {
+      signal = requestSignal;
+      return ++calls === 1 ? late.promise : 7;
+    } };
+  const initial = createSource(options);
+  t.after(() => initial.destroy());
+  const pending = initial.refresh();
+  await setImmediate();
+  initial.destroy();
+  await pending;
+  assert.equal(signal?.aborted, true);
+  assert.equal(calls, 1);
+
+  time += minute;
+  const source = createSource(options);
+  t.after(() => source.destroy());
+  const state = observe(source);
+  assert.equal(source.status, 'offline');
+  assert.equal(state.latest().data, 0);
+  assert.equal(state.latest().updatedAt, null);
+  assert.ok(state.latest().error);
+  await source.refresh(true);
+  time = start + hour - 1;
+  await source.refresh(true);
+  assert.equal(calls, 1);
+  assert.equal(source.status, 'offline');
+  time += 1;
+  const retry = source.refresh(true);
+  assert.equal(source.status, 'loading');
+  assert.equal(state.latest().error, null);
+  await retry;
+  assert.deepEqual(state.latest(), { data: 7, status: 'fresh', updatedAt: time, error: null });
+  assert.equal(calls, 2);
+  late.resolve(99);
+  await setImmediate();
+  assert.equal(state.latest().data, 7);
 });
 
 test('weather maps current, seven daily and 24 hourly values with explicit unit requests', async () => {
@@ -693,6 +769,72 @@ test('Bootstrap caches each endpoint hourly and force cannot bypass the release 
   await source.refresh();
   assert.equal(blogCalls, 4); assert.equal(releaseCalls, 2);
   source.destroy(); remounted.destroy();
+});
+
+test('Bootstrap expired headlines refresh neutrally while keeping both cached endpoints', async (t) => {
+  let time = start;
+  const replies = { blog: deferred<Response>(), releases: deferred<Response>() };
+  const source = createBootstrapSource({ fallback: storiesFallback, storage: new MemoryStorage(),
+    now: () => time, fetch: mockFetch((url) => {
+      const blog = url.hostname === 'blog.getbootstrap.com';
+      return time === start ? (blog ? new Response(rss()) : json([release()]))
+        : (blog ? replies.blog.promise : replies.releases.promise);
+    }) });
+  t.after(() => source.destroy());
+  const state = observe(source);
+  await source.refresh();
+  const cached = state.latest().data;
+  time += hour;
+  const pending = source.refresh();
+  assert.deepEqual(state.latest(), { data: cached, status: 'loading', updatedAt: start, error: null });
+  replies.blog.resolve(new Response(rss()));
+  await setImmediate();
+  assert.equal(source.status, 'loading');
+  assert.equal(state.latest().error, null);
+  assert.deepEqual(state.latest().data, cached);
+  replies.releases.resolve(json([release()]));
+  await pending;
+  assert.equal(source.status, 'fresh');
+  assert.equal(state.latest().updatedAt, time);
+});
+
+test('Bootstrap interrupted release attempts remount as unavailable alongside cached blog headlines', async (t) => {
+  let time = start;
+  let calls = 0;
+  let signal: AbortSignal | undefined;
+  const late = deferred<Response>();
+  const options = { fallback: storiesFallback, storage: new MemoryStorage(), now: () => time,
+    fetch: mockFetch((url, init) => {
+      if (url.hostname === 'blog.getbootstrap.com') return new Response(rss());
+      signal = init.signal as AbortSignal;
+      return ++calls === 1 ? late.promise : json([release()]);
+    }) };
+  const initial = createBootstrapSource(options);
+  t.after(() => initial.destroy());
+  const pending = initial.refresh();
+  await setImmediate();
+  initial.destroy();
+  await pending;
+  assert.equal(signal?.aborted, true);
+  const source = createBootstrapSource(options);
+  t.after(() => source.destroy());
+  const state = observe(source);
+  assert.equal(source.status, 'stale');
+  assert.ok(state.latest().error);
+  assert.equal(state.latest().data.length, 1);
+  assert.equal(state.latest().data[0].publication, 'Bootstrap blog');
+  await source.refresh(true);
+  assert.equal(source.status, 'stale');
+  assert.equal(calls, 1);
+  time += hour;
+  await source.refresh();
+  assert.equal(calls, 2);
+  assert.equal(source.status, 'fresh');
+  assert.equal(state.latest().error, null);
+  assert.equal(state.latest().data.length, 2);
+  late.resolve(json([]));
+  await setImmediate();
+  assert.equal(state.latest().data.length, 2);
 });
 
 test('Bootstrap deadlines retain the healthy endpoint and respect backoff and the hourly release floor',
@@ -1086,23 +1228,28 @@ test('default location derives a timezone city, with a neutral fallback and no p
   })), fallback);
 });
 
-test('default locations match canonical IANA aliases in either direction', async () => {
-  for (const pair of [
-    ['Asia/Calcutta', 'Asia/Kolkata'], ['Asia/Saigon', 'Asia/Ho_Chi_Minh'],
-    ['Asia/Katmandu', 'Asia/Kathmandu'], ['Europe/Kiev', 'Europe/Kyiv'],
+test('default locations search modern city names and match canonical IANA aliases in either direction', async () => {
+  for (const [legacy, modern, city] of [
+    ['Asia/Calcutta', 'Asia/Kolkata', 'Kolkata'], ['Asia/Saigon', 'Asia/Ho_Chi_Minh', 'Ho Chi Minh City'],
+    ['Asia/Katmandu', 'Asia/Kathmandu', 'Kathmandu'], ['Europe/Kiev', 'Europe/Kyiv', 'Kyiv'],
   ]) {
+    const pair = [legacy, modern];
     for (const [browserZone, resultZone] of [pair, [...pair].reverse()]) {
       const matching = { name: 'Willowmere', latitude: 1, longitude: 1, timezone: resultZone,
         country: 'Cloudfern Isles', admin1: 'North Mossreach' };
       const fetcher = mockFetch((url) => {
         assert.equal(url.searchParams.get('count'), '8');
-        assert.equal(url.searchParams.get('name'), browserZone.split('/').at(-1)?.replaceAll('_', ' '));
+        assert.equal(url.searchParams.get('name'), city);
         return json({ results: [
           { name: 'Willowmere', latitude: 0, longitude: 0, timezone: 'Africa/Johannesburg' },
           { name: 'Willowmere', latitude: 2, longitude: 2 }, matching,
         ] });
       });
       assert.deepEqual(await resolveDefaultLocation(browserZone, fetcher), matching);
+      assert.deepEqual(await resolveDefaultLocation(browserZone, mockFetch((url) => {
+        assert.equal(url.searchParams.get('name'), city);
+        return json({ results: [location, { ...matching, timezone: undefined }] });
+      })), { name: 'Harborview', latitude: 0, longitude: 0, timezone: 'UTC' });
     }
   }
 });

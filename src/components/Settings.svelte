@@ -140,7 +140,7 @@
   <div class={small ? 'drawer-body' : 'dialog-body'}>
     <div class="settings-content">
       <div
-        class="nav nav-pills flex-row flex-wrap md:flex-column settings-nav"
+        class={`nav nav-pills ${small ? 'flex-row flex-wrap' : 'flex-column'} settings-nav`}
         role="tablist"
         aria-label="Settings sections"
         data-bs-component="nav"
@@ -239,7 +239,11 @@
         >
           <h3 class="h5 mb-3">Display</h3>
           <label for="scale">Display scale: {settings.scale}%</label>
-          <div class="form-range mb-3" use:range data-bs-component="range">
+          <div
+            class="form-range mb-3"
+            use:range={settings.scale}
+            data-bs-component="range"
+          >
             <input
               id="scale"
               class="form-range-input"
@@ -367,8 +371,9 @@
           </p>
           <p>
             <strong>Location:</strong>
-            {settings.location?.name ??
-              'City inferred from your browser time zone'}
+            {settings.location
+              ? cityLabel(settings.location)
+              : 'City inferred from your browser time zone'}
           </p>
           <form
             onsubmit={(e) => {

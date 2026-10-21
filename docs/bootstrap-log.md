@@ -73,6 +73,8 @@ Bootstrap does not provide these dashboard-specific capabilities:
 - Svelte state integration for NavOverflow's cloned menu items and changing
   Datepicker options. Bootstrap owns both controls; the actions bridge their
   lifecycle and updates to application state.
+- Tooltip titles and Range fills follow Svelte updates through the plugins'
+  own APIs, including shortcut changes and programmatic settings resets.
 - Dashboard typography hierarchy, branded shell dimensions, compact quota
   rows, source attribution and theme-preview swatches. These rules live in
   the `app` layer and use Bootstrap tokens and rem units.
@@ -85,7 +87,9 @@ Bootstrap does not provide these dashboard-specific capabilities:
 - Small usage-history charts. Accessible SVG sparklines accompany numeric
   quotas rather than replacing them.
 - A component-inspection lens. Marked component outlines include ordinary
-  links to Bootstrap documentation.
+  links to Bootstrap documentation. Dialog elements are excluded because the
+  lens's positioning must not replace modal or drawer positioning. Labels sit
+  above compact button groups so the controls remain clickable.
 - Theme-specific console effects. Reduced motion and forced colours disable
   decorative finishes.
 - Alpha.1's checked switch thumb token is declared but not consumed by its
@@ -125,7 +129,7 @@ theme styles and Bootstrap are excluded. About Bootstrap shows the source byte
 count. The report's `bootstrap` version comes from the installed
 `node_modules/bootstrap/package.json`, so it follows dedicated upgrades.
 
-The review candidate measures **5,937 source bytes / 1,846 gzip bytes** with
+The review candidate measures **6,111 source bytes / 1,903 gzip bytes** with
 Bootstrap **6.0.0-alpha.1**. The report is included in the build artifact;
 compare the same metric on future upgrades.
 

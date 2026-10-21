@@ -170,14 +170,15 @@ export function createSource<T>(options: SourceOptions<T>): Source<T> {
       lastAttempt = cached.lastAttempt;
       retryAt = cached.retryAt;
       failures = cached.failures;
-      failed = failures > 0;
+      // A restored attempt without data has no live request left to finish it.
+      failed = failures > 0 || (updatedAt === null && lastAttempt !== null);
       if (failed) error = unavailable;
     }
   } catch { /* Storage can be disabled, full, or contain an obsolete or damaged copy. */ }
 
   function status(): SourceStatus {
     if (failed) return updatedAt === null ? 'offline' : 'stale';
-    if (updatedAt === null) return 'loading';
+    if (pending || updatedAt === null) return 'loading';
     return now() - updatedAt < ttl ? 'fresh' : 'stale';
   }
 
@@ -221,8 +222,7 @@ export function createSource<T>(options: SourceOptions<T>): Source<T> {
       const request = new AbortController();
       controller = request;
       lastAttempt = time;
-      failed = false;
-      error = null;
+      if (updatedAt === null) { failed = false; error = null; }
       // Persist attempt timing as well as successes so remounts cannot evade an API's limit.
       save();
       pending = withDeadline((signal) => Promise.resolve().then(() => {
@@ -234,9 +234,10 @@ export function createSource<T>(options: SourceOptions<T>): Source<T> {
         data = value;
         updatedAt = now();
         failures = 0;
+        failed = false;
+        error = null;
         retryAt = 0;
         save();
-        emit();
       }).catch((reason: unknown) => {
         if (destroyed) return;
         failed = true;
@@ -245,8 +246,7 @@ export function createSource<T>(options: SourceOptions<T>): Source<T> {
         retryAt = Math.max(now() + Math.min(hour, minute * 2 ** Math.min(failures - 1, 6)),
           reason instanceof SourceError ? reason.retryAt : 0);
         save();
-        emit();
-      }).finally(() => { pending = null; controller = null; });
+      }).finally(() => { pending = null; controller = null; emit(); });
       emit();
       return pending;
     },
@@ -648,6 +648,15 @@ function canonicalTimezone(value: string | undefined): string | null {
   catch { return null; }
 }
 
+// Intl can retain historical zone names that geocoders no longer use for cities.
+const timezoneCities: Record<string, string> = {
+  'Asia/Calcutta': 'Kolkata',
+  'Europe/Kiev': 'Kyiv',
+  'Asia/Saigon': 'Ho Chi Minh City',
+  'Asia/Ho_Chi_Minh': 'Ho Chi Minh City',
+  'Asia/Katmandu': 'Kathmandu',
+};
+
 export async function resolveDefaultLocation(timezone: string,
   fetcher: SourceFetch = globalThis.fetch, options: SourceRequestOptions = {}): Promise<Location> {
   deadline(options.timeoutMs);
@@ -661,7 +670,8 @@ export async function resolveDefaultLocation(timezone: string,
     return fallback;
   }
   try {
-    const locations = await geocodeCities(segment.replaceAll('_', ' '), 8, fetcher, options);
+    const city = timezoneCities[cityZone] ?? segment.replaceAll('_', ' ');
+    const locations = await geocodeCities(city, 8, fetcher, options);
     return locations.find((location) => canonicalTimezone(location.timezone) === canonical) ?? fallback;
   }
   catch { return fallback; }

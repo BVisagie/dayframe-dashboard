@@ -69,7 +69,7 @@ reviewed with every Bootstrap release.
 | Agent readings that adapt to panel size      | Container-query breakpoint mixins                                                                        |
 | Panels and agent cards                       | `card`                                                                                                   |
 | View navigation                              | `nav` with `nav-overflow`; delegated clicks reach cloned menu items, and active state stays synchronized |
-| Header controls                              | `btn-group`, `vr`, flex utilities, `tooltip`                                                             |
+| Header controls                              | `btn-group`, `vr`, flex utilities, `tooltip`; tooltip titles follow shortcut settings                    |
 | Quota meters                                 | `progress`, coloured by theme roles                                                                      |
 | Status and simulation labels                 | `badge`                                                                                                  |
 | Agent marks                                  | `avatar`, showing initials instead of logos                                                              |
@@ -85,7 +85,7 @@ reviewed with every Bootstrap release.
 | Settings, About and the full agenda          | `dialog dialog-scrollable`, or `drawer` on narrow screens; Settings uses `tab` between sections          |
 | Theme and navigation overflow menus          | `menu`                                                                                                   |
 | City search                                  | `combobox`; known alpha.1 instance warnings and listener accumulation are tracked in the Bootstrap log   |
-| Display scale                                | `form-range` and `form-range-input`, with the Range plugin                                               |
+| Display scale                                | `form-range` and `form-range-input`, with the Range plugin; programmatic resets update its fill          |
 | Toggles, choices and numbers                 | `switch`, `check`, `form-field`, `form-control`                                                          |
 | Feed categories                              | `chip` buttons (the editable `Chips` plugin is for input)                                                |
 | Colour schemes                               | `data-bs-theme`, `color-scheme` and `light-dark()`                                                       |
@@ -105,7 +105,8 @@ first-visit tour.
 - **Bootstrap lens.** Settings → Demo, or `?lens=1`, outlines each Bootstrap
   component on screen. Each outline is labelled with the component name and a
   link to its Bootstrap documentation, so visitors can see what Bootstrap
-  renders and what is custom.
+  renders and what is custom. Dialog elements are excluded so inspection
+  positioning cannot override modal or drawer positioning.
 - **About Bootstrap.** Shows the bundled version, the components and plugins in
   use, and the latest Bootstrap releases.
 - **Build credits.** A subdued footer line shows the exact installed Bootstrap,
@@ -173,8 +174,11 @@ interface Source<T> {
 
 Snapshots include data, status, the last update time and a nullable error.
 Before an initial load succeeds or fails, an uncached source reports `loading`;
-the views show a spinner and loading text rather than a failure warning. A
-failed load reports `offline` without a saved response, or `stale` with one.
+the views show a spinner and loading text rather than a failure warning.
+Refreshing expired data also uses a neutral loading state. A failed load
+reports `offline` without a saved response, or `stale` with one. An interrupted
+initial request restored from storage reports `offline` while its persisted
+rate limit prevents another attempt; it does not claim to be loading.
 
 | View                    | Source                                                         | Fallback                         |
 | ----------------------- | -------------------------------------------------------------- | -------------------------------- |
@@ -201,8 +205,9 @@ each group then sorts newest first.
 
 - **Default:** the city in the browser's time zone (for example `America/Chicago`
   gives Chicago), resolved through Open-Meteo geocoding. Candidates must match
-  the browser's zone after IANA alias canonicalisation. This needs no
-  permission prompt.
+  the browser's zone after IANA alias canonicalisation. Common legacy city
+  segments are searched using their modern names before this validation.
+  This needs no permission prompt.
 - **Fallback:** a fixed, neutral location when the time zone has no city, such
   as `UTC`, or geocoding finds no matching zone.
 - **Alternatives:** visitors can search for a city, or choose "Use my location".
