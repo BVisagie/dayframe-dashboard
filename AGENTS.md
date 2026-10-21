@@ -146,6 +146,11 @@ Apply the skill within this project's limits:
 
 - Run `npm run check`, `npm test` and the relevant `npm run test:browser`
   projects. Report failures as they are; never skip or loosen a test.
+- Routine CI uses the focused Chromium and screenshot selection documented in
+  `docs/ci.md`. Keep the complete browser suite available. Run it before merging
+  a Bootstrap upgrade or substantial theme change, using the manual CI
+  `full_suite` option. Selecting the approved routine scope does not permit
+  weakening assertions or accepting unintended baseline changes.
 - Update screenshot baselines only for intended visual changes, and say which
   changed and why.
 - Keep the docs current: the feature map in `docs/roadmap.md`,

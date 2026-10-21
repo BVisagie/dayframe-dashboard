@@ -11,6 +11,8 @@ Acceptance:
 
 - [ ] `npm run check`, `npm test`, `npm run build` and all relevant
       `npm run test:browser` projects pass.
+- [ ] Routine CI passes. For a Bootstrap upgrade or substantial theme change,
+      manual CI with `full_suite` enabled also passes after those changes.
 - [ ] The pinned Playwright container covers functional tests and intended
       screenshot changes. List changed baselines and why below.
 - [ ] Keyboard focus, WCAG 2.2 AA contrast, reduced motion and forced colours

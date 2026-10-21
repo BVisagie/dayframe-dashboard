@@ -4,7 +4,8 @@ import { themeSchemes, views } from './matrix';
 import { themeContract } from './contrast';
 
 for (const { theme, scheme } of themeSchemes) {
-  test(`${theme.id} ${scheme} resolves every required token and passes the independent AA colour contract`, async ({ page }) => {
+  const defaultLight = theme.id === 'default' && scheme === 'light';
+  test(`${theme.id} ${scheme} resolves every required token and passes the independent AA colour contract`, { tag: defaultLight ? '@smoke' : [] }, async ({ page }) => {
     await visit(page, { theme: theme.id, scheme });
     const result = await themeContract(page);
     expect(result.checkedTokens).toBeGreaterThan(200);
@@ -13,7 +14,7 @@ for (const { theme, scheme } of themeSchemes) {
   });
 
   for (const view of views) {
-    test(`${theme.id} ${scheme} ${view} has no axe WCAG 2.2 AA violations`, async ({ page }) => {
+    test(`${theme.id} ${scheme} ${view} has no axe WCAG 2.2 AA violations`, { tag: defaultLight && view === 'summary' ? '@smoke' : [] }, async ({ page }) => {
       await visit(page, { theme: theme.id, scheme, view });
       const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
       expect(result.violations).toEqual([]);
@@ -30,7 +31,7 @@ for (const { theme, scheme } of themeSchemes) {
     }
   });
 
-  test(`${theme.id} ${scheme} preserves visible keyboard focus and disables effects for reduced motion and forced colors`, async ({ page }) => {
+  test(`${theme.id} ${scheme} preserves visible keyboard focus and disables effects for reduced motion and forced colors`, { tag: defaultLight || (theme.id !== 'default' && scheme === 'dark') ? '@smoke' : [] }, async ({ page }) => {
     await visit(page, { theme: theme.id, scheme });
     for (const forcedColors of ['none', 'active'] as const) {
       await page.emulateMedia({ reducedMotion: forcedColors === 'none' ? 'reduce' : 'no-preference', forcedColors });

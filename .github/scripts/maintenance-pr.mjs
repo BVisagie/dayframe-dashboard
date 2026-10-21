@@ -29,7 +29,7 @@ try {
     if (kind === 'bootstrap') {
       if (JSON.parse(readFileSync('package.json', 'utf8')).dependencies.bootstrap !== candidate) throw new Error();
       title = `Upgrade Bootstrap to ${candidate}`;
-      body = `Pins Bootstrap ${candidate} for a dedicated upgrade review. This draft still requires implementation and visual review before merge.\n\n- [ ] Review every entry in the feature map against the release.\n- [ ] Record renamed tokens, adopted components, removed workarounds and the custom CSS footprint.\n- [ ] Run check, unit, build, full browser and screenshot matrix, and the trusted full-history secret check.\n- [ ] Keep the CSS browser target at Bootstrap's support floor.\n`;
+      body = `Pins Bootstrap ${candidate} for a dedicated upgrade review. This draft still requires implementation and visual review before merge.\n\n- [ ] Review every entry in the feature map against the release.\n- [ ] Record renamed tokens, adopted components, removed workarounds and the custom CSS footprint.\n- [ ] Run check, unit and build, dispatch CI on this branch with \`full_suite=true\` for every browser and screenshot project, and require the trusted full-history secret check.\n- [ ] Keep the CSS browser target at Bootstrap's support floor.\n`;
       appendFileSync('docs/bootstrap-log.md', `\n## ${candidate} — review pending\n\nCandidate pin prepared by the weekly registry check. Before merge, record token\nchanges, component adoption, workarounds and the app CSS footprint, and review\nthe feature map and full screenshot matrix.\n`);
       const roadmap = readFileSync('docs/roadmap.md', 'utf8');
       const marker = '### Feature map\n';

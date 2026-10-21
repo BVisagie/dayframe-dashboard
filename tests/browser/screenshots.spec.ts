@@ -26,7 +26,9 @@ test.beforeAll(async ({ browser }, testInfo) => {
 
 for (const { theme, scheme } of themeSchemes) {
   for (const view of views) {
-    test(`${theme.id} ${scheme} ${view}`, async ({ page, audit }, testInfo) => {
+    const smoke = (theme.id === 'default' && scheme === 'light')
+      || (theme.id !== 'default' && view === 'summary');
+    test(`${theme.id} ${scheme} ${view}`, { tag: smoke ? '@smoke' : [] }, async ({ page, audit }, testInfo) => {
       await visit(page, { theme: theme.id, scheme, view });
       expect(await page.evaluate(() => window.devicePixelRatio)).toBe(
         testInfo.project.use.deviceScaleFactor,

@@ -448,7 +448,12 @@ Each viewport runs at device pixel ratios of 1 and 2.
 - **Unit tests** (`node:test`) cover the simulation engine, date and recurrence
   handling, formatting, settings migrations and the theme registry.
 - **Browser tests** (Playwright):
-  - functional tests in Chromium, Firefox and WebKit;
+  - routine CI selects existing Chromium tests and a small desktop/phone
+    screenshot set tagged `@smoke`;
+  - the complete functional suite in Chromium, Firefox and WebKit remains
+    available, together with the full screenshot matrix, through manual CI
+    with `full_suite` enabled. Run it on the current candidate before merging
+    Bootstrap upgrades or substantial theme changes;
   - screenshot comparisons in Chromium only, for the full matrix of view ×
     theme × scheme × standard viewport, using a fixed `?clock` and `?seed`;
   - all runs in Playwright's pinned container image, so fonts render
@@ -464,7 +469,10 @@ Each viewport runs at device pixel ratios of 1 and 2.
 - **Bootstrap-first review:** the pull request template asks two questions.
   Does a Bootstrap component, utility or token already cover this? Does every
   new custom rule carry a comment saying what Bootstrap lacks?
-- **Privacy checks** run on every push and pull request, and before every
+- **Routine CI** has three jobs: Quality (types, lint, unit tests and build),
+  Browser and screenshots, and Secret history. It runs on pull requests and
+  pushes to `main`; feature-branch pushes do not duplicate PR runs.
+- **Privacy checks** run with routine CI, and before every
   deploy once the trusted listener is installed on `main`:
   - `gitleaks` scans the complete reachable history for secrets;
   - the trusted listener fetches the exact candidate and complete history as
@@ -489,8 +497,8 @@ The implemented workflows build and test pushes to `main`. A trusted listener
 then scans the exact candidate and permits Pages deployment only when every
 required job and privacy status succeeds. Vite's `base` is
 `/dayframe-dashboard/`. Pull request builds are configured as workflow artifacts.
-The canonical 400-image replacement set has been reviewed; final candidate CI
-remains pending. Every candidate still requires green CI, the trusted
+The canonical 400-image replacement set has been reviewed and all comparisons
+passed at `8c58cba`. Every candidate still requires its applicable CI, the trusted
 full-history secret scan and separately approved Pages setup before deployment.
 
 Prelaunch builds exclude search engines with `noindex` and `robots.txt`. A
@@ -520,19 +528,21 @@ Launch checklist:
 
 ### Implementation evidence
 
-Pinned Noble run `39637681760` at `13b227a` passed 186 functional tests per
-browser. The revised candidate expects 188 per browser plus 400 screenshot
-comparisons (964 browser tests total), and 84 unit tests after removing the
-seven custom-scanner tests. Final candidate CI remains pending. The
+Pinned Noble [run `39643918557`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39643918557)
+at `8c58cba` passed 188 functional tests per browser plus all 400 screenshot
+comparisons (964 browser tests total), 84 unit tests, types, lint, build and
+secret scanning. GitGuardian also passed. Routine CI now uses the smaller
+approved selection; full mode remains required for Bootstrap upgrades and
+substantial theme changes. The
 [baseline review evidence](ci.md#screenshot-comparison-and-review) records the
 400-image replacement set and the approved comparison tolerance.
 
 | Area                   | Implemented                                                                                                                                                                  | Pending proof or external setup                                                                                                                          |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Views and state        | All five views, Settings, navigation, rotation and deterministic scenarios; independent persisted date format                                                                | Final 188-test functional suite per browser in Chromium, Firefox and WebKit                                                                               |
-| Bootstrap integration  | Real plugins through Svelte actions; Datepicker updates and NavOverflow clone navigation/active-state synchronization                                                        | Final candidate browser CI and screenshot comparisons                                                                                                    |
-| Layout and themes      | Default, Nebuchadnezzar and Tideline; reviewed 400-image canonical replacement set; all six desktop dimensions fit without lowering the root floor                            | Final 400 screenshot comparisons with approved `threshold: 0.005` and `maxDiffPixels: 0`                                                                   |
-| Sources                | Allowed live adapters, caching, fallbacks, backoff and default ten-second deadlines                                                                                          | Hosted checks; no real account connections are needed                                                                                                    |
+| Views and state        | All five views, Settings, navigation, rotation and deterministic scenarios; independent persisted date format; full three-browser checks passed at `8c58cba`                    | Routine CI on later changes                                                                                                                              |
+| Bootstrap integration  | Real plugins through Svelte actions; Datepicker updates and NavOverflow clone navigation/active-state synchronization; full browser checks passed                               | Full mode for Bootstrap upgrades                                                                                                                         |
+| Layout and themes      | Default, Nebuchadnezzar and Tideline; reviewed 400-image canonical set passed at `8c58cba`; all six desktop dimensions fit without lowering the root floor                        | Full mode for substantial theme changes; routine desktop/phone selection otherwise                                                                         |
+| Sources                | Allowed live adapters, caching, fallbacks, backoff and default ten-second deadlines; hosted adapter checks passed                                                               | No real account connections are needed                                                                                                                    |
 | Bootstrap tracking     | Exact `6.0.0-alpha.1` pin, lens, About panel, gap log and measured app CSS footprint                                                                                         | Hosted maintenance workflow verification                                                                                                                 |
 | Privacy and deployment | Trusted full-history secrets gate and gated static artifact deployment workflows                                                                                            | Independent trusted secrets scan before first merge, listener/status verification on `main` and separately approved repository/Pages settings              |
 

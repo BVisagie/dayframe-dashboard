@@ -90,7 +90,7 @@ async function mockSources(page: Page, failing = false) {
   return state;
 }
 
-test('live weather maps mocked current, daily and hourly fields; units and city combobox update requests', async ({
+test('live weather maps mocked current, daily and hourly fields; units and city combobox update requests', { tag: '@smoke' }, async ({
   page,
   audit,
 }) => {
@@ -254,7 +254,7 @@ test('live Bootstrap headlines show original links and refresh respects the rele
   expect(releases).toBe(1);
 });
 
-test('failed live forecast falls back and reconnect refresh recovers after backoff', async ({
+test('failed live forecast falls back and reconnect refresh recovers after backoff', { tag: '@smoke' }, async ({
   page,
 }) => {
   await page.clock.install({ time: new Date(referenceClock) });
@@ -278,7 +278,7 @@ test('failed live forecast falls back and reconnect refresh recovers after backo
   ).toHaveCount(0);
 });
 
-test('deterministic replay has identical content on reload and never requests a live API', async ({
+test('deterministic replay has identical content on reload and never requests a live API', { tag: '@smoke' }, async ({
   page,
   audit,
 }) => {

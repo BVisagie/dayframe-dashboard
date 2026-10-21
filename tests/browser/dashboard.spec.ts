@@ -8,7 +8,7 @@ async function browserDate(page: Page, date: string, locale: string, options: In
     .format(new Date(`${date}T12:00:00`)), { date, locale, options });
 }
 
-test('all views navigate by controls, letters, numbers and wrapping arrows', async ({ page, audit }) => {
+test('all views navigate by controls, letters, numbers and wrapping arrows', { tag: '@smoke' }, async ({ page, audit }) => {
   await visit(page);
   const nav = page.getByRole('navigation', { name: 'Dashboard views' });
   for (const view of views) {
@@ -31,7 +31,7 @@ test('all views navigate by controls, letters, numbers and wrapping arrows', asy
   expect(audit.external, 'Replay must not request live sources').toHaveLength(0);
 });
 
-test('shortcuts ignore editable controls and modifier combinations', async ({ page }) => {
+test('shortcuts ignore editable controls and modifier combinations', { tag: '@smoke' }, async ({ page }) => {
   await visit(page, { view: 'calendar' });
   await page.getByLabel('Jump to a date', { exact: true }).focus();
   await page.keyboard.press('w');
@@ -57,7 +57,7 @@ test('shortcuts ignore editable controls and modifier combinations', async ({ pa
   await expectView(page, 'calendar');
 });
 
-test('mobile navigation exposes overflowing views through the Bootstrap More menu', async ({ page }) => {
+test('mobile navigation exposes overflowing views through the Bootstrap More menu', { tag: '@smoke' }, async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await visit(page);
   const nav = page.getByRole('navigation', { name: 'Dashboard views' });
@@ -78,7 +78,7 @@ test('mobile navigation exposes overflowing views through the Bootstrap More men
 });
 
 for (const mobile of [false, true]) {
-  test(`Settings ${mobile ? 'mobile drawer' : 'dialog'} keeps background inert, uses plugin tabs and restores focus on Escape`, async ({ page }) => {
+  test(`Settings ${mobile ? 'mobile drawer' : 'dialog'} keeps background inert, uses plugin tabs and restores focus on Escape`, { tag: '@smoke' }, async ({ page }) => {
     if (mobile) await page.setViewportSize({ width: 390, height: 844 });
     await visit(page);
     await page.keyboard.press(',');
@@ -134,7 +134,7 @@ for (const mobile of [false, true]) {
   });
 }
 
-test('URL overrides apply only to this visit, including after an unrelated deliberate edit', async ({ page }) => {
+test('URL overrides apply only to this visit, including after an unrelated deliberate edit', { tag: '@smoke' }, async ({ page }) => {
   await visit(page);
   let dialog = await settings(page, 'Display');
   await dialog.getByLabel('Startup view', { exact: true }).selectOption('agents');
@@ -182,7 +182,7 @@ for (const source of ['stored', 'URL'] as const) {
   });
 }
 
-test('theme picker discovers every manifest and generated options clear when switching themes', async ({ page }) => {
+test('theme picker discovers every manifest and generated options clear when switching themes', { tag: '@smoke' }, async ({ page }) => {
   await visit(page);
   const dialog = await settings(page);
   for (const theme of themes) {
@@ -206,7 +206,7 @@ test('theme picker discovers every manifest and generated options clear when swi
   await expect(page.locator('html')).toHaveAttribute('data-bs-theme', 'dark');
 });
 
-test('system scheme reacts to preference changes; auto follows replay day and night', async ({ page }) => {
+test('system scheme reacts to preference changes; auto follows replay day and night', { tag: '@smoke' }, async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await visit(page, { scheme: 'system' });
   await expect(page.locator('html')).toHaveAttribute('data-bs-theme', 'dark');
@@ -220,7 +220,7 @@ test('system scheme reacts to preference changes; auto follows replay day and ni
   await expect(page.locator('html')).toHaveAttribute('data-bs-theme', 'dark');
 });
 
-test('scale control changes root sizing and persists deliberate edits', async ({ page }) => {
+test('scale control changes root sizing and persists deliberate edits', { tag: '@smoke' }, async ({ page }) => {
   await page.setViewportSize({ width: 1920, height: 1080 });
   await visit(page);
   const original = await page.locator('html').evaluate(node => parseFloat(getComputedStyle(node).fontSize));
@@ -384,7 +384,7 @@ for (const [dateFormat, date] of [
   });
 }
 
-test('datepicker supports keyboard selection and Escape removes it visually and from the accessibility tree', async ({ page }) => {
+test('datepicker supports keyboard selection and Escape removes it visually and from the accessibility tree', { tag: '@smoke' }, async ({ page }) => {
   await visit(page, { view: 'calendar' });
   const input = page.getByLabel('Jump to a date', { exact: true });
   await input.focus();

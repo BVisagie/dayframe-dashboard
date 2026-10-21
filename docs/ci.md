@@ -1,40 +1,51 @@
 # CI, privacy and maintenance
 
-`CI` runs on every branch push and pull request. It checks types and lint,
-unit tests, the production build, full-history secrets, and every Playwright
-project. Node is 26. All browser and screenshot tests use
-`mcr.microsoft.com/playwright:v1.64.1-noble`, matching the exact test dependency.
-Chromium, Firefox and WebKit run in separate functional jobs. Four screenshot
-shards cover every screenshot project. Each browser first performs a launch
-preflight so environment failures are visible before the full test report.
+Routine `CI` runs on pull requests and pushes to `main`, with three jobs:
+
+- **Quality:** types, Svelte, lint, workflow-tooling types, unit tests and the
+  production build. It uploads the `dayframe-build` artifact.
+- **Browser and screenshots:** selected existing Chromium tests tagged
+  `@smoke`: 18 functional cases and 16 screenshots, eight each at 1280×720 and
+  390×844, at device pixel ratio 1. These cover all five Default views and
+  Summary in the other themes' supported schemes.
+- **Secret history:** full-history gitleaks with the isolated default policy.
+
+Feature-branch pushes do not start a second copy of PR CI. Node is 26; browser
+tests run in `mcr.microsoft.com/playwright:v1.64.1-noble`, matching Playwright
+1.64.1. The browser report, build and requested screenshot candidates are
+retained for seven days. Every browser run builds and serves the production
+bundle, uses two workers and has zero retries.
+
+The routine browser command is:
+
+```sh
+npm run test:browser -- --project=chromium --project=screenshots-1280x720-dpr1 --project=screenshots-390x844-dpr1 --grep @smoke
+```
+
+The full suite remains available through `npm run test:browser`. To run it in
+the pinned container, dispatch `CI` on the candidate branch with `full_suite`
+enabled. It uses the same three jobs; the browser job runs all three engines
+and all 400 screenshots. **Before merging a Bootstrap upgrade or substantial
+theme change, run this full mode on the current candidate SHA and review the
+results.** Later documentation or CI-selection changes can use routine CI;
+behaviour or test-assertion changes require fresh full validation. This is a
+manual review requirement, not automatic path detection.
+Ordinary changes use the routine selection. All assertions and baselines remain
+in the complete suite.
+
 Firefox [rejects root when the home directory belongs to another user](https://github.com/mozilla/gecko-dev/blob/master/toolkit/xre/nsAppRunner.cpp#L3544-L3570).
-Its job changes only the runner-mounted home directory's owner to the container
-user before preflight, without recursion or overriding `HOME`. The full suite
-still runs when preflight fails.
-The aggregate `Browser and screenshots` job succeeds only when every browser
-and screenshot shard succeeds; failed, cancelled or skipped groups block it.
-Reports are named per browser or screenshot shard. They and the
-`dayframe-build` static build are retained for seven days, including PR builds.
-The workflow also generates initial screenshot candidates in the same
-pinned container. They are uploaded separately for visual review; the normal
-comparison job still fails until reviewed baselines are committed. Later
-intentional visual changes can request candidates through the workflow's
-`screenshot_candidates` dispatch input. Host-generated baselines are refused.
-Jobs use two Playwright workers to limit CPU contention. Scale checks keep
-each view/viewport/scale combination as an independent test, preserving the
-same assertions without combining twenty navigations under one timeout.
-Every suite builds and serves the production bundle on a dedicated port;
-an existing development server cannot supply stale CSS or modules.
-Screenshot projects alone disable font subpixel positioning and Skia runtime
-CPU optimizations. Fresh-load and reload probes reproduced a one-pixel
-mixed-weight text baseline difference with normal Chromium font positioning;
-the fixed setting produced identical captures. Skia's
-[baseline CPU path](https://chromium.googlesource.com/chromium/src/+/HEAD/content/public/common/content_switches.cc)
-also avoids host-specific raster optimizations. Functional browser projects
-retain their normal rendering. Screenshot comparisons use the explicitly
-approved colour tolerance below.
-The type job also runs `npx tsc --project .github/tsconfig.json` to check the
-typed JSDoc in trusted history, sync and workflow tooling with Node types.
+Full mode corrects only the runner-mounted home directory's owner before
+launch, without recursion or overriding `HOME`.
+
+For intentional visual updates, enable `screenshot_candidates` in the manual
+dispatch. Candidate generation runs after comparisons and uploads all 400
+images for review, including when comparisons fail. It cannot turn a failed
+comparison into a pass. Host-generated baselines are refused.
+
+Screenshot projects fix font subpixel positioning and Skia's runtime CPU path;
+functional projects retain normal rendering. The font setting addresses a
+reproduced fresh-load/reload metric difference. Cross-host curve rasterization
+can still vary slightly; comparisons use the approved colour tolerance below.
 
 ## Screenshot comparison and review
 
@@ -63,15 +74,13 @@ phone/tablet images have font-related height changes of 1–3 pixels relative to
 the initial set. All six desktop dimensions still fit without vertical
 overflow; phone and tablet views scroll as designed.
 
-Final candidate CI is pending. The earlier `13b227a` run passed 186 functional
-tests in each of Chromium, Firefox and WebKit. Two new tests per engine bring
-the final expected browser total to 3 × 188 + 400 = 964. Removing the custom
-denylist scanner removes its seven unit tests, taking that suite from 91 to
-84. The updated Chromium and Firefox suites passed all 376 functional tests
-locally. A host probe of 50 screenshot comparisons failed against the Noble
-baselines, with widespread text-rendering differences; no host baselines were
-accepted. The pinned-container run remains required. These results and visual
-reviews do not certify the final candidate's CI or trusted secret scan.
+Pinned Noble [run `39643918557`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39643918557)
+at `8c58cba` passed 84 unit tests, 188 functional tests in each of Chromium,
+Firefox and WebKit, and all 400 screenshot comparisons: 964 browser tests.
+GitGuardian also passed on that commit. This validates the complete suite
+before routine CI was reduced; later candidates still need their applicable
+checks. A local probe of 50 screenshot comparisons differed from the Noble
+baselines across text rendering, so host captures were not accepted.
 
 The Vite configuration fixes the Pages base at `/dayframe-dashboard/`.
 `DAYFRAME_PUBLIC_LAUNCH` is the single repository variable passed to the build:
@@ -126,9 +135,9 @@ Private credentials, private contact details and addresses, home-directory
 paths, private hostnames, private account/project IDs and private repository
 references must stay out of tracked content, commit messages and PR text.
 Review remains necessary for private details a secret scanner cannot detect.
-Public author credits, attribution and legal notices are allowed. Simulated data still uses
-invented people, organisations and places; never connect real accounts or
-read local credentials. No mandatory private denylist or legal-name digest
+Public author credits, attribution and legal notices are allowed. Simulated
+data still uses invented people, organisations and places; never connect real
+accounts or read local credentials. No mandatory private denylist or legal-name digest
 exception process remains.
 
 Both secret checks use the pinned gitleaks container, all reachable history
@@ -145,10 +154,10 @@ to five and three levels respectively. Scanner failures fail the job. See the
 
 Pages deployment accepts only a successful `CI` run caused by a push to `main`
 in this repository. It also requires the trusted privacy job and its status
-publication to succeed. The gate queries the run and confirms that Type and
-lint, Unit tests, Production build, Browser and screenshots, and Secret history
-all succeeded. It rejects skipped jobs, an unexpected workflow path and an
-obsolete main SHA. It checks freshness again after acquiring the deployment
+publication to succeed. The gate queries the run and confirms that Quality,
+Browser and screenshots, and Secret history all succeeded. It rejects skipped
+jobs, an unexpected workflow path and an obsolete main SHA. It checks freshness
+again after acquiring the deployment
 lock. The deploy job receives only the static artifact from that exact run;
 it does not rebuild it. Only this job has `pages: write` and `id-token: write`.
 
@@ -159,8 +168,8 @@ announcement needs separate approval; implementation does not authorize them:
 1. Select GitHub Actions as the Pages source and allow the `github-pages`
    environment to deploy from `main`. Leave `DAYFRAME_PUBLIC_LAUNCH` unset or
    explicitly `false` until launch is approved.
-2. Protect `main` with pull request review and required checks: Type and lint,
-   Unit tests, Production build, Browser and screenshots, Secret history, and
+2. Protect `main` with pull request review and required checks: Quality,
+   Browser and screenshots, Secret history, and
    `Privacy / private history`. Require checks for the current candidate SHA.
    Confirm the trusted status appears on a real fork or Dependabot PR before
    treating this setup as complete. Rulesets/settings remain external work.
@@ -180,7 +189,8 @@ a default-version range. It never selects Bootstrap 5 or downgrades the pin.
 An upgrade draft changes only `package.json`, `package-lock.json`, the
 Bootstrap log and a pending feature-map review note. Lockfile generation
 disables lifecycle scripts. The draft explicitly requires token/component
-review, the CSS footprint and the full screenshot matrix before merge.
+review, the CSS footprint and a manual `CI` run with `full_suite` enabled before
+merge, covering the complete browser and screenshot matrix.
 
 The same schedule checks canonical frontend-design bytes at a fixed resolved
 upstream commit. `node scripts/sync-skill.mjs --check` is read-only;

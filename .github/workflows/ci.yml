@@ -2,10 +2,14 @@ name: CI
 
 on:
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
   workflow_dispatch:
     inputs:
+      full_suite:
+        description: Run every browser and screenshot project
+        type: boolean
+        default: false
       screenshot_candidates:
         description: Generate screenshot candidates for visual review
         type: boolean
@@ -22,8 +26,8 @@ env:
   DAYFRAME_PUBLIC_LAUNCH: ${{ vars.DAYFRAME_PUBLIC_LAUNCH == 'true' && 'true' || 'false' }}
 
 jobs:
-  check:
-    name: Type and lint
+  quality:
+    name: Quality
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -37,35 +41,7 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npx tsc --project .github/tsconfig.json
-
-  unit:
-    name: Unit tests
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: false
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: '26'
-      - run: npm ci
       - run: npm test
-
-  build:
-    name: Production build
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: false
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: '26'
-      - run: npm ci
       - run: npm run build
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
@@ -74,13 +50,9 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  functional:
-    name: Functional (${{ matrix.browser }})
+  browser:
+    name: Browser and screenshots
     runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
       options: --ipc=host
@@ -95,80 +67,37 @@ jobs:
           node-version: '26'
       - run: npm ci
       - name: Match Firefox home ownership to the container user
-        if: matrix.browser == 'firefox'
+        if: ${{ inputs.full_suite }}
         # Firefox refuses root when the runner-mounted home belongs to another user.
         run: chown "$(id -u)" "$HOME"
-      - name: Check browser launch
-        env:
-          PLAYWRIGHT_BROWSER: ${{ matrix.browser }}
-        run: |
-          node --input-type=module <<'NODE'
-          import { chromium, firefox, webkit } from '@playwright/test';
-          const browserName = process.env.PLAYWRIGHT_BROWSER;
-          console.log(`Checking ${browserName} launch before the full suite.`);
-          const browser = await ({ chromium, firefox, webkit })[browserName].launch();
-          await browser.close();
-          NODE
-      # Keep the full suite even when the diagnostic launch fails.
-      - if: ${{ !cancelled() }}
-        run: npm run test:browser -- --project=${{ matrix.browser }}
+      - name: Run focused browser and screenshot comparisons
+        if: ${{ !inputs.full_suite }}
+        run: npm run test:browser -- --project=chromium --project=screenshots-1280x720-dpr1 --project=screenshots-390x844-dpr1 --grep @smoke
+      - name: Run every browser and screenshot comparison
+        if: ${{ inputs.full_suite }}
+        run: npm run test:browser
+      # Upload comparisons before candidate generation replaces local test output.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: ${{ !cancelled() }}
         with:
-          name: browser-report-${{ matrix.browser }}
+          name: browser-report
           path: |
             playwright-report/
             test-results/
           if-no-files-found: ignore
           retention-days: 7
 
-  screenshots:
-    name: Screenshots (${{ matrix.shard }}/4)
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
-    container:
-      image: mcr.microsoft.com/playwright:v1.64.1-noble
-      options: --ipc=host
-    timeout-minutes: 40
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: false
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: '26'
-      - run: npm ci
-      # Select every screenshot project; Playwright partitions tests across shards.
-      - run: npm run test:browser -- --project='screenshots-*' --shard=${{ matrix.shard }}/4
+      # Candidate generation never clears a failed comparison step's status.
+      - name: Generate requested screenshot candidates
+        if: ${{ inputs.screenshot_candidates && !cancelled() }}
+        run: npm run test:browser -- --project='screenshots-*' --update-snapshots
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: ${{ !cancelled() }}
+        if: ${{ inputs.screenshot_candidates && !cancelled() }}
         with:
-          name: screenshot-report-${{ matrix.shard }}
-          path: |
-            playwright-report/
-            test-results/
-          if-no-files-found: ignore
+          name: screenshot-candidates
+          path: tests/browser/__screenshots__/
+          if-no-files-found: error
           retention-days: 7
-
-  browser:
-    name: Browser and screenshots
-    needs: [functional, screenshots]
-    if: ${{ always() }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - name: Require every browser and screenshot shard
-        env:
-          FUNCTIONAL_RESULT: ${{ needs.functional.result }}
-          SCREENSHOTS_RESULT: ${{ needs.screenshots.result }}
-        run: |
-          echo "Functional: $FUNCTIONAL_RESULT"
-          echo "Screenshots: $SCREENSHOTS_RESULT"
-          test "$FUNCTIONAL_RESULT" = success && test "$SCREENSHOTS_RESULT" = success
 
   gitleaks:
     name: Secret history
@@ -184,40 +113,3 @@ jobs:
         with:
           node-version: '26'
       - run: node .github/scripts/gitleaks.mjs .
-
-  snapshot-candidates:
-    name: Screenshot review candidates
-    runs-on: ubuntu-24.04
-    container:
-      image: mcr.microsoft.com/playwright:v1.64.1-noble
-      options: --ipc=host
-    timeout-minutes: 40
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: false
-      - name: Select explicit updates or the first baseline set
-        id: capture
-        env:
-          REQUESTED: ${{ inputs.screenshot_candidates }}
-        run: |
-          if [ ! -d tests/browser/__screenshots__ ] || [ "$REQUESTED" = true ]; then
-            echo 'needed=true' >> "$GITHUB_OUTPUT"
-          fi
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        if: steps.capture.outputs.needed == 'true'
-        with:
-          node-version: '26'
-      - if: steps.capture.outputs.needed == 'true'
-        run: npm ci
-      # Candidate generation never substitutes for the unchanged comparison job.
-      - if: steps.capture.outputs.needed == 'true'
-        run: npm run test:browser -- --project='screenshots-*' --update-snapshots
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        if: steps.capture.outputs.needed == 'true' && !cancelled()
-        with:
-          name: screenshot-candidates
-          path: tests/browser/__screenshots__/
-          if-no-files-found: error
-          retention-days: 7

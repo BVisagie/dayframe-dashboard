@@ -12,7 +12,7 @@ try {
   };
   const [branch, jobs, workflow] = await Promise.all([get('branches/main'), get(`actions/runs/${run.id}/jobs?per_page=100&filter=latest`), get(`actions/workflows/${run.workflow_id}`)]);
   if (branch.commit?.sha !== run.head_sha || workflow.path !== '.github/workflows/ci.yml' || jobs.total_count > 100) throw new Error();
-  for (const name of ['Type and lint', 'Unit tests', 'Production build', 'Browser and screenshots', 'Secret history']) {
+  for (const name of ['Quality', 'Browser and screenshots', 'Secret history']) {
     if (!jobs.jobs.some(/** @param {{name:string, conclusion:string}} job */ job => job.name === name && job.conclusion === 'success')) throw new Error();
   }
   console.log('All required checks succeeded for the current main commit.');

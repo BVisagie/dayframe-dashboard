@@ -77,19 +77,25 @@ upstream findings.
 npm run check
 npm test
 npm run build
-npm run test:browser
+npm run test:browser -- --project=chromium --grep @smoke
 ```
 
+Routine CI has three jobs: Quality (types, lint, unit tests and build), focused
+Chromium tests with a small desktop/phone screenshot set, and Secret history.
+It runs on pull requests and pushes to `main`, avoiding duplicate branch runs.
+The complete suite remains available through `npm run test:browser` or manual
+CI with `full_suite` enabled. Run it for Bootstrap upgrades and substantial
+theme changes before merging. See [CI setup](docs/ci.md) for exact commands.
+
 Browser validation uses Playwright 1.64.1 and its pinned Noble container. The
-functional suite runs in Chromium, Firefox and WebKit. Chromium screenshots
-cover all views and supported theme/scheme combinations at eight viewports,
-each at device pixel ratios 1 and 2. Clock, seed, locale and time zone are
-fixed. Remote APIs are mocked in tests. Screenshot projects fix font subpixel
+complete suite includes Chromium, Firefox and WebKit and 400 Chromium screenshots
+at eight viewports, each at device pixel ratios 1 and 2. Clock, seed, locale and
+time zone are fixed. Remote APIs are mocked in tests. Screenshot projects fix font subpixel
 positioning and Skia's CPU path. The approved colour threshold is `0.005`,
 with `maxDiffPixels: 0`; this permits tiny colour noise, not exact pixel
 equality. Initial baselines and intentional visual updates require review;
-missing snapshots fail comparisons. See [CI setup](docs/ci.md) for the reviewed
-400-image replacement set and pending final validation.
+missing snapshots fail comparisons. The complete suite passed at `8c58cba`;
+[CI setup](docs/ci.md) records the baseline review and validation evidence.
 
 Full-history gitleaks checks run in CI and in the trusted deployment gate. No
 `DAYFRAME_DENYLIST`, personal access token or provider account is needed.
