@@ -1,0 +1,8 @@
+.agents/
+.claude/
+node_modules/
+dist/
+test-results/
+playwright-report/
+public/third-party-notices.txt
+package-lock.json
