@@ -71,16 +71,16 @@ for (const { theme, scheme } of themeSchemes) {
     });
   }
 
-  test(`${theme.id} ${scheme} fits every view at both display scale extremes on desktop and phone`, async ({ page }) => {
-    for (const viewport of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
-      await page.setViewportSize(viewport);
-      for (const scale of ['70', '150']) {
-        for (const view of views) {
+  for (const viewport of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
+    for (const scale of ['70', '150']) {
+      for (const view of views) {
+        test(`${theme.id} ${scheme} ${view} fits at ${scale}% scale at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+          await page.setViewportSize(viewport);
           await visit(page, { theme: theme.id, scheme, view, scale });
           await noHorizontalOverflow(page);
           expect(await page.locator('html').evaluate(node => parseFloat(getComputedStyle(node).fontSize)), 'Readable root text floor').toBeGreaterThanOrEqual(14);
-        }
+        });
       }
     }
-  });
+  }
 }

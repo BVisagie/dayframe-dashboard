@@ -12,7 +12,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0,
-  workers: process.env.CI ? 4 : 2,
+  // CI runners have two CPU cores; avoid oversubscribing browser processes.
+  workers: 2,
   timeout: 45_000,
   expect: { timeout: 7000, toHaveScreenshot: { maxDiffPixels: 0, threshold: 0 } },
   // Missing baselines must fail; creation is an explicit container-only operation.

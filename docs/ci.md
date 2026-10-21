@@ -4,13 +4,21 @@
 unit tests, the production build, full-history secrets, and every Playwright
 project. Node is 26. All browser and screenshot tests use
 `mcr.microsoft.com/playwright:v1.64.1-noble`, matching the exact test dependency.
-No browser project is filtered out. Reports and the `dayframe-build` static
-build are retained for seven days, including pull request builds.
+Chromium, Firefox and WebKit run in separate functional jobs. Four screenshot
+shards cover every screenshot project. Each browser first performs a launch
+preflight so environment failures are visible before the full test report.
+The aggregate `Browser and screenshots` job succeeds only when every browser
+and screenshot shard succeeds; failed, cancelled or skipped groups block it.
+Reports are named per browser or screenshot shard. They and the
+`dayframe-build` static build are retained for seven days, including PR builds.
 The workflow also generates initial screenshot candidates in the same
 pinned container. They are uploaded separately for visual review; the normal
 comparison job still fails until reviewed baselines are committed. Later
 intentional visual changes can request candidates through the workflow's
 `screenshot_candidates` dispatch input. Host-generated baselines are refused.
+Jobs use two Playwright workers to limit CPU contention. Scale checks keep
+each view/viewport/scale combination as an independent test, preserving the
+same assertions without combining twenty navigations under one timeout.
 The type job also runs `npx tsc --project .github/tsconfig.json` to check the
 typed JSDoc in privacy, sync and workflow tooling with Node types.
 

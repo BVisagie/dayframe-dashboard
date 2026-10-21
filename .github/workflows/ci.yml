@@ -74,9 +74,13 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  browser:
-    name: Browser and screenshots
+  functional:
+    name: Functional (${{ matrix.browser }})
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
       options: --ipc=host
@@ -90,17 +94,77 @@ jobs:
         with:
           node-version: '26'
       - run: npm ci
-      # No project filter: this includes every functional and screenshot project.
-      - run: npm run test:browser
+      - name: Check browser launch
+        env:
+          PLAYWRIGHT_BROWSER: ${{ matrix.browser }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { chromium, firefox, webkit } from '@playwright/test';
+          const browserName = process.env.PLAYWRIGHT_BROWSER;
+          console.log(`Checking ${browserName} launch before the full suite.`);
+          const browser = await ({ chromium, firefox, webkit })[browserName].launch();
+          await browser.close();
+          NODE
+      # Keep the full suite even when the diagnostic launch fails.
+      - if: ${{ !cancelled() }}
+        run: npm run test:browser -- --project=${{ matrix.browser }}
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: ${{ !cancelled() }}
         with:
-          name: browser-report
+          name: browser-report-${{ matrix.browser }}
           path: |
             playwright-report/
             test-results/
           if-no-files-found: ignore
           retention-days: 7
+
+  screenshots:
+    name: Screenshots (${{ matrix.shard }}/4)
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --ipc=host
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '26'
+      - run: npm ci
+      # Select every screenshot project; Playwright partitions tests across shards.
+      - run: npm run test:browser -- --project='screenshots-*' --shard=${{ matrix.shard }}/4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: ${{ !cancelled() }}
+        with:
+          name: screenshot-report-${{ matrix.shard }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  browser:
+    name: Browser and screenshots
+    needs: [functional, screenshots]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every browser and screenshot shard
+        env:
+          FUNCTIONAL_RESULT: ${{ needs.functional.result }}
+          SCREENSHOTS_RESULT: ${{ needs.screenshots.result }}
+        run: |
+          echo "Functional: $FUNCTIONAL_RESULT"
+          echo "Screenshots: $SCREENSHOTS_RESULT"
+          test "$FUNCTIONAL_RESULT" = success && test "$SCREENSHOTS_RESULT" = success
 
   gitleaks:
     name: Secret history
