@@ -2,6 +2,9 @@ import type { Page } from '@playwright/test';
 import { test, expect, visit, settings, closeSettings, apiOrigins } from './fixtures';
 import { referenceClock } from './matrix';
 
+// Routine live-source coverage must exercise browser-default geocoding outside UTC.
+test.use({ timezoneId: 'America/Los_Angeles' });
+
 function forecast(fahrenheit = false) {
   const dates = Array.from(
     { length: 7 },
@@ -38,6 +41,7 @@ function forecast(fahrenheit = false) {
 
 async function mockSources(page: Page, failing = false) {
   const state = { failing, forecasts: [] as URL[], geocoding: [] as URL[] };
+  const timezone = await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
   await page.route(
     'https://api.open-meteo.com/v1/forecast?*',
     async (route) => {
@@ -59,7 +63,7 @@ async function mockSources(page: Page, failing = false) {
       return route.fulfill({
         json: {
           results: [
-            { name: 'Cloudfern', latitude: 0, longitude: 0, timezone: 'UTC' },
+            { name: 'Cloudfern', latitude: 0, longitude: 0, timezone },
           ],
         },
       });
@@ -158,7 +162,7 @@ test('live weather maps mocked current, daily and hourly fields; units and city 
   await dialog
     .getByRole('button', { name: 'Search cities', exact: true })
     .click();
-  await expect(dialog.getByRole('status')).toContainText('1 cities found');
+  await expect(dialog.getByRole('status')).toContainText('1 city found');
   await dialog
     .getByRole('button', { name: 'Choose a city', exact: true })
     .click();
@@ -169,7 +173,8 @@ test('live weather maps mocked current, daily and hourly fields; units and city 
   await closeSettings(page);
   await expect(page.getByRole('region', { name: 'Seven-day forecast' })
     .getByText('Cloudfern', { exact: true })).toBeVisible();
-  expect(state.geocoding).toHaveLength(1);
+  // Initial default, unit-system replacement, then the deliberate city search.
+  expect(state.geocoding).toHaveLength(3);
   expect(
     new Set(audit.external.map((request) => new URL(request.url()).origin)),
   ).toEqual(new Set(apiOrigins));
@@ -249,9 +254,14 @@ test('live Bootstrap headlines show original links and refresh respects the rele
   );
   await expect(page.locator('.story-excerpt')).toHaveCount(0);
   await expect(page.locator('.story-title')).toHaveCount(2);
-  await page
-    .getByRole('button', { name: 'Refresh live sources', exact: true })
-    .click();
+  const refresh = page.getByRole('button', { name: 'Refresh live sources', exact: true });
+  await expect(refresh).toBeEnabled();
+  expect(releases).toBe(1);
+  // Forced refresh bypasses the blog TTL, but not the releases' minimum interval.
+  const blogRequest = page.waitForRequest('https://blog.getbootstrap.com/feed.xml');
+  await refresh.click();
+  await blogRequest;
+  await expect(refresh).toBeEnabled();
   expect(releases).toBe(1);
 });
 

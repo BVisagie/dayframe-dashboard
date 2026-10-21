@@ -66,5 +66,7 @@
     </li>{/each}
 </ul>
 {#if events.length > max}<button class="btn btn-link px-0 mt-2" onclick={onmore}
-    >+{events.length - max} more events</button
+    >+{events.length - max} more {events.length - max === 1
+      ? 'event'
+      : 'events'}</button
   >{/if}

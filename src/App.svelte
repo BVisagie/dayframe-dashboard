@@ -8,6 +8,8 @@
     SourceStatus,
   } from './lib/types';
   import { simulate } from './lib/data';
+  import { parseReplayClock } from './lib/clock';
+  import { eventsForDate } from './lib/calendar';
   import {
     defaultSettings,
     loadSettings,
@@ -51,8 +53,8 @@
   ];
   const params = new URLSearchParams(location.search);
   const requestedClock = params.get('clock');
-  const parsedClock = requestedClock ? new Date(requestedClock) : null;
-  const frozen = parsedClock !== null && Number.isFinite(parsedClock.getTime());
+  const parsedClock = parseReplayClock(requestedClock);
+  const frozen = parsedClock !== null;
   const seed = params.get('seed') ?? '';
   let now = $state(frozen ? parsedClock! : new Date());
   let storage: Storage | null = null;
@@ -95,6 +97,7 @@
   );
   let settingsOpen = $state(false);
   let aboutOpen = $state(false);
+  let aboutSmall = $state(false);
   let notice = $state('');
   let refreshing = $state(false);
   let hourPage = $state(0);
@@ -109,7 +112,14 @@
   let weatherStatus = $state<SourceStatus>('fresh');
   let feedStatus = $state<SourceStatus>('fresh');
   let weatherLive = $state(false);
-  const simulation = $derived(simulate(now, seed, settings.scenario));
+  const simulation = $derived(
+    simulate(
+      now,
+      seed,
+      settings.scenario,
+      frozen ? 0 : now.getTimezoneOffset(),
+    ),
+  );
   const replay = $derived(frozen || settings.scenario !== 'steady');
   const convertedWeather = $derived.by(() => {
     const weather = simulation.weather;
@@ -148,7 +158,11 @@
           ...simulation.stories.filter(
             (story) => story.category !== 'bootstrap',
           ),
-        ].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)),
+        ].sort(
+          (a, b) =>
+            Number(Boolean(b.live)) - Number(Boolean(a.live)) ||
+            Date.parse(b.publishedAt) - Date.parse(a.publishedAt),
+        ),
   );
   const nextEvents = $derived(
     simulation.events
@@ -156,6 +170,12 @@
       .sort((a, b) => Date.parse(a.start) - Date.parse(b.start)),
   );
   const nextEvent = $derived(nextEvents.find((event) => !event.allDay));
+  const todaysEvents = $derived(
+    eventsForDate(
+      simulation.events,
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`,
+    ).filter((event) => event.allDay || Date.parse(event.end) > now.getTime()),
+  );
   const attentionAgent = $derived(
     simulation.agents.find((agent) => agent.status === 'reconnect') ??
       [...simulation.agents]
@@ -223,6 +243,10 @@
     settingsOpen = true;
     lastInteraction = Date.now();
   }
+  function openAbout() {
+    aboutSmall = matchMedia('(max-width: 43rem)').matches;
+    aboutOpen = true;
+  }
   async function closeSettings() {
     settingsOpen = false;
     await tick();
@@ -259,6 +283,7 @@
       event.ctrlKey ||
       event.metaKey ||
       event.altKey ||
+      event.shiftKey ||
       document.querySelector('dialog[open]') ||
       (target instanceof HTMLElement &&
         (target.matches('input, select, textarea, [contenteditable="true"]') ||
@@ -266,6 +291,7 @@
     )
       return;
     let next: View | undefined;
+    if (!settings.keyboardShortcuts && event.key.length === 1) return;
     if (event.key === ',') {
       event.preventDefault();
       openSettings();
@@ -338,15 +364,18 @@
     );
     document.documentElement.lang = settings.locale;
   });
+  const weatherUnits = $derived(settings.units);
+  const weatherLocationKey = $derived(JSON.stringify(settings.location));
   $effect(() => {
     if (replay) return;
-    const units = settings.units;
-    const selectedLocation = settings.location;
+    const units = weatherUnits;
+    const selectedLocation: SettingsType['location'] =
+      JSON.parse(weatherLocationKey);
     // A previous location or unit system must not be labelled as the new one
     // while its replacement source is resolving.
     sourceWeather = null;
     weatherLive = false;
-    weatherStatus = 'fresh';
+    weatherStatus = 'loading';
     const lifetime = new AbortController();
     let cancelled = false;
     let current: Source<Weather> | undefined;
@@ -469,7 +498,7 @@
       >
         <div class="position-relative">
           <button
-            class="btn btn-outline"
+            class="btn btn-outline theme-secondary"
             use:menu
             data-bs-toggle="menu"
             aria-label="Choose theme"
@@ -486,8 +515,10 @@
           </div>
         </div>
         <button
-          class="btn btn-outline"
-          use:tooltip={{ title: 'Settings (,)' }}
+          class="btn btn-outline theme-secondary"
+          use:tooltip={{
+            title: settings.keyboardShortcuts ? 'Settings (,)' : 'Settings',
+          }}
           onclick={openSettings}
           bind:this={settingsTrigger}
           aria-label="Open settings"><Icon name="sliders" /></button
@@ -508,7 +539,9 @@
             class={`nav-link ${view === item.id ? 'active' : ''}`}
             aria-current={view === item.id ? 'page' : undefined}
             data-view={item.id}
-            aria-keyshortcuts={`${i + 1} ${item.key}`}
+            aria-keyshortcuts={settings.keyboardShortcuts
+              ? `${i + 1} ${item.key}`
+              : undefined}
             ><Icon name={item.icon} /><span>{item.name}</span></button
           >
         </li>{/each}
@@ -547,7 +580,7 @@
         role="status"
       >
         {notice}<button
-          class="btn btn-ghost ms-auto"
+          class="btn btn-text theme-secondary ms-auto"
           aria-label="Dismiss notice"
           onclick={() => (notice = '')}><Icon name="x-lg" /></button
         >
@@ -631,7 +664,7 @@
             dense={compactDesktop}
             previewDays={compactDesktop ? 0 : 2}
           />{#snippet action()}<button
-              class="btn btn-ghost btn-sm"
+              class="btn btn-text theme-secondary btn-sm"
               onclick={() => navigate('weather')}
               aria-label="View full weather"
               ><Icon name="arrow-up-right" /></button
@@ -655,19 +688,19 @@
               >+{simulation.agents.length - summaryAgentCount} more agents</button
             >{/if}
           {#snippet action()}<button
-              class="btn btn-ghost btn-sm"
+              class="btn btn-text theme-secondary btn-sm"
               onclick={() => navigate('agents')}>View all</button
             >{/snippet}</Panel
         >
         <Panel title="Coming up" class="summary-calendar"
-          ><Agenda
-            events={nextEvents}
-            locale={settings.locale}
-            hourCycle={settings.hourCycle}
-            max={compactDesktop ? 1 : 2}
-            compact
-            onmore={() => navigate('calendar')}
-          /></Panel
+          >{#if todaysEvents.length}<Agenda
+              events={todaysEvents}
+              locale={settings.locale}
+              hourCycle={settings.hourCycle}
+              max={compactDesktop ? 1 : 2}
+              compact
+              onmore={() => navigate('calendar')}
+            />{:else}<p class="fg-2 mb-0">No more events today.</p>{/if}</Panel
         >
         <Panel title="Across your feeds" class="summary-feeds"
           ><ul
@@ -694,7 +727,7 @@
               </li>{/each}
           </ul>
           {#snippet action()}<button
-              class="btn btn-ghost btn-sm"
+              class="btn btn-text theme-secondary btn-sm"
               onclick={() => navigate('feeds')}>All stories</button
             >{/snippet}</Panel
         >
@@ -728,7 +761,7 @@
             dense={compactDesktop}
             full
           />{#snippet action()}<button
-              class="btn btn-ghost btn-sm"
+              class="btn btn-text theme-secondary btn-sm"
               onclick={openSettings}
               ><Icon name="geo-alt" /> Location and units</button
             >{/snippet}</Panel
@@ -806,14 +839,16 @@
       </p>
     </div>
     <div class="d-flex align-items-center gap-3">
-      <button class="btn btn-link btn-sm p-0" onclick={() => (aboutOpen = true)}
+      <button class="btn btn-link btn-sm p-0" onclick={openAbout}
         >About Bootstrap</button
       ><button
-        class="btn btn-ghost btn-sm"
+        class="btn btn-text theme-secondary btn-sm"
         onclick={refresh}
         disabled={refreshing}
         aria-label="Refresh live sources"
-        >{#if refreshing}<span class="spinner spinner-sm" aria-hidden="true"
+        >{#if refreshing}<span
+            class="spinner-border spinner-sm"
+            aria-hidden="true"
           ></span>{:else}<Icon name="arrow-clockwise" />{/if}</button
       >
     </div>
@@ -832,16 +867,16 @@
     aria-labelledby="about-title"
     style="--dialog-width: 46rem"
   >
-    <div class="dialog-header">
+    <div class={aboutSmall ? 'drawer-header' : 'dialog-header'}>
       <h2 class="h4 m-0" id="about-title">Bootstrap, at work</h2>
       <button
-        class="btn btn-ghost"
-        onclick={() => (aboutOpen = false)}
+        class="btn btn-text theme-secondary"
+        data-bs-dismiss={aboutSmall ? 'drawer' : 'dialog'}
         aria-label="Close about"><Icon name="x-lg" /></button
       >
     </div>
-    <div class="dialog-body prose">
-      <p class="fs-5">
+    <div class={aboutSmall ? 'drawer-body prose' : 'dialog-body prose'}>
+      <p class="fs-lg">
         Built with Bootstrap <strong>{stack.bootstrap}</strong>, Svelte {stack.svelte}
         and Vite {stack.vite}.
       </p>
@@ -856,7 +891,7 @@
         inspection lens.
       </p>
       <p>
-        <strong>Custom app CSS:</strong>
+        <strong>App-layer SCSS source:</strong>
         {new TextEncoder()
           .encode(appCss)
           .length.toLocaleString(settings.locale)} bytes before compression. Every
@@ -867,11 +902,10 @@
         {getTheme(settings.theme).name}. {themes.length} themes discovered automatically.
       </p>
       <button
-        class="btn btn-outline mb-3"
-        onclick={() => {
-          changeSettings({ lens: !settings.lens });
-          aboutOpen = false;
-        }}>{settings.lens ? 'Turn off' : 'Turn on'} Bootstrap lens</button
+        class="btn btn-outline theme-primary mb-3"
+        data-bs-dismiss={aboutSmall ? 'drawer' : 'dialog'}
+        onclick={() => changeSettings({ lens: !settings.lens })}
+        >{settings.lens ? 'Turn off' : 'Turn on'} Bootstrap lens</button
       >
       <h3 class="h5">Recent Bootstrap headlines</h3>
       <ul>
@@ -910,7 +944,7 @@
             settings.locale,
           )}</strong
         ><button
-          class="btn btn-ghost btn-sm"
+          class="btn btn-text theme-secondary btn-sm"
           aria-label="Dismiss reminder"
           onclick={() => (dismissedReminder = reminder.id)}
           ><Icon name="x-lg" /></button

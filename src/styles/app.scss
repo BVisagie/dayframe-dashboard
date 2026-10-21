@@ -5,6 +5,10 @@
   .switch:has(input:checked) {
     --switch-indicator-bg: var(--switch-checked-indicator-bg);
   }
+  /* Alpha.1's Range plugin writes a prefixed fill token; its Sass uses the unprefixed token. */
+  .form-range {
+    --range-fill: var(--bs-range-fill, 0);
+  }
   /* Bootstrap does not define dashboard information hierarchy or branded shell dimensions. */
   .dashboard-shell {
     max-width: 150rem;
@@ -45,10 +49,6 @@
     letter-spacing: -0.04em;
     font-weight: 650;
     max-width: 23ch;
-  }
-  .hero-panel {
-    --card-bg: var(--primary-bg-subtle);
-    --card-border-color: var(--primary-border);
   }
   .hero-context {
     max-width: 52ch;
@@ -149,7 +149,7 @@
   .compact-weather .weather-temperature {
     font-size: 3rem;
   }
-  .month-day[aria-pressed='true'] {
+  .month-day[aria-pressed='true']:not(:focus-visible) {
     outline: var(--border-width) solid var(--primary-fg);
     outline-offset: 0.1rem;
   }
@@ -169,8 +169,10 @@
     border-radius: 50%;
   }
   /* Bootstrap has no component inspection overlay. Its labels are ordinary documentation links. */
-  .lens-target {
+  .lens-target:not(:focus-visible) {
     outline: var(--border-width) dashed var(--info-fg);
+  }
+  .lens-target {
     position: relative;
   }
   .lens-label {
@@ -232,10 +234,6 @@
     .settings-content {
       grid-template-columns: minmax(0, 1fr);
     }
-    .settings-nav {
-      flex-direction: row;
-      flex-wrap: wrap;
-    }
     .month-day {
       min-height: 3rem;
       padding: 0.35rem;
@@ -252,7 +250,7 @@
     .event-dot {
       background: Highlight;
     }
-    .month-day[aria-pressed='true'] {
+    .month-day[aria-pressed='true']:not(:focus-visible) {
       outline-color: Highlight;
     }
     .theme-swatch {

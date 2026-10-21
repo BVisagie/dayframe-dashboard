@@ -32,7 +32,7 @@ export const menu = attach(Menu as Factory);
 export const navOverflow: Action<HTMLElement> = (node) => {
   const plugin = new NavOverflow(node);
   let frame = 0;
-  // Refresh clones when Svelte changes the active original, without observing
+  // Refresh clones when Svelte changes original state or shortcuts, without observing
   // Bootstrap's own overflow mutations and feeding them back into the plugin.
   const observer = new MutationObserver(() => {
     cancelAnimationFrame(frame);
@@ -41,7 +41,7 @@ export const navOverflow: Action<HTMLElement> = (node) => {
   node.querySelectorAll('.nav-link[data-view]').forEach((link) =>
     observer.observe(link, {
       attributes: true,
-      attributeFilter: ['class', 'aria-current'],
+      attributeFilter: ['class', 'aria-current', 'aria-keyshortcuts'],
     }),
   );
   return {
@@ -117,7 +117,7 @@ export const settingsDialog: Action<HTMLDialogElement> = (node) => {
   const instant = matchMedia('(prefers-reduced-motion: reduce)').matches;
   node.className = small
     ? `drawer drawer-end ${instant ? 'drawer-instant' : ''}`
-    : `dialog dialog-lg ${instant ? 'dialog-instant' : ''}`;
+    : `dialog dialog-lg dialog-scrollable ${instant ? 'dialog-instant' : ''}`;
   const plugin = small ? new Drawer(node) : new Dialog(node);
   void plugin.show();
   return {

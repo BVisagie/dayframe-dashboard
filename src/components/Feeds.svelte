@@ -31,6 +31,19 @@
   const pageCount = $derived(
     Math.max(1, Math.ceil(filtered.length / pageSize)),
   );
+  // Bootstrap supplies Pagination styling; the app windows its data-backed pages.
+  const pages = $derived.by(() => {
+    const indices = [...new Set([0, page - 1, page, page + 1, pageCount - 1])]
+      .filter((index) => index >= 0 && index < pageCount)
+      .sort((a, b) => a - b);
+    const window: (number | string)[] = [];
+    for (const [position, index] of indices.entries()) {
+      if (position > 0 && index - indices[position - 1] > 1)
+        window.push(`gap-${index}`);
+      window.push(index);
+    }
+    return window;
+  });
   $effect(() => {
     if (page >= pageCount) page = pageCount - 1;
   });
@@ -53,7 +66,18 @@
         >{item.charAt(0).toUpperCase() + item.slice(1)}</button
       >{/each}
   </div>
-  {#if status !== 'fresh'}<div class="alert theme-warning" role="status">
+  {#if status === 'loading'}<p
+      class="fg-2 d-flex align-items-center gap-2"
+      role="status"
+    >
+      <span
+        class="spinner-border spinner-sm"
+        aria-hidden="true"
+        data-bs-component="spinner"
+      ></span>
+      Loading Bootstrap feeds…
+    </p>
+  {:else if status !== 'fresh'}<div class="alert theme-warning" role="status">
       Bootstrap feeds could not refresh. Showing cached headlines or labelled
       demo stories.
     </div>{/if}
@@ -93,7 +117,7 @@
         <h3 class="h5">No stories in these categories</h3>
         <p>Choose a different category or enable more feeds in Settings.</p>
         <button
-          class="btn btn-outline"
+          class="btn btn-outline theme-secondary"
           onclick={() => {
             onchange({
               categories: ['bootstrap', 'technology', 'design', 'science'],
@@ -104,28 +128,37 @@
       </li>{/each}
   </ul>
   <nav aria-label="Feed pages" class="mt-4" data-bs-component="pagination">
-    <ul class="pagination m-0">
-      <li class="page-item">
-        <button class="page-link" disabled={page === 0} onclick={() => page--}
-          >Previous</button
+    <ul class="pagination pagination-sm m-0">
+      <li class="page-item" class:disabled={page === 0}>
+        <button
+          class="page-link"
+          disabled={page === 0}
+          onclick={() => page--}
+          aria-label="Previous"><Icon name="chevron-left" /></button
         >
       </li>
-      {#each Array.from({ length: pageCount }, (_, i) => i) as index}<li
-          class:active={page === index}
-          class="page-item"
-        >
-          <button
-            class="page-link"
-            aria-current={page === index ? 'page' : undefined}
-            aria-label={`Page ${index + 1}`}
-            onclick={() => (page = index)}>{index + 1}</button
+      {#each pages as index (index)}
+        {#if typeof index === 'string'}<li
+            class="page-item disabled"
+            aria-hidden="true"
           >
-        </li>{/each}
-      <li class="page-item">
+            <span class="page-link">…</span>
+          </li>
+        {:else}<li class:active={page === index} class="page-item">
+            <button
+              class="page-link"
+              aria-current={page === index ? 'page' : undefined}
+              aria-label={`Page ${index + 1}`}
+              onclick={() => (page = index)}>{index + 1}</button
+            >
+          </li>{/if}
+      {/each}
+      <li class="page-item" class:disabled={page + 1 >= pageCount}>
         <button
           class="page-link"
           disabled={page + 1 >= pageCount}
-          onclick={() => page++}>Next</button
+          onclick={() => page++}
+          aria-label="Next"><Icon name="chevron-right" /></button
         >
       </li>
     </ul>

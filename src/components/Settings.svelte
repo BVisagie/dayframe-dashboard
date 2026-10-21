@@ -28,6 +28,11 @@
   ];
   const categories = ['bootstrap', 'technology', 'design', 'science'];
   const small = matchMedia('(max-width: 43rem)').matches;
+  function cityLabel(city: Location) {
+    return [
+      ...new Set([city.name, city.admin1, city.country].filter(Boolean)),
+    ].join(', ');
+  }
   let cityQuery = $state('');
   let cityResults = $state<Location[]>([]);
   let cityMessage = $state('');
@@ -53,7 +58,7 @@
       if (disposed || version !== searchVersion) return;
       cityResults = results;
       cityMessage = results.length
-        ? `${results.length} cities found. Open the results menu to choose one.`
+        ? `${results.length} ${results.length === 1 ? 'city' : 'cities'} found. Open the results menu to choose one.`
         : 'No cities matched. Try a longer name or another spelling.';
     } catch {
       if (!disposed && version === searchVersion)
@@ -127,7 +132,7 @@
   <div class={small ? 'drawer-header' : 'dialog-header'}>
     <h2 id="settings-title" class="h4 m-0">Settings</h2>
     <button
-      class="btn btn-ghost"
+      class="btn btn-text theme-secondary"
       data-bs-dismiss={small ? 'drawer' : 'dialog'}
       aria-label="Close settings"><Icon name="x-lg" /></button
     >
@@ -135,7 +140,7 @@
   <div class={small ? 'drawer-body' : 'dialog-body'}>
     <div class="settings-content">
       <div
-        class="nav nav-pills flex-column settings-nav"
+        class="nav nav-pills flex-row flex-wrap md:flex-column settings-nav"
         role="tablist"
         aria-label="Settings sections"
         data-bs-component="nav"
@@ -163,7 +168,7 @@
           <h3 class="h5 mb-3">Appearance</h3>
           <div class="vstack gap-2 mb-4">
             {#each themes as theme}<button
-                class="btn btn-outline theme-choice"
+                class="btn btn-outline theme-secondary theme-choice"
                 aria-pressed={settings.theme === theme.id}
                 onclick={() => onchange({ theme: theme.id })}
                 ><span class="d-flex align-items-center gap-2"
@@ -173,7 +178,10 @@
                   ></span><span
                     class="theme-swatch"
                     style:background={theme.preview.accent}
-                  ></span><strong>{theme.name}</strong></span
+                  ></span><strong>{theme.name}</strong>
+                  {#if settings.theme === theme.id}<Icon
+                      name="check-lg"
+                    />{/if}</span
                 ><span class="small d-block mt-1">{theme.description}</span
                 ></button
               >{/each}
@@ -231,9 +239,10 @@
         >
           <h3 class="h5 mb-3">Display</h3>
           <label for="scale">Display scale: {settings.scale}%</label>
-          <div class="range mb-3" use:range data-bs-component="range">
+          <div class="form-range mb-3" use:range data-bs-component="range">
             <input
               id="scale"
+              class="form-range-input"
               type="range"
               min="70"
               max="150"
@@ -242,6 +251,18 @@
               oninput={(e) =>
                 onchange({ scale: Number(e.currentTarget.value) })}
             />
+          </div>
+          <div class="form-field mb-3">
+            <span class="switch"
+              ><input
+                id="keyboard-shortcuts"
+                type="checkbox"
+                role="switch"
+                checked={settings.keyboardShortcuts}
+                onchange={(e) =>
+                  onchange({ keyboardShortcuts: e.currentTarget.checked })}
+              /></span
+            ><label for="keyboard-shortcuts">Keyboard shortcuts</label>
           </div>
           <div class="form-field mb-3">
             <label for="startup">Startup view</label><select
@@ -371,7 +392,7 @@
           </form>
           {#if cityResults.length}<div class="mt-3">
               <button
-                class="btn btn-outline"
+                class="btn btn-outline theme-secondary"
                 type="button"
                 data-bs-toggle="combobox"
                 use:combobox
@@ -386,14 +407,14 @@
                     class="menu-item"
                     role="option"
                     aria-selected="false"
-                    data-bs-value={String(index)}>{city.name}</button
+                    data-bs-value={String(index)}>{cityLabel(city)}</button
                   >{/each}
               </div>
             </div>{/if}
           <p class="small mt-2" role="status">{cityMessage}</p>
           <div class="d-flex flex-wrap gap-2 mb-4">
             <button
-              class="btn btn-outline"
+              class="btn btn-outline theme-secondary"
               onclick={location}
               disabled={locationPending}
               ><Icon name="geo-alt" />
@@ -401,7 +422,7 @@
                 ? 'Finding location…'
                 : 'Use my location'}</button
             ><button
-              class="btn btn-ghost"
+              class="btn btn-text theme-secondary"
               onclick={() => onchange({ location: null })}
               >Use time-zone city</button
             >
@@ -534,7 +555,7 @@
             ><label for="lens">Bootstrap lens</label>
           </div>
           <div class="d-flex flex-wrap gap-2">
-            <button class="btn btn-outline" onclick={onrefresh}
+            <button class="btn btn-outline theme-secondary" onclick={onrefresh}
               >Refresh live sources</button
             ><button class="btn btn-outline theme-danger" onclick={onreset}
               >Reset settings</button

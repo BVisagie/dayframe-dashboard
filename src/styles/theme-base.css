@@ -228,6 +228,11 @@
   :where([data-bs-theme='light']) { color-scheme: light; }
   :where([data-bs-theme='dark']) { color-scheme: dark; }
 
+  .hero-panel {
+    --card-bg: var(--primary-bg-subtle);
+    --card-border-color: var(--primary-border);
+  }
+
   /* Bootstrap component tokens keep control boundaries at interface contrast
      while panel dividers can use the quieter decorative border token. */
   .form-control { --control-border-color: var(--border-emphasized); }

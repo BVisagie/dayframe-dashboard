@@ -28,7 +28,7 @@
     <p class="mb-1 fg-2">{weather.city}</p>
     <div class={dense ? 'd-flex align-items-center flex-wrap gap-2' : ''}>
       <div class="weather-temperature">
-        {Math.round(weather.temperature)}<span class="fs-4"
+        {Math.round(weather.temperature)}<span class="fs-xl"
           >°{units === 'fahrenheit' ? 'F' : 'C'}</span
         >
       </div>
@@ -41,7 +41,21 @@
   Feels like {Math.round(weather.feelsLike)}° · Wind {Math.round(weather.wind)}
   {units === 'fahrenheit' ? 'mph' : 'km/h'} · {weather.humidity}% humidity
 </p>
-{#if status !== 'fresh'}<div class="alert theme-warning small" role="status">
+{#if status === 'loading'}<p
+    class="small fg-2 d-flex align-items-center gap-2"
+    role="status"
+  >
+    <span
+      class="spinner-border spinner-sm"
+      aria-hidden="true"
+      data-bs-component="spinner"
+    ></span>
+    Loading weather…
+  </p>
+{:else if status !== 'fresh'}<div
+    class="alert theme-warning small"
+    role="status"
+  >
     {status === 'offline'
       ? 'Weather is offline. Showing the saved or simulated forecast.'
       : 'Weather could not refresh. Showing the last available forecast.'}

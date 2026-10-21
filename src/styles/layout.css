@@ -46,25 +46,6 @@
     --gap: var(--spacer-5);
   }
 
-  /* The month and selected-day agenda need an asymmetric split rather than
-     Bootstrap's equal column-count utilities. Month cells live inside it. */
-  .calendar-grid {
-    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
-    grid-template-rows: none;
-    --gap: var(--spacer-5);
-  }
-
-  .weather-grid {
-    --columns: 2;
-    --gap: var(--spacer-5);
-    grid-template-rows: none;
-  }
-
-  .calendar-cell {
-    min-block-size: 7.5rem;
-  }
-
-  /* Add Bootstrap's .contains-inline to panels that need container queries. */
   .dashboard-panel {
     min-inline-size: 0;
   }
@@ -98,17 +79,6 @@
     :where([data-layout='console']) .dashboard-grid {
       grid-template-columns: minmax(0, 1fr);
       grid-template-areas: 'hero' 'agents' 'calendar' 'weather' 'feeds';
-    }
-
-    .calendar-grid {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    .weather-grid {
-      --columns: 1;
-    }
-
-    .calendar-cell {
-      min-block-size: 5.5rem;
     }
   }
 }

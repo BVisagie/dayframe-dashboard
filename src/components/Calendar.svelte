@@ -19,6 +19,7 @@
     compact?: boolean;
   } = $props();
   let fullAgenda = $state(false);
+  let small = $state(false);
   function dateKey(date: Date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }
@@ -80,16 +81,16 @@
         data-bs-component="button-group"
       >
         <button
-          class="btn btn-outline"
+          class="btn btn-outline theme-secondary"
           onclick={() => moveMonth(-1)}
           aria-label="Previous month"><Icon name="chevron-left" /></button
         ><button
-          class="btn btn-outline"
+          class="btn btn-outline theme-secondary"
           onclick={() => {
             chooseDate(dateKey(now));
           }}>Today</button
         ><button
-          class="btn btn-outline"
+          class="btn btn-outline theme-secondary"
           onclick={() => moveMonth(1)}
           aria-label="Next month"><Icon name="chevron-right" /></button
         >
@@ -101,15 +102,16 @@
     <div class="month-grid" aria-label="Choose a date">
       {#each days as day}{@const date = dateKey(day)}{@const count =
           eventsOn(date).length}<button
-          class="btn btn-ghost month-day"
+          class="btn btn-text theme-secondary month-day"
           class:outside-month={day.getMonth() !== month.getMonth()}
           class:weekend={day.getDay() === 0 || day.getDay() === 6}
           aria-pressed={selected === date}
-          aria-label={`${formatDate(day, settings.locale, { dateStyle: 'full' })}, ${count} events`}
+          aria-label={`${formatDate(day, settings.locale, { dateStyle: 'full' })}, ${count} ${count === 1 ? 'event' : 'events'}`}
           onclick={() => chooseDate(date)}
           ><span class:fw-bold={date === dateKey(now)}>{day.getDate()}</span
           >{#if count}<span class="event-dot" aria-hidden="true"></span><span
-              class="visually-hidden">{count} events</span
+              class="visually-hidden"
+              >{count} {count === 1 ? 'event' : 'events'}</span
             >{/if}</button
         >{/each}
     </div>
@@ -146,7 +148,10 @@
       locale={settings.locale}
       hourCycle={settings.hourCycle}
       max={compact ? 3 : 6}
-      onmore={() => (fullAgenda = true)}
+      onmore={() => {
+        small = matchMedia('(max-width: 43rem)').matches;
+        fullAgenda = true;
+      }}
     />
     <p class="small fg-2 mt-3 mb-0">
       All calendars and attendees are invented. Select an event for details.
@@ -158,9 +163,10 @@
     use:settingsDialog
     onclose={() => (fullAgenda = false)}
     aria-labelledby="full-agenda-title"
+    data-bs-component={small ? 'drawer' : 'dialog'}
     style="--dialog-width: 44rem"
   >
-    <div class="dialog-header">
+    <div class={small ? 'drawer-header' : 'dialog-header'}>
       <h2 id="full-agenda-title" class="h4 m-0">
         All events for {formatDate(
           new Date(selected + 'T12:00:00'),
@@ -170,12 +176,12 @@
         )}
       </h2>
       <button
-        class="btn btn-ghost"
-        onclick={() => (fullAgenda = false)}
+        class="btn btn-text theme-secondary"
+        data-bs-dismiss={small ? 'drawer' : 'dialog'}
         aria-label="Close all events"><Icon name="x-lg" /></button
       >
     </div>
-    <div class="dialog-body">
+    <div class={small ? 'drawer-body' : 'dialog-body'}>
       <Agenda
         events={eventsOn(selected)}
         locale={settings.locale}

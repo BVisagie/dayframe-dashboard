@@ -31,10 +31,19 @@ export async function themeContract(page: Page) {
       const resolved = getComputedStyle(probe).getPropertyValue(property);
       if (!resolved || resolved.includes('var(')) failures.push(`${token} did not resolve: ${resolved}`);
       if (property === 'color') {
-        context.clearRect(0, 0, 1, 1);
+        // Invalid assignments retain the old style; two sentinels also allow either as a real colour.
+        context.fillStyle = '#010203';
         context.fillStyle = resolved;
-        context.fillRect(0, 0, 1, 1);
-        values[token] = Array.from(context.getImageData(0, 0, 1, 1).data);
+        const first = context.fillStyle;
+        context.fillStyle = '#040506';
+        context.fillStyle = resolved;
+        if (context.fillStyle !== first) {
+          failures.push(`${token} is not a valid canvas color: ${resolved}`);
+        } else {
+          context.clearRect(0, 0, 1, 1);
+          context.fillRect(0, 0, 1, 1);
+          values[token] = Array.from(context.getImageData(0, 0, 1, 1).data);
+        }
       }
       probe.style.removeProperty(property);
     }
