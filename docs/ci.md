@@ -14,12 +14,16 @@ intentional visual changes can request candidates through the workflow's
 The type job also runs `npx tsc --project .github/tsconfig.json` to check the
 typed JSDoc in privacy, sync and workflow tooling with Node types.
 
-These workflows are implemented; a successful hosted browser run and reviewed
-container-generated screenshot baselines remain pending. Local fitting checks
-cover all five views at 1280×720 and 1920×1080 in all three themes at the
-default display scale. They do not establish that the three-browser functional
-suite or the complete screenshot matrix has passed. No baseline acceptance or
-production privacy pass is claimed.
+The initial 400 Chromium baselines were generated in the pinned Noble
+container and reviewed across all five views, all supported theme/scheme
+combinations, eight viewports and device pixel ratios 1 and 2. Comparisons
+store CSS-pixel images; the test asserts the browser's actual device pixel
+ratio separately. Default and Tideline each contribute 160 images and
+Nebuchadnezzar contributes 80. Desktop image dimensions confirm no vertical
+overflow at the six desktop sizes; tablet and phone views scroll as designed.
+These are the first baselines, with no previous images replaced. Every
+candidate must still pass the complete functional and screenshot comparison
+suite; visual review does not certify the private denylist gate.
 
 The Vite configuration fixes the Pages base at `/dayframe-dashboard/`.
 `DAYFRAME_PUBLIC_LAUNCH` is the single repository variable passed to the build:

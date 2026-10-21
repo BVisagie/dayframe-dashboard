@@ -77,10 +77,13 @@ single agent and the more-agents control preserve the mono face's breathing
 room. At 1920×1080 three agent readings fit alongside the expanded agenda and
 feed log. Black stays black, and amber warnings keep explicit text cues.
 
-Local fitting checks cover all five views at both desktop sizes in this theme
-at the default display scale. The clock now carries `.dashboard-clock`, the
-optional glow target. These
-captures use reduced motion, which disables CRT effects; normal-motion CRT
-on/off review remains required before baseline acceptance. The full
-viewport/DPR screenshot matrix and hosted browser CI remain pending. No
-screenshot baselines were created, updated or accepted during this review.
+The initial 80 pinned-container baselines for this theme were reviewed across
+all five views, eight viewports and both device pixel ratios. No substantive
+clipping, overlap, unintended desktop overflow or disclosure issue was found.
+Phone and tablet scrolling preserves the intended reading order. These are
+initial images rather than replacements. Independent token, contrast and
+functional browser checks remain required for each candidate.
+
+A separate normal-motion on/off review confirmed that the static CRT lines
+and clock glow preserve readability. The baseline matrix uses reduced motion,
+so its captures deliberately omit that decorative finish.

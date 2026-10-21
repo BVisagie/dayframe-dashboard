@@ -109,6 +109,24 @@ for (const mobile of [false, true]) {
   });
 }
 
+for (const mobile of [false, true]) {
+  test(`Settings ${mobile ? 'drawer' : 'dialog'} closes through its plugin with normal motion`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    if (mobile) await page.setViewportSize({ width: 390, height: 844 });
+    await visit(page);
+    await page.evaluate(name => document.addEventListener(name, event => {
+      (event.target as HTMLElement).dataset.pluginReady = 'true';
+    }, { once: true }), mobile ? 'shown.bs.drawer' : 'shown.bs.dialog');
+    const dialog = await settings(page);
+    await expect(dialog).toHaveAttribute('data-plugin-ready', 'true');
+    await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Open settings', exact: true })).toBeFocused();
+    await page.keyboard.press('w');
+    await expectView(page, 'weather');
+  });
+}
+
 test('URL overrides apply only to this visit, including after an unrelated deliberate edit', async ({ page }) => {
   await visit(page);
   let dialog = await settings(page, 'Display');

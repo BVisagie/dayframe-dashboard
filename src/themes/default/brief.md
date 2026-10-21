@@ -78,8 +78,9 @@ readings use the available space without competing with the action. Theme
 card tokens now control the hero radius and padding, preserving its distinction
 from the supporting panels.
 
-Local fitting checks cover all five views at both desktop sizes in this theme
-at the default display scale. These captures support the layout critique;
-the full viewport/DPR screenshot
-matrix, hosted browser CI and baseline review remain pending. No screenshot
-baselines were created, updated or accepted during this review.
+The initial 160 pinned-container baselines for this theme were reviewed across
+all five views, eight viewports and both device pixel ratios. No substantive
+clipping, overlap, unintended desktop overflow or disclosure issue was found.
+Phone and tablet scrolling preserves the intended reading order. These are
+initial images rather than replacements. Independent token, contrast and
+functional browser checks remain required for each candidate.

@@ -76,9 +76,9 @@ the app no longer overrides those tokens. Compact agenda and capacity previews
 keep all three lower panels above the footer at 1280×720. The taller capture
 uses the additional readings without adding decorative texture.
 
-Local fitting checks cover all five views at both desktop sizes in this theme
-at the default display scale. These captures support the palette and hierarchy
-critique; they do not certify
-contrast or the full browser matrix. Supported-scheme contract checks, hosted
-browser CI and the complete viewport/DPR baseline review remain required.
-No screenshot baselines were created, updated or accepted during this review.
+The initial 160 pinned-container baselines for this theme were reviewed across
+all five views, eight viewports and both device pixel ratios. No substantive
+clipping, overlap, unintended desktop overflow or disclosure issue was found.
+Phone and tablet scrolling preserves the intended reading order. These are
+initial images rather than replacements. Independent token, contrast and
+functional browser checks remain required for each candidate.

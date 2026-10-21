@@ -476,8 +476,9 @@ The implemented workflows build and test pushes to `main`. A trusted listener
 then scans the exact candidate and permits Pages deployment only when every
 required job and privacy status succeeds. Vite's `base` is
 `/dayframe-dashboard/`. Pull request builds are configured as workflow artifacts.
-Hosted CI, baseline review, private denylist setup and Pages setup remain
-pending; this describes the implementation rather than a completed deployment.
+The initial 400 container-generated screenshot baselines are reviewed and
+committed. Every candidate still requires green CI, the real full-history
+private denylist check and separately approved Pages setup before deployment.
 
 Prelaunch builds exclude search engines with `noindex` and `robots.txt`. A
 single build flag controls both. Pages setup/deployment, repository settings,
@@ -510,7 +511,7 @@ Launch checklist:
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Views and state        | All five views, Settings, navigation, rotation and deterministic scenarios; independent persisted date format                                                                | Complete functional browser suite in Chromium, Firefox and WebKit                                                                                        |
 | Bootstrap integration  | Real plugins through Svelte actions; Datepicker updates and NavOverflow clone navigation/active-state synchronization                                                        | Hosted browser CI and reviewed screenshot comparisons                                                                                                    |
-| Layout and themes      | Default, Nebuchadnezzar and Tideline; height-aware row limits and paging; all five views locally fit 1280×720 and 1920×1080 at default scale without lowering the root floor | Full view × theme × supported scheme × viewport × DPR screenshot matrix and accepted container baselines                                                 |
+| Layout and themes      | Default, Nebuchadnezzar and Tideline; height-aware row limits and paging; all five views locally fit 1280×720 and 1920×1080 at default scale without lowering the root floor | Reviewed initial 400-image matrix committed; exact comparisons required for every candidate                                                              |
 | Sources                | Allowed live adapters, caching, fallbacks, backoff and default ten-second deadlines                                                                                          | Hosted checks; no real account connections are needed                                                                                                    |
 | Bootstrap tracking     | Exact `6.0.0-alpha.1` pin, lens, About panel, gap log and measured app CSS footprint                                                                                         | Hosted maintenance workflow verification                                                                                                                 |
 | Privacy and deployment | Fail-closed scanner, trusted history gate and gated static artifact deployment workflows                                                                                     | Real denylist deferred; independent full-history check before first merge, trusted status verification and separately approved repository/Pages settings |
