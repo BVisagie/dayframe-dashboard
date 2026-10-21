@@ -81,7 +81,7 @@ reviewed with every Bootstrap release.
 | Feed paging | `pagination` |
 | Loading states | `placeholder`, `spinner` |
 | Reminders | `toast` |
-| "Demo data" notice, offline and stale states | `banner`, `alert` |
+| "Demo data" notice, offline and stale states | `alert` |
 | Settings | `dialog`, or `drawer` on narrow screens, with `tab` or `scrollspy` between sections |
 | Theme, view and scenario pickers | `menu` |
 | City search | `combobox` |
@@ -139,7 +139,8 @@ views, so it isn't a carousel. `stepper` could suit a first-visit tour.
 
 The app is a single page with five views: Summary, Agents, Calendar, Weather
 and Feeds. Settings open from any view. Arrow keys, number keys and the existing
-single-key shortcuts navigate between views. Optional rotation cycles through
+single-key shortcuts (`s`, `a`, `c`, `w`, `f`) navigate between views. Shortcuts
+ignore editable controls, and `,` opens Settings. Optional rotation cycles through
 the views and pauses during interaction.
 
 ### Data sources
@@ -162,7 +163,9 @@ live or simulated:
 Open-Meteo, the Bootstrap blog feed and the GitHub REST API all allow
 cross-origin requests from any site. Responses are cached in `localStorage`.
 GitHub release data is refreshed at most hourly, which stays well within the
-unauthenticated limit of 60 requests per hour per visitor.
+unauthenticated limit of 60 requests per hour per originating IP. Shared networks
+can exhaust that allowance, so rate limits trigger backoff and cached fallbacks.
+The blog feed provides headlines, dates and links, without article excerpts.
 
 ### Weather location
 
@@ -268,7 +271,7 @@ export default defineTheme({
 });
 ```
 
-- **Registry:** `src/themes/registry.js` discovers themes with
+- **Registry:** `src/themes/registry.ts` discovers themes with
   `import.meta.glob('./*/theme.js', { eager: true })` and validates each
   manifest. Validation checks for a unique `id`, known schemes and layouts, a
   well-formed options schema, and the required preview colours.
@@ -459,9 +462,9 @@ Launch checklist:
 
 | # | Milestone | Done when |
 | --- | --- | --- |
-| M0 | Scaffold | Licence, README stub, `AGENTS.md` and `CLAUDE.md`, and a Svelte, Vite and Bootstrap build. CI runs the tests and privacy checks, and the weekly skill-sync workflow is in place. A placeholder deploys to Pages with `noindex` |
+| M0 | Scaffold | Licence, README, `AGENTS.md` and `CLAUDE.md`, and a Svelte, Vite and Bootstrap build. CI runs the tests and privacy checks, and the weekly skill-sync workflow is in place. The complete prelaunch dashboard supersedes the placeholder and deploys to Pages with `noindex` |
 | M1 | Views on simulated data | All five views, Settings, keyboard navigation, rotation and scenarios work on simulated data. They are built from Bootstrap components and plugins as the feature map lists. A fixed clock gives identical renders |
-| M2 | Token architecture | Theme registry, token tiers, layers, scale unit, and the `standard` and `console` layouts. Default and Nebuchadnezzar ported. Contract checks and screenshot matrix pass |
+| M2 | Token architecture | Theme registry, token tiers, layers, scale unit, and the `standard` and `console` layouts. Default and Nebuchadnezzar built from their recorded briefs. Contract checks and screenshot matrix pass |
 | M3 | Live sources | Weather and Bootstrap feeds are live, with caching and fallbacks. They degrade gracefully offline and under rate limits |
 | M4 | Bootstrap tracking | Dependabot and the release log are running. The Bootstrap lens and About Bootstrap panel are built, and the custom CSS footprint is recorded |
 | M5 | Launch | Launch checklist complete |

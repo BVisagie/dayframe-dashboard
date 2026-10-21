@@ -35,6 +35,9 @@ Pages using simulated data, and is built with Svelte 5, Vite and Bootstrap 6.
    pull request text. The only exception is the copyright holder's name in
    `LICENSE`. Simulated data uses invented people, organisations and places.
    Don't change the repository's git identity.
+   - Approved exception: mandatory third-party legal notices and the unmodified
+     vendored frontend-design skill may retain upstream names. This exception
+     does not apply to project-authored content or secret scanning.
 4. **Bootstrap first.** For each piece of UI, work down this list and stop at
    the first step that covers it:
    1. a Bootstrap component, with its JavaScript plugin where it has one;
