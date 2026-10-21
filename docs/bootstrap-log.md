@@ -29,6 +29,17 @@ continues to own the selected day and input node when the calendar peer restores
 a clone during disposal. Global shortcuts yield to the datepicker and open
 dialogs, and resume when the native dialog closes.
 
+Combobox alpha.1 registers itself and its internal Menu on the same toggle,
+which Bootstrap's instance registry rejects. This emits one construction
+warning. Menu's delegated capture handler constructs additional unregistered
+instances on keyboard navigation; their submenu listeners remain attached
+after the owned plugin is disposed. Probes measured listener accumulation,
+not heap growth. A bubble listener cannot prevent this capture-phase path.
+Desktop and drawer regressions verify three choices, arrows, Home, End,
+Escape, selection and reopening. The warning and additional listeners remain
+upstream limitations; no warning is suppressed or dependency patched. Track
+[Bootstrap issue 42965](https://github.com/twbs/bootstrap/issues/42965).
+
 ### Custom code inventory
 
 Bootstrap does not provide these dashboard-specific capabilities:

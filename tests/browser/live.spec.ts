@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { test, expect, settings, closeSettings, apiOrigins } from './fixtures';
+import { test, expect, visit, settings, closeSettings, apiOrigins } from './fixtures';
 import { referenceClock } from './matrix';
 
 function forecast(fahrenheit = false) {
@@ -175,6 +175,47 @@ test('live weather maps mocked current, daily and hourly fields; units and city 
   for (const request of audit.external)
     expect(request.headers().cookie).toBeUndefined();
 });
+
+for (const viewport of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
+  test(`city combobox supports keyboard selection and reopening at ${viewport.width}`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.route('https://geocoding-api.open-meteo.com/v1/search?*', route => route.fulfill({
+      json: { results: ['Cloudfern', 'Mistvale', 'Rainmere'].map(name => ({
+        name, latitude: 0, longitude: 0, timezone: 'UTC',
+      })) },
+    }));
+    await visit(page, { view: 'weather' });
+    for (let cycle = 0; cycle < 2; cycle++) {
+      const dialog = await settings(page, 'Weather');
+      await dialog.getByLabel('Search for a city', { exact: true }).fill('Cloud');
+      await dialog.getByRole('button', { name: 'Search cities', exact: true }).click();
+      await expect(dialog.getByRole('status')).toContainText('3 cities found');
+      const toggle = dialog.getByRole('button', { name: 'Choose a city', exact: true });
+      const first = dialog.getByRole('option', { name: 'Cloudfern', exact: true });
+      const second = dialog.getByRole('option', { name: 'Mistvale', exact: true });
+      const last = dialog.getByRole('option', { name: 'Rainmere', exact: true });
+      await toggle.focus();
+      await page.keyboard.press('ArrowDown');
+      await expect(first).toBeFocused();
+      await page.keyboard.press('ArrowDown');
+      await expect(second).toBeFocused();
+      await page.keyboard.press('End');
+      await expect(last).toBeFocused();
+      await page.keyboard.press('ArrowUp');
+      await expect(second).toBeFocused();
+      await page.keyboard.press('Home');
+      await expect(first).toBeFocused();
+      await page.keyboard.press('Escape');
+      await expect(toggle).toBeFocused();
+      await expect(first).toBeHidden();
+      await page.keyboard.press('ArrowUp');
+      await expect(last).toBeFocused();
+      await page.keyboard.press('Enter');
+      await expect(dialog.locator('p').filter({ hasText: /^Location:/ })).toContainText('Rainmere');
+      await closeSettings(page);
+    }
+  });
+}
 
 test('live Bootstrap headlines show original links and refresh respects the release interval', async ({
   page,

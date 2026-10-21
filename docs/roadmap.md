@@ -84,7 +84,7 @@ reviewed with every Bootstrap release.
 | "Demo data" notice, offline and stale states | `alert`                                                                                                      |
 | Settings                                     | `dialog`, or `drawer` on narrow screens, with `tab` between sections                                         |
 | Theme, view and scenario pickers             | `menu`                                                                                                       |
-| City search                                  | `combobox`                                                                                                   |
+| City search                                  | `combobox`; known alpha.1 instance warnings and listener accumulation are tracked in the Bootstrap log       |
 | Display scale                                | `range`                                                                                                      |
 | Toggles, choices and numbers                 | `switch`, `check`, `radio`, `form-field`, floating labels, `form-adorn` for units, `input-group`, validation |
 | Feed categories                              | `chip` buttons (the editable `Chips` plugin is for input)                                                    |
