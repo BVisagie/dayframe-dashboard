@@ -1,0 +1,68 @@
+name: Weekly maintenance
+
+on:
+  schedule:
+    - cron: '17 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-maintenance
+  cancel-in-progress: false
+
+jobs:
+  skill:
+    name: Sync canonical frontend design skill
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '26'
+      - id: sync
+        run: node scripts/sync-skill.mjs
+      - name: Open a dedicated skill update draft
+        if: steps.sync.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAINTENANCE_KIND: skill
+        run: node .github/scripts/maintenance-pr.mjs
+
+  bootstrap:
+    name: Check Bootstrap 6 prereleases
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '26'
+      - id: release
+        run: node .github/scripts/check-bootstrap.mjs
+      - name: Prepare the exact candidate pin without lifecycle scripts
+        if: steps.release.outputs.version != ''
+        env:
+          BOOTSTRAP_CANDIDATE: ${{ steps.release.outputs.version }}
+        run: npm install --package-lock-only --ignore-scripts --save-exact "bootstrap@$BOOTSTRAP_CANDIDATE"
+      - name: Record required Bootstrap review and open a dedicated draft
+        if: steps.release.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAINTENANCE_KIND: bootstrap
+          BOOTSTRAP_CANDIDATE: ${{ steps.release.outputs.version }}
+        run: node .github/scripts/maintenance-pr.mjs

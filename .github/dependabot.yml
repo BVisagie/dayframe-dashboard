@@ -1,0 +1,28 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:00'
+      timezone: Etc/UTC
+    versioning-strategy: increase
+    open-pull-requests-limit: 10
+    # Bootstrap stays a dedicated upgrade PR, never a grouped dependency update.
+    groups:
+      development-tools:
+        dependency-type: development
+        patterns: ['*']
+        update-types: [minor, patch]
+    commit-message:
+      prefix: deps
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '07:30'
+      timezone: Etc/UTC
+    commit-message:
+      prefix: ci

@@ -1,0 +1,126 @@
+name: Privacy and deployment
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  privacy:
+    name: Trusted private history
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      # workflow_run loads this workflow from main. Candidate source is never
+      # checked out, installed, cached, imported, or executed in this job.
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '26'
+      - name: Fetch candidate and complete repository history as passive data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ulimit -f 1048576
+          node .github/scripts/trusted-source.mjs
+      - name: Scan every reachable commit for secrets with trusted policy
+        run: node .github/scripts/gitleaks.mjs "$SCAN_REPOSITORY"
+      - name: Scan private denylist in candidate tree and complete history
+        env:
+          DAYFRAME_DENYLIST: ${{ secrets.DAYFRAME_DENYLIST }}
+        run: node scripts/privacy.mjs --repository "$SCAN_REPOSITORY" --tree "$SCAN_SHA" --history
+
+  report:
+    name: Publish private history result
+    needs: privacy
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      statuses: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '26'
+      - name: Publish a status on the exact candidate commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRIVACY_RESULT: ${{ needs.privacy.result }}
+        run: node .github/scripts/privacy-status.mjs
+
+  deploy-gate:
+    name: Verify deployment checks
+    needs: [privacy, report]
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '26'
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: node .github/scripts/deploy-gate.mjs
+
+  deploy:
+    name: Deploy Pages
+    needs: deploy-gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '26'
+      # Recheck after acquiring the deployment lock to reject an obsolete run.
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: node .github/scripts/deploy-gate.mjs
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: dayframe-build
+          path: dist/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        with:
+          path: dist/
+      - uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+        id: deployment

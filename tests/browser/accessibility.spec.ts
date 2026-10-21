@@ -1,0 +1,71 @@
+import AxeBuilder from '@axe-core/playwright';
+import { test, expect, visit, settings, noHorizontalOverflow } from './fixtures';
+import { themeSchemes, views } from './matrix';
+import { themeContract } from './contrast';
+
+for (const { theme, scheme } of themeSchemes) {
+  test(`${theme.id} ${scheme} resolves every required token and passes the independent AA colour contract`, async ({ page }) => {
+    await visit(page, { theme: theme.id, scheme });
+    const result = await themeContract(page);
+    expect(result.checkedTokens).toBeGreaterThan(200);
+    expect(result.resolvedColors).toBeGreaterThan(180);
+    expect(result.failures).toEqual([]);
+  });
+
+  for (const view of views) {
+    test(`${theme.id} ${scheme} ${view} has no axe WCAG 2.2 AA violations`, async ({ page }) => {
+      await visit(page, { theme: theme.id, scheme, view });
+      const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
+      expect(result.violations).toEqual([]);
+    });
+  }
+
+  test(`${theme.id} ${scheme} Settings sections have no axe violations`, async ({ page }) => {
+    await visit(page, { theme: theme.id, scheme });
+    const dialog = await settings(page);
+    for (const section of ['Appearance', 'Display', 'Weather', 'Calendar', 'Feeds', 'Demo']) {
+      await dialog.getByRole('tab', { name: section, exact: true }).click();
+      const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']).analyze();
+      expect(result.violations, `${section} accessibility`).toEqual([]);
+    }
+  });
+
+  test(`${theme.id} ${scheme} preserves visible keyboard focus and disables effects for reduced motion and forced colors`, async ({ page }) => {
+    await visit(page, { theme: theme.id, scheme });
+    for (const forcedColors of ['none', 'active'] as const) {
+      await page.emulateMedia({ reducedMotion: forcedColors === 'none' ? 'reduce' : 'no-preference', forcedColors });
+      const effects = await page.locator('.dashboard-shell').evaluate(shell => {
+        const after = getComputedStyle(shell, '::after');
+        return { visible: after.display !== 'none' && !['none', 'normal'].includes(after.content),
+          animations: document.getAnimations().filter(animation => animation.playState === 'running').length };
+      });
+      expect(effects.visible, `Decorative overlay under ${forcedColors === 'active' ? 'forced colors' : 'reduced motion'}`).toBe(false);
+      if (forcedColors === 'none') expect(effects.animations).toBe(0);
+      await page.locator('main').focus();
+      await page.keyboard.press('Tab');
+      const focus = await page.evaluate(() => {
+        const element = document.activeElement as HTMLElement;
+        const style = getComputedStyle(element);
+        return { visible: element.matches(':focus-visible'),
+          outline: style.outlineStyle !== 'none' && parseFloat(style.outlineWidth) > 0 && style.outlineColor !== 'rgba(0, 0, 0, 0)',
+          shadow: style.boxShadow !== 'none', hidden: style.visibility === 'hidden' || style.display === 'none' };
+      });
+      expect(focus.visible).toBe(true);
+      expect(focus.hidden).toBe(false);
+      expect(focus.outline || focus.shadow, 'Keyboard focus must have a visible indicator').toBe(true);
+    }
+  });
+
+  test(`${theme.id} ${scheme} fits every view at both display scale extremes on desktop and phone`, async ({ page }) => {
+    for (const viewport of [{ width: 1280, height: 720 }, { width: 390, height: 844 }]) {
+      await page.setViewportSize(viewport);
+      for (const scale of ['70', '150']) {
+        for (const view of views) {
+          await visit(page, { theme: theme.id, scheme, view, scale });
+          await noHorizontalOverflow(page);
+          expect(await page.locator('html').evaluate(node => parseFloat(getComputedStyle(node).fontSize)), 'Readable root text floor').toBeGreaterThanOrEqual(14);
+        }
+      }
+    }
+  });
+}
