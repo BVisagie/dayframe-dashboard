@@ -585,7 +585,7 @@
         use:viewNavigation
         data-bs-component="nav-overflow"
       >
-        <ul class="nav nav-pills gap-1">
+        <ul class="nav nav-pills gap-1" data-bs-component="tab">
           {#each views as item, i}<li class="nav-item">
               <button
                 class="nav-link"
@@ -731,7 +731,7 @@
           ? 'Offline scenario: showing saved or simulated data. Your settings are available in this browser.'
           : 'Stale scenario: sources need a refresh. The dashboard keeps the last available data visible.'}
       </div>{/if}
-    <div class="tab-content" data-bs-component="tab">
+    <div class="tab-content">
       <section
         class="tab-pane"
         class:active={startView === 'summary'}
