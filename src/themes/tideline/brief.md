@@ -89,4 +89,4 @@ on the accent rule of the brand mark and on signal states only. Weather's
 range bars take teal for mild days and the info blue for cold ones, which
 suits the chartroom; coral, blue and teal story rules read as chart colours,
 not decoration, and the rail's teal header appears only with live data, so a
-replay stays a plain panel.
+replay stays a plain panel. Status-graded agent cards keep coral for the limiting readings only, and the calendar's series badges sit on salt white without competing with the teal selection.

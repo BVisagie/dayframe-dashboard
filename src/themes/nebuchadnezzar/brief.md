@@ -94,4 +94,4 @@ avatars read as instruments, and the outlined quiet panels suit the console.
 The mono face wraps excerpts at 70ch, and the weather strip's two-digit hours
 and readings align in columns. Amber and danger series rules carry no state
 meaning, so each publication's name sits beside its rule. Compact height
-keeps one agent reading and a more-agents link, as before.
+keeps one agent reading and a more-agents link, as before. Amber-graded agent cards and the phosphor selection in the month grid keep the console's instrument feel; series badges stay quiet on olive glass.

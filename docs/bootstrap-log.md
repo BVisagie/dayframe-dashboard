@@ -128,6 +128,14 @@ in how Dayframe uses Bootstrap.
   a `badge` link; lens labels are badges placed with utilities, which removed
   the custom label and placement rules. A docs-section map now resolves each
   `data-bs-component` name to the right documentation path.
+- **Agents and Calendar.** Agent cards are graded by status with
+  `card-subtle` theme roles, `card-header`, `card-footer` and an
+  `avatar-status` dot; the headline is the limiting allowance with its reset.
+  Month cells show event titles as series-coloured badges at desktop heights
+  and dots elsewhere; the month grid remains the one custom layout, day
+  buttons get their height through `--btn-min-height`, and the selected day
+  paints the system Highlight pair under forced colours. The jump-to-date
+  field moved beside the month controls as a small adorned control.
 - **Simulation.** Hourly precipitation now drifts around the day's chance,
   and dry hours of a wet day show cloud, so the hourly strip has something
   to show.
@@ -165,16 +173,16 @@ Bootstrap does not provide these dashboard-specific capabilities:
   readings and the clock (Bootstrap has no `font-variant-numeric` utility),
   compact quota rows and source attribution. These rules live in the `app`
   layer and use Bootstrap tokens and rem units.
-- A calendar month event grid, weekend/outside-month surfaces and event dots.
-  Date selection enhancements use Bootstrap Datepicker; event details use
-  Popover. All-day membership compares date-only values with exclusive ends;
+- A calendar month event grid with day-button heights, series-coloured
+  event dots, and the selected day's forced-colours pair. Date selection
+  enhancements use Bootstrap Datepicker; event details use Popover. All-day membership compares date-only values with exclusive ends;
   timed events use local midnight boundaries, including daylight-saving
   transitions. Browser time zones cannot shift an all-day event onto an
   adjacent date.
-- A component-inspection lens. Marked component outlines include ordinary
-  links to Bootstrap documentation. Dialog elements are excluded because the
-  lens's positioning must not replace modal or drawer positioning. Labels sit
-  above compact button groups so the controls remain clickable.
+- A component-inspection lens: a dashed outline on marked components. Its
+  labels are Bootstrap badges placed with utilities and linked to the right
+  documentation section. Dialog elements are excluded because the lens's
+  positioning must not replace modal or drawer positioning.
 - Theme-specific console effects. Reduced motion and forced colours disable
   decorative finishes.
 - Alpha.1's checked switch thumb token is declared but not consumed by its
@@ -214,8 +222,11 @@ theme styles and Bootstrap are excluded. About Bootstrap shows the source byte
 count. The report's `bootstrap` version comes from the installed
 `node_modules/bootstrap/package.json`, so it follows dedicated upgrades.
 
-The review candidate measures **6,111 source bytes / 1,903 gzip bytes** with
-Bootstrap **6.0.0-alpha.1**. The report is included in the build artifact;
+The review candidate measured **6,111 source bytes / 1,903 gzip bytes** with
+Bootstrap **6.0.0-alpha.1**. After the October 2026 once-over the app layer
+measures **3,079 source bytes / 1,209 gzip bytes**: the brand, clock,
+heading, panel-title, agent-row, quota, agenda, theme-swatch, settings-grid
+and lens-label rules all moved to Bootstrap components, tokens and utilities. The report is included in the build artifact;
 compare the same metric on future upgrades.
 
 All 400 intended baseline updates for the review fixes were visually reviewed

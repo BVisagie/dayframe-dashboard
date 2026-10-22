@@ -31,21 +31,6 @@
   .agenda-list .btn-link {
     --btn-min-height: auto;
   }
-  /* Only the Summary feed headlines still use this; fs-md fw-semibold can replace it there. */
-  .agent-name {
-    font-size: 1rem;
-    font-weight: 650;
-  }
-  .weather-temperature {
-    font-size: 4rem;
-    line-height: 1.15;
-    font-weight: 500;
-    letter-spacing: -0.055em;
-  }
-  .weather-symbol {
-    font-size: 3.5rem;
-    color: var(--primary-fg);
-  }
   .source-credit {
     color: var(--fg-2);
     max-width: 75ch;
@@ -63,9 +48,6 @@
   }
   .compact-calendar .month-day {
     --btn-min-height: 2.75rem;
-  }
-  .compact-weather .weather-temperature {
-    font-size: 3rem;
   }
   /* Bootstrap has no inline dot marker; avatar-status only positions over an avatar. */
   .event-dot {

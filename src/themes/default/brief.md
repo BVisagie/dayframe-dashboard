@@ -96,4 +96,4 @@ rain bars replace twelve table rows. On Feeds the live rail carries the only
 primary tint and the series rules stay thin beside readable publication
 names; four stories per page leave space below the list at 1080p. Settings'
 theme cards and vertical pills sit on a white dialog surface now that the
-surface tokens are re-pointed.
+surface tokens are re-pointed. Agents are graded by status so the two low cards stand out from the four plain ones, and the month grid's series badges make the week readable from a distance.

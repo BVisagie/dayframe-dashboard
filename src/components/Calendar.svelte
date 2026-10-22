@@ -160,10 +160,10 @@
            button's visible text stays within its name (WCAG 2.5.3); they
            repeat the agenda and ignore the pointer. -->
       {#each days as day}{@const date = dateKey(day)}{@const dayEvents =
-          sortForDay(eventsOn(date))}{@const count = dayEvents.length}{@const titled =
-          !compact && count > 0 && day.getMonth() === month.getMonth()}<div
-          class="position-relative d-flex min-w-0"
-        >
+          sortForDay(eventsOn(date))}{@const count =
+          dayEvents.length}{@const titled =
+          !compact && count > 0 && day.getMonth() === month.getMonth()}
+        <div class="position-relative d-flex min-w-0">
           <button
             class={dayClass(day, date)}
             aria-pressed={selected === date}
@@ -184,8 +184,8 @@
               class="position-absolute top-0 start-0 end-0 p-2 pe-none d-none lg:d-flex flex-column gap-1"
               aria-hidden="true"
               ><span class="d-flex align-items-center justify-content-between"
-                ><span class="invisible">{day.getDate()}</span>{#if count > 2}<span
-                    class="badge">+{count - 2}</span
+                ><span class="invisible">{day.getDate()}</span
+                >{#if count > 2}<span class="badge">+{count - 2}</span
                   >{/if}</span
               >{#each dayEvents.slice(0, 2) as event (event.id)}<span
                   class={`badge badge-subtle theme-${calendarRole(event.calendar)} d-block text-truncate text-start`}
@@ -240,7 +240,7 @@
         )}
       </h2>
       <button
-        class="btn btn-text theme-secondary"
+        class="btn btn-text theme-secondary ms-auto"
         data-bs-dismiss={small ? 'drawer' : 'dialog'}
         aria-label="Close all events"><Icon name="x-lg" /></button
       >

@@ -102,7 +102,7 @@
           class={`${dense ? 'text-5xl' : 'text-6xl'} fg-primary`}
         />
         <p
-          class={`weather-temperature ${dense ? 'text-5xl' : 'text-6xl'} font-monospace tabular-nums fw-medium lh-1 m-0 text-nowrap`}
+          class={`${dense ? 'text-5xl' : 'text-6xl'} font-monospace tabular-nums fw-medium lh-1 m-0 text-nowrap`}
         >
           {Math.round(weather.temperature)}<span class="fs-2xl">°{unit}</span>
         </p>
