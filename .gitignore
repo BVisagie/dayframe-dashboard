@@ -8,3 +8,4 @@ blob-report/
 *.local
 .claude/settings.local.json
 .DS_Store
+.claude/worktrees/
