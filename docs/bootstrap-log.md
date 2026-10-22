@@ -78,7 +78,14 @@ in how Dayframe uses Bootstrap.
   for shortcuts, rotation and the URL. NavOverflow clones the triggers into
   its menu, so the action strips `role`, `aria-selected`, `aria-controls`,
   `tabindex` and `data-bs-target` from the clones; delegated clicks on
-  `[data-view]` still navigate.
+  `[data-view]` still navigate. The two plugins do not coordinate keyboard
+  focus: Tab's arrow keys focus the next trigger even when NavOverflow has
+  hidden it, which blurs the tablist, and its roving tabindex leaves no tab
+  stop when the active trigger sits in More. The navigation action handles
+  the arrow, Home and End keys before Tab sees them, keeps focus on the
+  trigger or on the More toggle, and gives the first visible trigger the tab
+  stop whenever the active one is hidden. This is a candidate for upstream
+  feedback alongside the drafts below.
 - **Header menu.** `menu-header`, `menu-divider`, `menu-item-icon` swatches,
   `menu-item-content` with `menu-item-description`, and `selected` with
   `menu-item-check` make one menu switch both theme and colour scheme.
@@ -114,7 +121,11 @@ in how Dayframe uses Bootstrap.
   `progress-stacked` temperature range on the week's shared scale; the hourly
   outlook is a table laid out as `list-group list-group-horizontal` inside a
   `contains-inline` container, each hour with its own icon and a `progress`
-  rain bar; a `placeholder-glow` skeleton covers the first live load.
+  rain bar; a `placeholder-glow` skeleton covers the first live load. The
+  horizontal list does not wrap or scroll, so the page size follows the
+  strip's measured width and the time format: twelve-hour labels need wider
+  cells, and a 1024-pixel tablet shows eight hours per page instead of
+  twelve.
 - **Feeds.** Stories and a live Bootstrap rail in a two-column `.grid`; story
   rows carry a series-coloured `border-start` rule. `theme-border` sets the
   whole border shorthand and `theme-*` on a card cascades into nested list

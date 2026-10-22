@@ -68,6 +68,19 @@ function formatClock(time: number, settings: ClockSettings): string {
   }
 }
 
+/** Twelve-hour clocks add a day period, so each hourly cell needs more room. */
+export function usesTwelveHours(settings: ClockSettings): boolean {
+  if (settings.hourCycle !== 'locale') return settings.hourCycle === 'h12';
+  try {
+    const cycle = new Intl.DateTimeFormat(settings.locale, {
+      hour: 'numeric',
+    }).resolvedOptions().hourCycle;
+    return cycle === 'h12' || cycle === 'h11';
+  } catch {
+    return false;
+  }
+}
+
 export function formatSunTime(value: string, settings: ClockSettings): string {
   return formatClock(wallTime(value), settings);
 }

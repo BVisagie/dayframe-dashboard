@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Weather, SourceStatus, Settings } from '../lib/types';
-  import { formatHour } from '../lib/weather';
+  import { formatHour, usesTwelveHours } from '../lib/weather';
   import Panel from './Panel.svelte';
   import WeatherPanel from './WeatherPanel.svelte';
   import Icon from './Icon.svelte';
@@ -21,7 +21,18 @@
     onsettings: () => void;
   } = $props();
   let hourPage = $state(0);
-  const hourRows = $derived(compact ? 6 : 12);
+  let stripWidth = $state(0);
+  // The strip turns horizontal at the md container width. Each cell then needs
+  // its time label plus padding, and twelve-hour labels are wider, so the page
+  // holds as many hours as the measured width fits instead of a fixed twelve.
+  const hourRows = $derived.by(() => {
+    if (compact) return 6;
+    if (stripWidth < 768) return 12;
+    const rem =
+      parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const cell = (usesTwelveHours(settings) ? 7.5 : 5.5) * rem;
+    return Math.max(6, Math.min(12, Math.floor(stripWidth / cell)));
+  });
   const hourPages = $derived(
     Math.max(1, Math.ceil(weather.hours.length / hourRows)),
   );
@@ -53,15 +64,17 @@
         {#each { length: hourRows }, index (index)}<span
             class="placeholder placeholder-lg flex-fill"
           ></span>{/each}
-      </div>{:else}<HourlyStrip
-        hours={weather.hours.slice(
-          hourPage * hourRows,
-          (hourPage + 1) * hourRows,
-        )}
-        days={weather.days}
-        {settings}
-        dense={compact}
-      />{/if}
+      </div>{:else}<div bind:clientWidth={stripWidth}>
+        <HourlyStrip
+          hours={weather.hours.slice(
+            hourPage * hourRows,
+            (hourPage + 1) * hourRows,
+          )}
+          days={weather.days}
+          {settings}
+          dense={compact}
+        />
+      </div>{/if}
     {#snippet action()}{#if status !== 'loading'}<nav
           aria-label="Hourly forecast pages"
         >

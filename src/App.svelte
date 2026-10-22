@@ -327,18 +327,101 @@
       const next = views.find((item) => item.id === target?.dataset.view)?.id;
       if (next) navigate(next);
     };
-    // Arrow keys inside the tablist switch tabs through Bootstrap; follow them.
+    const triggerList = () => [
+      ...node.querySelectorAll<HTMLElement>('.nav-link[data-view]'),
+    ];
+    const isVisible = (trigger: HTMLElement) =>
+      !trigger.closest('.nav-item')?.classList.contains('d-none');
+    // Tab's roving tabindex leaves no tab stop when NavOverflow has hidden the
+    // active trigger, so the first visible trigger takes it instead.
+    const ensureTabStop = () => {
+      const triggers = triggerList();
+      const active = triggers.find((trigger) =>
+        trigger.classList.contains('active'),
+      );
+      const stop =
+        active && isVisible(active) ? active : triggers.find(isVisible);
+      for (const trigger of triggers) {
+        if (trigger === stop) trigger.removeAttribute('tabindex');
+        else trigger.setAttribute('tabindex', '-1');
+      }
+    };
+    // Focus stays on a visible control: the trigger itself, or More when the
+    // view's trigger has moved into the overflow menu.
+    const focusView = (id: View) => {
+      const trigger = triggers[id];
+      const target =
+        trigger && isVisible(trigger)
+          ? trigger
+          : node.querySelector<HTMLElement>('.nav-overflow-toggle');
+      target?.focus();
+    };
+    // Tab would move focus to the next trigger even when it is hidden, which
+    // blurs the tablist. Choose the next view here, before Tab sees the key.
+    const keydown = (event: KeyboardEvent) => {
+      const target =
+        event.target instanceof HTMLElement
+          ? event.target.closest<HTMLElement>('.nav-link[data-view]')
+          : null;
+      const keys = [
+        'ArrowLeft',
+        'ArrowRight',
+        'ArrowUp',
+        'ArrowDown',
+        'Home',
+        'End',
+      ];
+      if (
+        !target ||
+        !keys.includes(event.key) ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey
+      )
+        return;
+      event.preventDefault();
+      event.stopPropagation();
+      const from = Math.max(
+        0,
+        views.findIndex((item) => item.id === target.dataset.view),
+      );
+      const next =
+        event.key === 'Home'
+          ? views[0].id
+          : event.key === 'End'
+            ? views[views.length - 1].id
+            : views[
+                (from +
+                  (['ArrowRight', 'ArrowDown'].includes(event.key)
+                    ? 1
+                    : views.length - 1)) %
+                  views.length
+              ].id;
+      navigate(next);
+      focusView(next);
+      ensureTabStop();
+    };
     const shown = (event: Event) => {
       const target =
         event.target instanceof HTMLElement ? event.target.dataset.view : '';
       const next = views.find((item) => item.id === target)?.id;
       if (next && next !== view) navigate(next);
+      ensureTabStop();
     };
+    // NavOverflow hides and reveals items as the width changes.
+    const overflow = new MutationObserver(ensureTabStop);
+    for (const item of node.querySelectorAll('.nav-item'))
+      overflow.observe(item, { attributes: true, attributeFilter: ['class'] });
     node.addEventListener('click', click);
+    node.addEventListener('keydown', keydown, true);
     node.addEventListener('shown.bs.tab', shown);
+    ensureTabStop();
     return {
       destroy() {
+        overflow.disconnect();
         node.removeEventListener('click', click);
+        node.removeEventListener('keydown', keydown, true);
         node.removeEventListener('shown.bs.tab', shown);
       },
     };

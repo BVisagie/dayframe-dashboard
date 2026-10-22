@@ -31,6 +31,15 @@ test('all views navigate by controls, letters, numbers and wrapping arrows', { t
     await page.keyboard.press(key);
     await expectView(page, view);
   }
+  // A tablet with twelve-hour times fits every hourly cell inside the viewport.
+  await page.setViewportSize({ width: 1024, height: 768 });
+  const dialog = await settings(page, 'Display');
+  await dialog.getByLabel('Time format', { exact: true }).selectOption('h12');
+  await closeSettings(page);
+  await page.keyboard.press('w');
+  await expectView(page, 'weather');
+  await expect(page.locator('#view-weather .list-group-item').first()).toContainText(/\d\s?(am|pm)/i);
+  await noHorizontalOverflow(page);
   expect(audit.external, 'Replay must not request live sources').toHaveLength(0);
 });
 
@@ -80,6 +89,23 @@ test('mobile navigation exposes overflowing views through the Bootstrap More men
   await page.locator('main').focus();
   await page.keyboard.press('1');
   await expectView(page, 'summary');
+  // Arrow keys cross into the overflow without losing a visible focus: the
+  // trigger when it is visible, otherwise the More toggle.
+  await nav.getByRole('tab', { name: 'Summary', exact: true }).focus();
+  await page.keyboard.press('ArrowRight');
+  await expectView(page, 'agents');
+  await expect(nav.getByRole('tab', { name: 'Agents', exact: true })).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expectView(page, 'calendar');
+  await expect(nav.getByRole('button', { name: 'More', exact: true })).toBeFocused();
+  // Starting on an overflowed view keeps a tab stop on a visible trigger.
+  await visit(page, { view: 'feeds' });
+  await page.locator('.navbar-brand').focus();
+  await page.keyboard.press('Tab');
+  await expect(nav.getByRole('tab', { name: 'Summary', exact: true })).toBeFocused();
+  await page.keyboard.press('ArrowLeft');
+  await expectView(page, 'feeds');
+  await expect(nav.getByRole('button', { name: 'More', exact: true })).toBeFocused();
 });
 
 for (const mobile of [false, true]) {
