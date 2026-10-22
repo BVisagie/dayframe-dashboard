@@ -135,8 +135,12 @@ compare the same metric on future upgrades.
 
 All 400 intended baseline updates for the review fixes were visually reviewed
 and accepted from Noble capture run `39656395929`, with exact artifact hashes
-verified before copying. Fresh comparisons and full final container
-validation remain required; historical passes do not certify this candidate.
+verified before copying. Resolute capture run `39665070867` preserves 399
+images byte-for-byte and updates only Default dark Summary at 1280×720 DPR 1
+for reviewed rounded-edge rasterization. The image dimensions, comparator and
+pixel budget are unchanged. Final candidate comparisons and full container
+validation are recorded in the pull request; historical passes do not certify
+later candidates.
 
 ### Upgrade checklist
 

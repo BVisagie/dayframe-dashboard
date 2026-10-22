@@ -591,16 +591,20 @@ substantial theme changes. The
 [baseline review evidence](ci.md#screenshot-comparison-and-review) records the
 400-image replacement set and the approved comparison tolerance.
 
-That run predates the current review fixes. The review candidate passes local
-type, lint, tooling, build and all 100 unit checks. Chromium and Firefox passed
-402 of 404 functional cases; the two stale singular-copy expectations were
-corrected, and all 22 app/live-source cases passed on the targeted rerun.
+That run predates the current review fixes. The final follow-ups pass local
+type, lint, tooling, build and all 104 unit checks, plus 48 targeted Chromium
+and Firefox cases. Routine CI still selects 34 cases; the complete suite now
+contains 1,027 cases.
 Pinned Noble capture run `39656395929` supplied all 400 intended baseline
 updates. Independent visual review and root hash verification accepted the
 complete set. Routine CI passed all three jobs and 34 selected browser cases
 at `0556e33` in run `39660061306`. The subsequent dependency/environment
-upgrade is tracked in the [dependency audit](dependencies.md); its full final
-container validation remains pending.
+upgrade is tracked in the [dependency audit](dependencies.md). Resolute capture
+run `39665070867` leaves 399 images byte-identical and updates only Default
+dark Summary at 1280×720 DPR 1 for reviewed rounded-edge rasterization. The
+[CI evidence](ci.md#screenshot-comparison-and-review) records exact provenance.
+The final candidate still requires a successful full container run; its current
+results are recorded in the pull request.
 
 | Area                   | Implemented                                                                                                                                                  | Pending proof or external setup                                                                                                               |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |

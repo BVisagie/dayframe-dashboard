@@ -94,7 +94,25 @@ unchanged. Comparison checks against the refreshed baselines remain required.
 Routine [run `39660061306`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39660061306)
 at `0556e33` passed Quality, all 34 selected browser/screenshot cases and
 Secret history against that accepted Noble set. The later dependency upgrade
-moves capture to Resolute; its screenshot review and full suite remain pending.
+moves capture to Resolute. Its first full run, `39661128611` at `1398a98`,
+passed all 606 functional cases and 399 screenshots. The remaining Default
+dark Summary image at 1280×720 DPR 1 differed only at rounded navigation and
+hero edges: 29 raw changed pixels, of which one exceeded the unchanged colour
+tolerance. Independent visual and trace review found no content or layout
+regression.
+
+Resolute [capture run `39665070867`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39665070867)
+supplied all 400 candidates. The artifact SHA-256 is
+`725d88b8bb0c998634c922848d48c3f7a297e5500ba6edd8774a211cf4a917b0`.
+All 399 other images are byte-identical to the committed set. Only
+`screenshots-1280x720-dpr1/default-dark-summary.png` is updated for the intended
+capture-environment change. Its SHA-256,
+`4be78c58a70cc73d037303375c30a52cb931702ed3082088f25d9edc7765750d`,
+exactly matches the independently reviewed actual from the first Resolute
+run. The comparator, pixel budget, assertions and screenshot dimensions are
+unchanged. The final follow-ups do not alter the frozen, lens-off screenshot
+states. A full comparison run on the final candidate remains required;
+current run results are recorded in the pull request.
 
 The matrix covers eight viewports × two device pixel ratios × five views ×
 five supported theme/scheme combinations = 400 images. Default and Tideline
@@ -109,14 +127,12 @@ at `8c58cba` passed 84 unit tests, 188 functional tests in each of Chromium,
 Firefox and WebKit, and all 400 screenshot comparisons: 964 browser tests.
 GitGuardian also passed on that commit. This validates the complete suite
 before routine CI was reduced; later candidates still need their applicable
-checks. The current review candidate passes local type, lint, tooling, build
-and all 100 unit checks. Chromium and Firefox passed 402 of 404 functional
-cases; the two stale singular-copy expectations were corrected, and all 22
-app/live-source cases passed on the targeted rerun. All 400 intended baseline
-updates are reviewed and accepted; fresh comparison and full final container
-validation remain pending. A local probe of 50 screenshot comparisons differed
-from the Noble baselines across text rendering, so host captures were not
-accepted.
+checks. The final follow-ups pass local type, lint, tooling, build and all
+104 unit checks. All 48 targeted Chromium/Firefox cases pass, covering source
+integration, tooltip updates, modal and lens positioning, pointer access,
+Settings breakpoints, programmatic Range resets and city labels. Full discovery
+now contains 209 cases per functional browser and 400 screenshots: 1,027 total.
+The routine selection remains 34. Host-generated baselines are not accepted.
 
 The Vite configuration fixes the Pages base at `/dayframe-dashboard/`.
 `DAYFRAME_PUBLIC_LAUNCH` is the single repository variable passed to the build:

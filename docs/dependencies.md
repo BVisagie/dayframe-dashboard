@@ -88,7 +88,10 @@ release. No custom runner or daemon installation is added. GitGuardian is an
 externally managed service, with no repository version to upgrade.
 
 The vendored frontend-design skill and licence already match upstream bytes.
-Resolute capture review and the full existing suite must pass before merge;
-older Noble evidence remains labelled Noble. Trusted deployment/maintenance
-activation still requires installation on `main` and the separately approved
-repository setup in [CI setup](ci.md).
+The Resolute capture audit preserves 399 images and updates only the reviewed
+Default dark Summary rounded-edge rendering at 1280×720 DPR 1. [CI evidence](ci.md#screenshot-comparison-and-review)
+records its provenance; older Noble evidence remains labelled Noble. The final
+candidate must pass the complete 1,027-case suite before merge, with current
+results recorded in the pull request. Trusted deployment/maintenance activation
+still requires installation on `main` and the separately approved repository
+setup in [CI setup](ci.md).
