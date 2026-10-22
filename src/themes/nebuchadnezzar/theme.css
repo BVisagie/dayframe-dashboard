@@ -1,0 +1,56 @@
+@layer theme {
+  :where([data-theme='nebuchadnezzar']) {
+    color-scheme: dark;
+    --bg-body: #010301;
+    --bg-1: #141b0c;
+    --fg-body: #d6edc9;
+    --body-font-family: ui-monospace, monospace;
+    --font-mono: ui-monospace, monospace;
+    --display-font-family: ui-monospace, monospace;
+    --body-line-height: 1.55;
+    --radius-1: .0625rem;
+    --radius-2: .125rem;
+    --radius-3: .1875rem;
+    --radius-4: .25rem;
+    --radius-5: .3125rem;
+    --radius-6: .375rem;
+    --radius-7: .4375rem;
+    --radius-8: .5rem;
+    --radius-9: .625rem;
+    --box-shadow: none;
+    --box-shadow-sm: none;
+    --box-shadow-lg: none;
+
+    --primary-base: #3cbf5c;
+    --accent-base: #a8c39a;
+    --secondary-base: #a8c39a;
+    --success-base: #74d58b;
+    --warning-base: #e1bd68;
+    --danger-base: #f49587;
+    --info-base: #8ed6c3;
+    --inverse-base: #d6edc9;
+    --codex-base: #74d58b;
+    --claude-base: #e1bd68;
+    --cursor-base: #8ed6c3;
+    --grok-base: #a8c39a;
+    --opencode-base: #c5b8e3;
+    --antigravity-base: #c5d878;
+    --series-1-base: var(--primary-base);
+    --series-2-base: var(--info-base);
+    --series-3-base: var(--warning-base);
+    --series-4-base: var(--opencode-base);
+    --series-5-base: var(--antigravity-base);
+    --series-6-base: var(--danger-base);
+  }
+
+  :where([data-theme='nebuchadnezzar']) .summary-hero {
+    --card-border-color: var(--primary-border);
+    --card-spacer-x: var(--spacer-6);
+    --card-spacer-y: var(--spacer-6);
+  }
+
+  :where([data-theme='nebuchadnezzar']) .summary-agents {
+    --card-spacer-x: var(--spacer-4);
+    --card-spacer-y: var(--spacer-4);
+  }
+}

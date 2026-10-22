@@ -1,0 +1,44 @@
+@layer theme {
+  :where([data-theme='default']) {
+    --bg-body: light-dark(#f3f6fa, #0c1727);
+    --bg-1: light-dark(#ffffff, #13243b);
+    --fg-body: light-dark(#13243b, #e6edf6);
+    --body-font-family: system-ui, sans-serif;
+    --display-font-family: ui-rounded, system-ui, sans-serif;
+
+    --primary-base: light-dark(#224cbb, #98b8ff);
+    --accent-base: light-dark(#176776, #7fd5df);
+    --secondary-base: light-dark(#52647c, #b6c5db);
+    --success-base: light-dark(#176744, #82d7a7);
+    --warning-base: light-dark(#77510a, #edcd85);
+    --danger-base: light-dark(#a32f46, #ffa3af);
+    --info-base: light-dark(#176776, #7fd5df);
+    --inverse-base: light-dark(#13243b, #e6edf6);
+
+    --codex-base: light-dark(#176744, #82d7a7);
+    --claude-base: light-dark(#8d4b2e, #e9b294);
+    --cursor-base: light-dark(#224cbb, #98b8ff);
+    --grok-base: light-dark(#52647c, #b6c5db);
+    --opencode-base: light-dark(#6b3fab, #c9adf5);
+    --antigravity-base: light-dark(#176776, #7fd5df);
+    --series-1-base: var(--primary-base);
+    --series-2-base: var(--accent-base);
+    --series-3-base: var(--claude-base);
+    --series-4-base: var(--opencode-base);
+    --series-5-base: var(--success-base);
+    --series-6-base: var(--danger-base);
+  }
+
+  :where([data-theme='default']) .summary-hero {
+    --card-border-radius: var(--radius-9);
+    --card-spacer-x: var(--spacer-7);
+    --card-spacer-y: var(--spacer-7);
+    --card-box-shadow: var(--box-shadow);
+  }
+
+  :where([data-theme='default']) .summary-agents {
+    --card-border-radius: var(--radius-5);
+    --card-spacer-x: var(--spacer-5);
+    --card-spacer-y: var(--spacer-5);
+  }
+}

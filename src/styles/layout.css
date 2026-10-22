@@ -1,0 +1,84 @@
+@layer layout {
+  /* Bootstrap has no viewport-and-visitor scale formula with a readable floor. */
+  :root {
+    font-size: max(
+      0.875rem,
+      calc(min(100dvh / 1080, 100vw / 1920) * 16 * var(--display-scale, 1))
+    );
+  }
+
+  .dashboard-shell {
+    min-block-size: 100dvh;
+    min-inline-size: 0;
+  }
+
+  /* Pair these layouts with Bootstrap's .grid. Its tokens handle gaps; named
+     areas add the dashboard hierarchy that its column utilities cannot name. */
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-template-areas: 'hero hero weather' 'agents calendar feeds';
+    --gap: var(--spacer-5);
+    align-items: stretch;
+  }
+
+  .summary-hero {
+    grid-area: hero;
+  }
+  .summary-agents {
+    grid-area: agents;
+  }
+  .summary-calendar {
+    grid-area: calendar;
+  }
+  .summary-weather {
+    grid-area: weather;
+  }
+  .summary-feeds {
+    grid-area: feeds;
+  }
+
+  /* Bootstrap's column utilities remain useful within panels. Auto-fit keeps
+     the instrument bank usable when display scaling changes its capacity. */
+  .agents-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 23rem), 1fr));
+    grid-template-rows: none;
+    --gap: var(--spacer-5);
+  }
+
+  .dashboard-panel {
+    min-inline-size: 0;
+  }
+
+  :where([data-layout='console']) .dashboard-grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-areas: 'hero hero weather' 'agents calendar feeds';
+  }
+
+  @media (min-aspect-ratio: 21/9) and (min-width: 68.75rem) {
+    .dashboard-grid {
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas: 'hero calendar weather' 'agents agents feeds';
+    }
+
+    :where([data-layout='console']) .dashboard-grid {
+      grid-template-columns:
+        minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr)
+        minmax(0, 1fr);
+      grid-template-areas: 'hero hero calendar weather' 'agents agents feeds feeds';
+    }
+  }
+
+  @media (max-width: 68.749rem) {
+    /* Scrolling keeps content readable below the desktop fitting threshold. */
+    .dashboard-shell {
+      min-block-size: 100dvh;
+    }
+
+    .dashboard-grid,
+    :where([data-layout='console']) .dashboard-grid {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: 'hero' 'agents' 'calendar' 'weather' 'feeds';
+    }
+  }
+}

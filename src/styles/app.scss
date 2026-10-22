@@ -1,0 +1,265 @@
+@use 'bootstrap/scss/layout/breakpoints' as bs;
+
+@layer app {
+  /* Bootstrap alpha.1 declares the checked switch thumb token without consuming it. */
+  .switch:has(input:checked) {
+    --switch-indicator-bg: var(--switch-checked-indicator-bg);
+  }
+  /* Alpha.1's Range plugin writes a prefixed fill token; its Sass uses the unprefixed token. */
+  .form-range {
+    --range-fill: var(--bs-range-fill, 0);
+  }
+  /* Bootstrap does not define dashboard information hierarchy or branded shell dimensions. */
+  .dashboard-shell {
+    max-width: 150rem;
+    margin-inline: auto;
+    padding: 1.75rem 2.5rem 0.25rem;
+  }
+  .brand {
+    font-size: 1.65rem;
+    font-weight: 750;
+    letter-spacing: -0.055em;
+    color: var(--fg-body);
+    text-decoration: none;
+  }
+  .brand-symbol {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radius-5);
+  }
+  .clock {
+    font-size: 1.5rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+  .view-heading {
+    font-size: 2rem;
+    font-weight: 650;
+    letter-spacing: -0.04em;
+    margin: 0;
+  }
+  .panel-title {
+    font-size: 1.125rem;
+    font-weight: 650;
+  }
+  .hero-title {
+    font-family: var(--display-font-family, var(--body-font-family));
+    font-size: clamp(1.75rem, 2.8rem, 3rem);
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+    font-weight: 650;
+    max-width: 23ch;
+  }
+  .hero-context {
+    max-width: 52ch;
+  }
+  .agenda-list .btn-link {
+    --btn-min-height: auto;
+  }
+  .agent-panel {
+    @include bs.set-container(inline-size, agent);
+  }
+  .agent-row .d-flex {
+    flex-wrap: wrap;
+  }
+  @include bs.container-breakpoint-up(
+    wide,
+    agent,
+    (
+      wide: 30rem,
+    )
+  ) {
+    .agent-row .d-flex {
+      flex-wrap: nowrap;
+    }
+  }
+  .agent-name {
+    font-size: 1rem;
+    font-weight: 650;
+  }
+  .quota-value {
+    font-size: 1.65rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .agent-panel .progress {
+    --progress-height: 0.5rem;
+  }
+  .agent-row {
+    padding-block: 0.5rem;
+    border-bottom: var(--border-width) solid var(--border-color);
+  }
+  .agent-row:last-child {
+    border-bottom: 0;
+  }
+  .agent-row .quota-value {
+    font-size: 1.125rem;
+  }
+  /* Bootstrap has no chart primitive. This small SVG exposes the same data as its accessible label. */
+  .sparkline {
+    width: 7rem;
+    height: 2.25rem;
+    color: var(--theme-fg, var(--primary-fg));
+  }
+  .weather-temperature {
+    font-size: 4rem;
+    line-height: 1.15;
+    font-weight: 500;
+    letter-spacing: -0.055em;
+  }
+  .weather-symbol {
+    font-size: 3.5rem;
+    color: var(--primary-fg);
+  }
+  .source-credit {
+    color: var(--fg-2);
+    max-width: 75ch;
+  }
+  .agenda-time {
+    min-width: 4rem;
+    color: var(--fg-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .story-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+  .story-excerpt {
+    max-width: 70ch;
+  }
+  /* Bootstrap has no month-event grid or outside-month state. */
+  .month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+  .month-day {
+    min-height: 4.25rem;
+    padding: 0.5rem;
+    text-align: start;
+    white-space: normal;
+  }
+  .compact-calendar .month-day {
+    min-height: 2.75rem;
+    padding: 0.25rem;
+  }
+  .compact-calendar .event-dot {
+    margin-top: 0.25rem;
+  }
+  .compact-weather .weather-temperature {
+    font-size: 3rem;
+  }
+  .month-day[aria-pressed='true']:not(:focus-visible) {
+    outline: var(--border-width) solid var(--primary-fg);
+    outline-offset: 0.1rem;
+  }
+  .month-day.outside-month {
+    color: var(--fg-2);
+    background: var(--calendar-outside-bg, var(--bg-2));
+  }
+  .month-day.weekend {
+    background: var(--calendar-weekend-bg, var(--bg-2));
+  }
+  .event-dot {
+    display: block;
+    width: 0.4rem;
+    height: 0.4rem;
+    margin-top: 0.5rem;
+    background: var(--primary-fg);
+    border-radius: 50%;
+  }
+  /* Bootstrap has no component inspection overlay. Its labels are ordinary documentation links. */
+  .lens-target:not(:focus-visible) {
+    outline: var(--border-width) dashed var(--info-fg);
+  }
+  .lens-target {
+    position: relative;
+  }
+  .lens-label {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    z-index: 2;
+    font: 0.75rem/1.2 var(--body-font-family);
+    background: var(--bg-body);
+    color: var(--info-fg);
+    padding: 0.15rem 0.3rem;
+  }
+  /* Inspection labels must leave compact button groups available to the pointer. */
+  .btn-group > .lens-label {
+    inset-block-start: auto;
+    inset-block-end: 100%;
+  }
+  /* Bootstrap tokens size Settings and theme previews; no component behavior is replaced. */
+  .settings-content {
+    display: grid;
+    grid-template-columns: 10rem minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+  .theme-swatch {
+    width: 1rem;
+    height: 1rem;
+    border: var(--border-width) solid var(--border-color);
+    border-radius: 50%;
+  }
+  .theme-choice {
+    text-align: start;
+    white-space: normal;
+  }
+  .theme-choice[aria-pressed='true'] {
+    --btn-border-color: var(--primary-fg);
+  }
+  .settings-dialog {
+    --dialog-width: 58rem;
+    --drawer-width: 100%;
+  }
+  .toast-container {
+    position: fixed;
+    inset-block-end: 1.5rem;
+    inset-inline-end: 1.5rem;
+    z-index: var(--z-toast);
+    max-width: calc(100vw - 3rem);
+  }
+  .feed-categories .chip {
+    cursor: pointer;
+  }
+  .dashboard-footer {
+    font-size: 0.8rem;
+    color: var(--fg-2);
+  }
+  @media (max-width: 68.75rem) {
+    .dashboard-shell {
+      padding: 1.25rem;
+    }
+  }
+  @media (max-width: 43rem) {
+    .dashboard-shell {
+      padding: 1rem;
+    }
+    .settings-content {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .month-day {
+      min-height: 3rem;
+      padding: 0.35rem;
+    }
+    .clock {
+      font-size: 1.125rem;
+    }
+    .brand {
+      font-size: 1.4rem;
+    }
+  }
+  @media (forced-colors: active) {
+    .progress-bar,
+    .event-dot {
+      background: Highlight;
+    }
+    .month-day[aria-pressed='true']:not(:focus-visible) {
+      outline-color: Highlight;
+    }
+    .theme-swatch {
+      forced-color-adjust: auto;
+    }
+  }
+}

@@ -1,0 +1,122 @@
+name: Secret checks and deployment
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  privacy:
+    name: Trusted full-history secret check
+    runs-on: ubuntu-26.04
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      # workflow_run loads this workflow from main. Candidate source is never
+      # checked out, installed, cached, imported, or executed in this job.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26.12.1'
+      - name: Fetch candidate and complete repository history as passive data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ulimit -f 1048576
+          node .github/scripts/trusted-source.mjs
+      - name: Scan every reachable commit for secrets with trusted policy
+        run: node .github/scripts/gitleaks.mjs "$SCAN_REPOSITORY"
+
+  report:
+    name: Publish trusted secret check result
+    needs: privacy
+    if: ${{ always() }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      statuses: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26.12.1'
+      - name: Publish a status on the exact candidate commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRIVACY_RESULT: ${{ needs.privacy.result }}
+        run: node .github/scripts/privacy-status.mjs
+
+  deploy-gate:
+    name: Verify deployment checks
+    needs: [privacy, report]
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26.12.1'
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: node .github/scripts/deploy-gate.mjs
+
+  deploy:
+    name: Deploy Pages
+    needs: deploy-gate
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26.12.1'
+      # Recheck after acquiring the deployment lock to reject an obsolete run.
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: node .github/scripts/deploy-gate.mjs
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dayframe-build
+          path: dist/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: dist/
+      - uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+        id: deployment

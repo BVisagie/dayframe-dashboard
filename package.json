@@ -1,0 +1,40 @@
+{
+  "name": "dayframe-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build && node scripts/footprint.mjs",
+    "preview": "vite preview --host 0.0.0.0",
+    "check": "svelte-check --tsconfig ./tsconfig.json && eslint .",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:browser": "playwright test --project=chromium --project=screenshots-1280x720-dpr1 --project=screenshots-390x844-dpr1 --grep @smoke",
+    "new-theme": "node scripts/new-theme.mjs"
+  },
+  "dependencies": {
+    "@floating-ui/dom": "1.8.0",
+    "bootstrap": "6.0.0-alpha.1",
+    "bootstrap-icons": "1.13.2",
+    "svelte": "5.57.2",
+    "vanilla-calendar-pro": "3.4.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@types/node": "26.6.5",
+    "@typescript/native": "npm:typescript@7.0.2",
+    "eslint": "10.13.0",
+    "globals": "17.13.0",
+    "lightningcss": "1.33.0",
+    "postcss": "8.5.31",
+    "prettier": "3.9.10",
+    "prettier-plugin-svelte": "4.1.1",
+    "sass": "1.106.0",
+    "svelte-check": "4.7.7",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "vite": "8.3.5"
+  }
+}

@@ -1,0 +1,264 @@
+@layer bootstrap, theme-base, theme, app, layout, theme-effects, bootstrap-utilities;
+
+@layer theme-base {
+  :where(:root) {
+    --bg-2: color-mix(in oklch, var(--bg-body) 96%, var(--fg-body));
+    --bg-3: color-mix(in oklch, var(--bg-body) 92%, var(--fg-body));
+    --bg-4: color-mix(in oklch, var(--bg-body) 87%, var(--fg-body));
+    --fg-1: color-mix(in oklch, var(--fg-body) 96%, var(--bg-body));
+    --fg-2: color-mix(in oklch, var(--fg-body) 91%, var(--bg-body));
+    --fg-3: color-mix(in oklch, var(--fg-body) 86%, var(--bg-body));
+    --fg-4: color-mix(in oklch, var(--fg-body) 81%, var(--bg-body));
+    --border-color: color-mix(in oklch, var(--fg-body) 20%, var(--bg-body));
+    --border-color-translucent: color-mix(in oklch, var(--fg-body) 18%, transparent);
+    --border-body: var(--border-color);
+    --border-muted: color-mix(in oklch, var(--fg-body) 16%, var(--bg-body));
+    --border-subtle: color-mix(in oklch, var(--fg-body) 12%, var(--bg-body));
+    --border-emphasized: color-mix(in oklch, var(--fg-body) 65%, var(--bg-body));
+    --border-style: solid;
+    --body-font-size: 1rem;
+    --body-line-height: 1.5;
+    --font-mono: ui-monospace, monospace;
+    --radius-1: .125rem;
+    --radius-2: .25rem;
+    --radius-3: .375rem;
+    --radius-4: .5rem;
+    --radius-5: .625rem;
+    --radius-6: .75rem;
+    --radius-7: 1rem;
+    --radius-8: 1.25rem;
+    --radius-9: 1.5rem;
+    --box-shadow: 0 .25rem 1rem color-mix(in oklch, var(--fg-body) 7%, transparent);
+    --box-shadow-sm: 0 .125rem .375rem color-mix(in oklch, var(--fg-body) 5%, transparent);
+    --box-shadow-lg: 0 .5rem 2rem color-mix(in oklch, var(--fg-body) 10%, transparent);
+    --box-shadow-inset: inset 0 var(--border-width) .125rem color-mix(in oklch, var(--fg-body) 7%, transparent);
+    --focus-ring-width: .1875rem;
+    --focus-ring-offset: .125rem;
+    --focus-ring-color: var(--primary-focus-ring);
+    --link-color: var(--primary-fg);
+    --link-hover-color: var(--primary-fg-emphasis);
+    --heading-color: var(--fg-body);
+
+    /* Bootstrap has no calendar month or dashboard clock surfaces. */
+    --calendar-weekend-bg: var(--bg-2);
+    --calendar-outside-bg: var(--bg-3);
+    --clock-face: var(--bg-1);
+
+    --primary-fg: color-mix(in oklch, var(--primary-base) 88%, var(--fg-body));
+    --primary-fg-emphasis: color-mix(in oklch, var(--primary-base) 65%, var(--fg-body));
+    --primary-bg: var(--primary-base);
+    --primary-bg-subtle: color-mix(in oklch, var(--primary-base) 7%, var(--bg-1));
+    --primary-bg-muted: color-mix(in oklch, var(--primary-base) 13%, var(--bg-1));
+    --primary-border: color-mix(in oklch, var(--primary-base) 90%, var(--fg-body));
+    --primary-focus-ring: var(--primary-fg);
+    --primary-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --accent-fg: color-mix(in oklch, var(--accent-base) 88%, var(--fg-body));
+    --accent-fg-emphasis: color-mix(in oklch, var(--accent-base) 65%, var(--fg-body));
+    --accent-bg: var(--accent-base);
+    --accent-bg-subtle: color-mix(in oklch, var(--accent-base) 7%, var(--bg-1));
+    --accent-bg-muted: color-mix(in oklch, var(--accent-base) 13%, var(--bg-1));
+    --accent-border: color-mix(in oklch, var(--accent-base) 90%, var(--fg-body));
+    --accent-focus-ring: var(--accent-fg);
+    --accent-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --secondary-fg: color-mix(in oklch, var(--secondary-base) 88%, var(--fg-body));
+    --secondary-fg-emphasis: color-mix(in oklch, var(--secondary-base) 65%, var(--fg-body));
+    --secondary-bg: var(--secondary-base);
+    --secondary-bg-subtle: color-mix(in oklch, var(--secondary-base) 7%, var(--bg-1));
+    --secondary-bg-muted: color-mix(in oklch, var(--secondary-base) 13%, var(--bg-1));
+    --secondary-border: color-mix(in oklch, var(--secondary-base) 90%, var(--fg-body));
+    --secondary-focus-ring: var(--secondary-fg);
+    --secondary-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --success-fg: color-mix(in oklch, var(--success-base) 88%, var(--fg-body));
+    --success-fg-emphasis: color-mix(in oklch, var(--success-base) 65%, var(--fg-body));
+    --success-bg: var(--success-base);
+    --success-bg-subtle: color-mix(in oklch, var(--success-base) 7%, var(--bg-1));
+    --success-bg-muted: color-mix(in oklch, var(--success-base) 13%, var(--bg-1));
+    --success-border: color-mix(in oklch, var(--success-base) 90%, var(--fg-body));
+    --success-focus-ring: var(--success-fg);
+    --success-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --warning-fg: color-mix(in oklch, var(--warning-base) 88%, var(--fg-body));
+    --warning-fg-emphasis: color-mix(in oklch, var(--warning-base) 65%, var(--fg-body));
+    --warning-bg: var(--warning-base);
+    --warning-bg-subtle: color-mix(in oklch, var(--warning-base) 7%, var(--bg-1));
+    --warning-bg-muted: color-mix(in oklch, var(--warning-base) 13%, var(--bg-1));
+    --warning-border: color-mix(in oklch, var(--warning-base) 90%, var(--fg-body));
+    --warning-focus-ring: var(--warning-fg);
+    --warning-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --danger-fg: color-mix(in oklch, var(--danger-base) 88%, var(--fg-body));
+    --danger-fg-emphasis: color-mix(in oklch, var(--danger-base) 65%, var(--fg-body));
+    --danger-bg: var(--danger-base);
+    --danger-bg-subtle: color-mix(in oklch, var(--danger-base) 7%, var(--bg-1));
+    --danger-bg-muted: color-mix(in oklch, var(--danger-base) 13%, var(--bg-1));
+    --danger-border: color-mix(in oklch, var(--danger-base) 90%, var(--fg-body));
+    --danger-focus-ring: var(--danger-fg);
+    --danger-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --info-fg: color-mix(in oklch, var(--info-base) 88%, var(--fg-body));
+    --info-fg-emphasis: color-mix(in oklch, var(--info-base) 65%, var(--fg-body));
+    --info-bg: var(--info-base);
+    --info-bg-subtle: color-mix(in oklch, var(--info-base) 7%, var(--bg-1));
+    --info-bg-muted: color-mix(in oklch, var(--info-base) 13%, var(--bg-1));
+    --info-border: color-mix(in oklch, var(--info-base) 90%, var(--fg-body));
+    --info-focus-ring: var(--info-fg);
+    --info-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --inverse-fg: color-mix(in oklch, var(--inverse-base) 88%, var(--fg-body));
+    --inverse-fg-emphasis: color-mix(in oklch, var(--inverse-base) 65%, var(--fg-body));
+    --inverse-bg: var(--inverse-base);
+    --inverse-bg-subtle: color-mix(in oklch, var(--inverse-base) 7%, var(--bg-1));
+    --inverse-bg-muted: color-mix(in oklch, var(--inverse-base) 13%, var(--bg-1));
+    --inverse-border: color-mix(in oklch, var(--inverse-base) 90%, var(--fg-body));
+    --inverse-focus-ring: var(--inverse-fg);
+    --inverse-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --codex-fg: color-mix(in oklch, var(--codex-base) 88%, var(--fg-body));
+    --codex-fg-emphasis: color-mix(in oklch, var(--codex-base) 65%, var(--fg-body));
+    --codex-bg: var(--codex-base);
+    --codex-bg-subtle: color-mix(in oklch, var(--codex-base) 7%, var(--bg-1));
+    --codex-bg-muted: color-mix(in oklch, var(--codex-base) 13%, var(--bg-1));
+    --codex-border: color-mix(in oklch, var(--codex-base) 90%, var(--fg-body));
+    --codex-focus-ring: var(--codex-fg);
+    --codex-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --claude-fg: color-mix(in oklch, var(--claude-base) 88%, var(--fg-body));
+    --claude-fg-emphasis: color-mix(in oklch, var(--claude-base) 65%, var(--fg-body));
+    --claude-bg: var(--claude-base);
+    --claude-bg-subtle: color-mix(in oklch, var(--claude-base) 7%, var(--bg-1));
+    --claude-bg-muted: color-mix(in oklch, var(--claude-base) 13%, var(--bg-1));
+    --claude-border: color-mix(in oklch, var(--claude-base) 90%, var(--fg-body));
+    --claude-focus-ring: var(--claude-fg);
+    --claude-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --cursor-fg: color-mix(in oklch, var(--cursor-base) 88%, var(--fg-body));
+    --cursor-fg-emphasis: color-mix(in oklch, var(--cursor-base) 65%, var(--fg-body));
+    --cursor-bg: var(--cursor-base);
+    --cursor-bg-subtle: color-mix(in oklch, var(--cursor-base) 7%, var(--bg-1));
+    --cursor-bg-muted: color-mix(in oklch, var(--cursor-base) 13%, var(--bg-1));
+    --cursor-border: color-mix(in oklch, var(--cursor-base) 90%, var(--fg-body));
+    --cursor-focus-ring: var(--cursor-fg);
+    --cursor-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --grok-fg: color-mix(in oklch, var(--grok-base) 88%, var(--fg-body));
+    --grok-fg-emphasis: color-mix(in oklch, var(--grok-base) 65%, var(--fg-body));
+    --grok-bg: var(--grok-base);
+    --grok-bg-subtle: color-mix(in oklch, var(--grok-base) 7%, var(--bg-1));
+    --grok-bg-muted: color-mix(in oklch, var(--grok-base) 13%, var(--bg-1));
+    --grok-border: color-mix(in oklch, var(--grok-base) 90%, var(--fg-body));
+    --grok-focus-ring: var(--grok-fg);
+    --grok-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --opencode-fg: color-mix(in oklch, var(--opencode-base) 88%, var(--fg-body));
+    --opencode-fg-emphasis: color-mix(in oklch, var(--opencode-base) 65%, var(--fg-body));
+    --opencode-bg: var(--opencode-base);
+    --opencode-bg-subtle: color-mix(in oklch, var(--opencode-base) 7%, var(--bg-1));
+    --opencode-bg-muted: color-mix(in oklch, var(--opencode-base) 13%, var(--bg-1));
+    --opencode-border: color-mix(in oklch, var(--opencode-base) 90%, var(--fg-body));
+    --opencode-focus-ring: var(--opencode-fg);
+    --opencode-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --antigravity-fg: color-mix(in oklch, var(--antigravity-base) 88%, var(--fg-body));
+    --antigravity-fg-emphasis: color-mix(in oklch, var(--antigravity-base) 65%, var(--fg-body));
+    --antigravity-bg: var(--antigravity-base);
+    --antigravity-bg-subtle: color-mix(in oklch, var(--antigravity-base) 7%, var(--bg-1));
+    --antigravity-bg-muted: color-mix(in oklch, var(--antigravity-base) 13%, var(--bg-1));
+    --antigravity-border: color-mix(in oklch, var(--antigravity-base) 90%, var(--fg-body));
+    --antigravity-focus-ring: var(--antigravity-fg);
+    --antigravity-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --series-1-fg: color-mix(in oklch, var(--series-1-base) 88%, var(--fg-body));
+    --series-1-fg-emphasis: color-mix(in oklch, var(--series-1-base) 65%, var(--fg-body));
+    --series-1-bg: var(--series-1-base);
+    --series-1-bg-subtle: color-mix(in oklch, var(--series-1-base) 7%, var(--bg-1));
+    --series-1-bg-muted: color-mix(in oklch, var(--series-1-base) 13%, var(--bg-1));
+    --series-1-border: color-mix(in oklch, var(--series-1-base) 90%, var(--fg-body));
+    --series-1-focus-ring: var(--series-1-fg);
+    --series-1-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --series-2-fg: color-mix(in oklch, var(--series-2-base) 88%, var(--fg-body));
+    --series-2-fg-emphasis: color-mix(in oklch, var(--series-2-base) 65%, var(--fg-body));
+    --series-2-bg: var(--series-2-base);
+    --series-2-bg-subtle: color-mix(in oklch, var(--series-2-base) 7%, var(--bg-1));
+    --series-2-bg-muted: color-mix(in oklch, var(--series-2-base) 13%, var(--bg-1));
+    --series-2-border: color-mix(in oklch, var(--series-2-base) 90%, var(--fg-body));
+    --series-2-focus-ring: var(--series-2-fg);
+    --series-2-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --series-3-fg: color-mix(in oklch, var(--series-3-base) 88%, var(--fg-body));
+    --series-3-fg-emphasis: color-mix(in oklch, var(--series-3-base) 65%, var(--fg-body));
+    --series-3-bg: var(--series-3-base);
+    --series-3-bg-subtle: color-mix(in oklch, var(--series-3-base) 7%, var(--bg-1));
+    --series-3-bg-muted: color-mix(in oklch, var(--series-3-base) 13%, var(--bg-1));
+    --series-3-border: color-mix(in oklch, var(--series-3-base) 90%, var(--fg-body));
+    --series-3-focus-ring: var(--series-3-fg);
+    --series-3-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --series-4-fg: color-mix(in oklch, var(--series-4-base) 88%, var(--fg-body));
+    --series-4-fg-emphasis: color-mix(in oklch, var(--series-4-base) 65%, var(--fg-body));
+    --series-4-bg: var(--series-4-base);
+    --series-4-bg-subtle: color-mix(in oklch, var(--series-4-base) 7%, var(--bg-1));
+    --series-4-bg-muted: color-mix(in oklch, var(--series-4-base) 13%, var(--bg-1));
+    --series-4-border: color-mix(in oklch, var(--series-4-base) 90%, var(--fg-body));
+    --series-4-focus-ring: var(--series-4-fg);
+    --series-4-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --series-5-fg: color-mix(in oklch, var(--series-5-base) 88%, var(--fg-body));
+    --series-5-fg-emphasis: color-mix(in oklch, var(--series-5-base) 65%, var(--fg-body));
+    --series-5-bg: var(--series-5-base);
+    --series-5-bg-subtle: color-mix(in oklch, var(--series-5-base) 7%, var(--bg-1));
+    --series-5-bg-muted: color-mix(in oklch, var(--series-5-base) 13%, var(--bg-1));
+    --series-5-border: color-mix(in oklch, var(--series-5-base) 90%, var(--fg-body));
+    --series-5-focus-ring: var(--series-5-fg);
+    --series-5-contrast: light-dark(#ffffff, var(--bg-body));
+
+    --series-6-fg: color-mix(in oklch, var(--series-6-base) 88%, var(--fg-body));
+    --series-6-fg-emphasis: color-mix(in oklch, var(--series-6-base) 65%, var(--fg-body));
+    --series-6-bg: var(--series-6-base);
+    --series-6-bg-subtle: color-mix(in oklch, var(--series-6-base) 7%, var(--bg-1));
+    --series-6-bg-muted: color-mix(in oklch, var(--series-6-base) 13%, var(--bg-1));
+    --series-6-border: color-mix(in oklch, var(--series-6-base) 90%, var(--fg-body));
+    --series-6-focus-ring: var(--series-6-fg);
+    --series-6-contrast: light-dark(#ffffff, var(--bg-body));
+  }
+
+  :where([data-bs-theme='light']) { color-scheme: light; }
+  :where([data-bs-theme='dark']) { color-scheme: dark; }
+
+  .hero-panel {
+    --card-bg: var(--primary-bg-subtle);
+    --card-border-color: var(--primary-border);
+  }
+
+  /* Bootstrap component tokens keep control boundaries at interface contrast
+     while panel dividers can use the quieter decorative border token. */
+  .form-control { --control-border-color: var(--border-emphasized); }
+  .check { --check-border-color: var(--border-emphasized); }
+  .radio { --radio-border-color: var(--border-emphasized); }
+  .switch {
+    --switch-border-color: var(--border-emphasized);
+    --switch-indicator-bg: var(--fg-body);
+    --switch-checked-indicator-bg: var(--primary-contrast);
+  }
+
+  @media (forced-colors: active) {
+    :where(:root) {
+      --focus-ring-color: Highlight;
+      --border-emphasized: ButtonText;
+    }
+
+    .switch {
+      --switch-bg: Canvas;
+      --switch-indicator-bg: ButtonText;
+    }
+
+    .switch:has(input:checked) {
+      --switch-checked-bg: Highlight;
+      --switch-checked-border-color: Highlight;
+      --switch-checked-indicator-bg: HighlightText;
+    }
+  }
+}

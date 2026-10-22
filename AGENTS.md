@@ -24,17 +24,19 @@ Pages using simulated data, and is built with Svelte 5, Vite and Bootstrap 6.
 2. **Simulated data.** Agent usage, calendars and every feed except the
    Bootstrap ones are always simulated. Never connect to a real account or
    provider API, and never read local credentials.
-3. **Nothing personal.** None of the following may appear anywhere in the
-   project:
-   - real people's names, email addresses or street addresses;
-   - precise locations, home-directory paths or hostnames;
-   - account or project IDs;
+3. **Private information.** Keep the following out of tracked content, commit
+   messages and pull request text:
+   - private credentials;
+   - private contact details or addresses;
+   - home-directory paths or private hostnames;
+   - private account or project IDs;
    - references to private repositories.
 
-   That covers code, tests, fixtures, screenshots, docs, commit messages and
-   pull request text. The only exception is the copyright holder's name in
-   `LICENSE`. Simulated data uses invented people, organisations and places.
-   Don't change the repository's git identity.
+   This includes code, tests, fixtures, screenshots and docs. Public author
+   credits, attribution and legal notices are allowed. Simulated data uses
+   invented people, organisations and places. Don't change the repository's
+   git identity.
+
 4. **Bootstrap first.** For each piece of UI, work down this list and stop at
    the first step that covers it:
    1. a Bootstrap component, with its JavaScript plugin where it has one;
@@ -46,6 +48,7 @@ Pages using simulated data, and is built with Svelte 5, Vite and Bootstrap 6.
 
    Never reimplement a component that Bootstrap ships. Record every step-4 gap
    in `docs/bootstrap-log.md`.
+
 5. **Bootstrap version.** Bootstrap is pinned to an exact version. Change it
    only in a dedicated upgrade pull request that updates both
    `docs/bootstrap-log.md` and the feature map in `docs/roadmap.md`. Never lower
@@ -118,7 +121,7 @@ Apply the skill within this project's limits:
 - **Types:** the theme API is written in TypeScript. Elsewhere, use TypeScript
   or typed JSDoc. `svelte-check` must pass.
 - **Cascade layers:** `bootstrap, theme-base, theme, app, layout,
-  theme-effects, bootstrap-utilities`. Never use `!important` or specificity
+theme-effects, bootstrap-utilities`. Never use `!important` or specificity
   hacks.
 - **Units:** size type, spacing and components in `rem` or with Bootstrap
   tokens, never in pixels. Hairline borders use Bootstrap's border tokens.
@@ -132,19 +135,25 @@ Apply the skill within this project's limits:
 
 <!-- Keep in sync with package.json. -->
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Development server |
-| `npm run build` | Production build |
-| `npm test` | Unit tests |
-| `npm run test:browser` | Playwright functional and screenshot tests |
-| `npm run check` | Type, Svelte and lint checks |
-| `npm run new-theme <id>` | Create a theme |
+| Command                  | Purpose                                |
+| ------------------------ | -------------------------------------- |
+| `npm run dev`            | Development server                     |
+| `npm run build`          | Production build                       |
+| `npm test`               | Unit tests                             |
+| `npm run test:browser`   | Focused Chromium and screenshot checks |
+| `npm run check`          | Type, Svelte and lint checks           |
+| `npm run new-theme <id>` | Create a theme                         |
 
 ## Before you finish
 
-- Run `npm run check`, `npm test` and the relevant `npm run test:browser`
-  projects. Report failures as they are; never skip or loosen a test.
+- Run `npm run check`, `npm test` and `npm run test:browser`. Report failures
+  as they are; never skip or loosen a test.
+- CI uses the focused Chromium and screenshot selection documented in
+  `docs/ci.md`. These 34 cases are the browser requirement for this demo,
+  including upgrades. Additional browser, theme and viewport checks remain
+  available for optional targeted local investigation. Review affected UI
+  visually and preserve the accessibility floor. The approved scope does not
+  permit weakening assertions or accepting unintended baseline changes.
 - Update screenshot baselines only for intended visual changes, and say which
   changed and why.
 - Keep the docs current: the feature map in `docs/roadmap.md`,
