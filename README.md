@@ -11,6 +11,9 @@ release feed. No accounts, credentials, analytics or backend are involved.
 
 ![Default Summary with simulated data](tests/browser/__screenshots__/screenshots-1280x720-dpr1/default-light-summary.png)
 
+Both screenshots show the compact desktop layout at 1280×720, with links to
+the remaining agents and events.
+
 **[Open the live Dayframe demo](https://bvisagie.github.io/dayframe-dashboard/).**
 
 The site is deployed on GitHub Pages as a prelaunch demo with indexing disabled.

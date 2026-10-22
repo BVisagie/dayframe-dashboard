@@ -84,7 +84,8 @@ the shared defaults cannot block the theme's choices.
 1. Set Bootstrap's `--bg-body`, `--bg-1`, `--fg-body`, `--body-font-family` and
    every role's `--<role>-base`. Shared `theme-base` derivations complete
    `--bg-2` through `--bg-4`, `--fg-1` through `--fg-4`, borders and type
-   defaults. Bootstrap generates the radius and shadow scales.
+   defaults. Bootstrap provides the default radius and shadow scales; themes
+   may override individual tokens.
 2. Every role supplies all nine Bootstrap keys: `base`, `fg`, `fg-emphasis`,
    `bg`, `bg-subtle`, `bg-muted`, `border`, `focus-ring`, `contrast`. The roles
    are `primary`, `accent`, `secondary`, `success`, `warning`, `danger`, `info`,
@@ -113,9 +114,10 @@ stacks; monospace is reserved for the clock and readings except in the console.
 
 The brand mark is an inline SVG filled with `--primary-bg`, `--primary-contrast`
 and `--accent-bg`, so a theme recolours it through its roles with no extra
-asset or token. Bootstrap generates the radius and shadow scales from `$radius`
-and `$shadows`; themes change radii per token (as Nebuchadnezzar does) and tint
-shadows through `--shadow-color` rather than redefining the scales.
+asset or token. Bootstrap generates the default radius and shadow scales from
+`$radius` and `$shadows`. Themes may override `--radius-*` and `--box-shadow*`
+tokens, as Nebuchadnezzar and Tideline do, or adjust `--shadow-color` and
+`--shadow-strength`.
 
 ## Layout integration
 
