@@ -186,9 +186,9 @@ The Vite configuration fixes the Pages base at `/dayframe-dashboard/`.
 `DAYFRAME_PUBLIC_LAUNCH` is the single repository variable passed to the build:
 only the literal value `true` enables indexing. An unset variable, `false` or
 any other value produces both the `noindex, nofollow` meta tag and a
-`robots.txt` that disallows crawling. The complete prelaunch dashboard is built
-with indexing disabled; Pages setup and deployment require separate approval
-and passing gates.
+`robots.txt` that disallows crawling. Prelaunch builds use indexing disabled;
+the [public launch](#public-launch) records the approved change to the flag.
+Pages setup and deployment require approval and passing gates.
 
 ## Trusted privacy gate
 
@@ -228,9 +228,10 @@ independent trusted gitleaks policy. The candidate's own workflow cannot
 certify its installation. Record the candidate SHA and nonsensitive results.
 The listener is now installed on `main`; its post-merge scan and status
 publication are recorded below. That success does not establish that the
-independent pre-merge check ran. Retain its candidate SHA and nonsensitive
-results separately. Verification on a real fork or Dependabot pull request
-also remains outstanding in this record.
+independent pre-merge check ran. Historical pre-installation evidence and
+verification on a real fork or Dependabot PR were not established; the
+maintainer excluded further work on those items from the approved launch
+scope on 2026-10-22. Current full-history scanning remains required.
 
 Private credentials, private contact details and addresses, home-directory
 paths, private hostnames, private account/project IDs and private repository
@@ -280,9 +281,8 @@ separate approval; implementation does not authorize them:
    Disable force pushes and deletion; revisit approvals when another reviewer
    joins. Do not require a successful deployment before merging, because Pages
    deploys only after a push to `main`.
-   Confirm the trusted status appears on a real fork or Dependabot PR before
-   treating this setup as complete. Changes to these settings remain external
-   work.
+   Fork/Dependabot status verification is outside the maintainer-approved
+   launch scope. Changes to these settings remain external work.
 3. Permit Actions to create pull requests for scheduled maintenance. Keep the
    weekly workflow's write permissions limited to contents and pull requests.
    No bot PAT, external service credential or change to local Git identity is
@@ -343,25 +343,26 @@ Verified on 2026-10-22 against main commit
   latter emits `index, follow` and `Allow: /`. The default build was restored
   afterward; no repository variable was changed.
 
-Remaining operational evidence:
+The historical pre-installation scan, fork/Dependabot status path and
+maintenance draft creation were not verified by this readiness check. The
+maintainer removed further work on those items from the launch scope on
+2026-10-22. Actions' draft-creation permission remains disabled; this launch
+does not change maintenance automation settings or certify automatic drafts.
 
-- The independent scan before the trusted listener's first installation has
-  no recorded candidate SHA and result. A later successful scan cannot
-  retroactively prove that this happened.
-- There is no real fork or Dependabot PR in the repository's PR record to
-  verify the trusted status on that path. Do not substitute a same-repository
-  maintainer PR for this proof.
-- Maintenance did not need an update draft. Actions currently reports
-  `can_approve_pull_request_reviews=false`, which also controls permission for
-  workflows to create PRs; see [GitHub's workflow permission setting](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository#preventing-github-actions-from-creating-or-approving-pull-requests).
-  Verify and separately approve the required setting
-  before relying on automatic draft creation, then test it with a real update.
-  The successful no-change run does not establish that capability.
+## Public launch
 
-Indexing, deployment of the launch build and public announcements require the
-separate approvals and live verification in the
-[launch procedure](roadmap.md#launch-procedure). No announcement or
-upstream feedback was posted during this readiness check.
+On 2026-10-22 the maintainer approved enabling indexing, deploying a checked
+launch build and recording the result. Publication of the announcement and
+upstream feedback belongs to the maintainer; no posting is part of this work.
+
+The launch uses the existing `DAYFRAME_PUBLIC_LAUNCH=true` build flag and the
+unchanged main-push deployment gate. The release PR updates the README's
+prelaunch notice. Live verification is pending deployment: require HTTP 200
+over HTTPS, `index, follow` in the HTML and `Allow: /` in `robots.txt`, then
+record the deployed commit and successful CI and deployment runs here.
+
+M5 remains open until the maintainer supplies publication links. The
+[roadmap checklist](roadmap.md#launch-checklist) tracks that remaining item.
 
 ## Weekly maintenance
 

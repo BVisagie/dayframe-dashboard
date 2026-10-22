@@ -13,11 +13,9 @@ release feed. No accounts, credentials, analytics or backend are involved.
 
 **[Open the live Dayframe demo](https://bvisagie.github.io/dayframe-dashboard/).**
 
-The site is deployed on GitHub Pages as a prelaunch demo with indexing disabled.
-Public launch remains a separate approval. See the
-[deployment evidence](docs/ci.md#prelaunch-deployment-evidence) and
-[roadmap](docs/roadmap.md#deployment-and-launch) for completed setup and pending
-release operations.
+The public demo runs on GitHub Pages with search indexing enabled. See the
+[launch record](docs/ci.md#public-launch) for deployment evidence and the
+[roadmap](docs/roadmap.md#deployment-and-launch) for release status.
 
 ## Run locally
 
