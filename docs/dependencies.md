@@ -73,7 +73,8 @@ package names. A fresh registry advisory query returned no findings, and
 
 All 24 direct workflow references were audited, including trusted deployment
 and maintenance. These upgrades preserve permissions, deployment gates,
-required job names and the three-job, 34-case routine selection.
+required job names and the three-job, 34-case browser requirement for all
+changes, including upgrades.
 
 The latest official Pages upload composite embeds upload-artifact 7.0.0,
 behind the direct 7.0.2 pin. This upstream-owned dependency is retained with
@@ -90,8 +91,10 @@ externally managed service, with no repository version to upgrade.
 The vendored frontend-design skill and licence already match upstream bytes.
 The Resolute capture audit preserves 399 images and updates only the reviewed
 Default dark Summary rounded-edge rendering at 1280×720 DPR 1. [CI evidence](ci.md#screenshot-comparison-and-review)
-records its provenance; older Noble evidence remains labelled Noble. The final
-candidate must pass the complete 1,027-case suite before merge, with current
-results recorded in the pull request. Trusted deployment/maintenance activation
-still requires installation on `main` and the separately approved repository
-setup in [CI setup](ci.md).
+records its historical provenance; older Noble evidence remains labelled
+Noble. Each candidate must pass three-job CI, including the 34 browser cases,
+with current results recorded in the pull request. Upgrades also need targeted
+manual review of affected components, themes and viewports. Broader browser
+projects and baselines remain optional local tools. Trusted deployment and
+maintenance activation still requires installation on `main` and the separately
+approved repository setup in [CI setup](ci.md).

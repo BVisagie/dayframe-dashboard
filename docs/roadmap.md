@@ -428,7 +428,8 @@ Each theme must pass these checks in every scheme it supports:
   for large text and interface elements;
 - state colours meet 3:1 against their surface, and every state also has a
   text or icon cue;
-- screenshots match the approved baselines at the standard viewports.
+- the required CI screenshots match their approved baselines; broader
+  standard-viewport comparisons remain available for optional local review.
 
 Tooling:
 
@@ -451,7 +452,7 @@ Tooling:
   control. Calendar limits the selected-day agenda, Weather pages hourly rows,
   and Feeds reduces stories per page. All five views fit at 1280×720 and
   1920×1080 at the default display scale in all three themes; this is local
-  fitting evidence, not completion of the screenshot matrix.
+  fitting evidence.
 - **Narrow windows:** below about 1100 CSS pixels wide, the dashboard switches
   to a scrolling layout for laptops in split view, tablets and phones.
 - **Container queries:** panels adapt to their own size, so layouts can
@@ -471,17 +472,19 @@ Standard test viewports, in CSS pixels:
 | 3840×2160         | 4K at 100%                    |
 | 1024×768, 390×844 | Tablet, phone                 |
 
-Each viewport runs at device pixel ratios of 1 and 2.
+Optional screenshot projects cover each viewport at device pixel ratios of 1
+and 2. Required CI selects 1280×720 and 390×844 at DPR 1.
 
 ## Tracking Bootstrap
 
 - **Pinned version:** Bootstrap is pinned to an exact version and excluded from
   Dependabot updates. A dedicated weekly registry check prepares upgrade
   drafts for newer 6.x releases, including pre-releases.
-- **Upgrade checks:** manually dispatch CI with `full_suite` on each upgrade
-  candidate before merging. It runs unit tests, all three functional browser
-  projects, theme contract checks and the full screenshot matrix. Review the
-  diffs to see what the release changed.
+- **Upgrade checks:** require the same three CI jobs and 34 browser cases as
+  every change. Manually review affected components, themes and viewports,
+  including keyboard operation, visible focus, contrast, reduced motion and
+  forced colours. Broader engine and screenshot projects remain optional local
+  tools. Review the diffs to see what the release changed.
 - **Release log:** `docs/bootstrap-log.md` records, per Bootstrap release, what
   changed in Dayframe. That covers renamed tokens, adopted components,
   workarounds added or removed, and issues reported upstream.
@@ -500,22 +503,28 @@ Each viewport runs at device pixel ratios of 1 and 2.
 - **Unit tests** (`node:test`) cover the simulation engine, date and recurrence
   handling, formatting, settings migrations and the theme registry.
 - **Browser tests** (Playwright):
-  - routine CI selects 34 cases tagged `@smoke`: 18 Chromium functional cases
-    and 16 desktop/phone screenshots;
-  - the complete functional suite in Chromium, Firefox and WebKit remains
-    available, together with the full screenshot matrix, through manual CI
-    with `full_suite` enabled. Run it on the current candidate before merging
-    Bootstrap upgrades or substantial theme changes;
-  - screenshot comparisons in Chromium only, for the full matrix of view ×
-    theme × scheme × standard viewport, using a fixed `?clock` and `?seed`;
-  - all runs in Playwright's pinned container image, so fonts render
-    consistently, against the production build;
+  - `npm run test:browser` selects 34 existing cases tagged `@smoke`: 18 Chromium
+    functional cases and 16 screenshots across the 1280×720 and 390×844 DPR 1
+    projects. This is the complete CI browser requirement for all changes,
+    including upgrades and substantial theme changes;
+  - broader tests, engine projects and screenshot baselines remain optional
+    local tools. Use the direct CLI for focused extra coverage, for example
+    `npx playwright test tests/browser/dashboard.spec.ts --project=firefox`;
+    the npm default appends its fixed project and tag selection;
+  - screenshots use Chromium, a fixed `?clock` and `?seed`, and Playwright's
+    pinned container for consistent fonts. Existing projects retain the full
+    view × theme × scheme × standard viewport matrix for optional local use;
+  - browser tests run against the production build;
   - screenshot projects fix font positioning and Skia's CPU path; functional
     projects keep normal browser rendering. The explicitly approved colour
     threshold is `0.005` with `maxDiffPixels: 0` and the existing antialiasing
     heuristic. Tiny colour differences may pass; counted pixels beyond the
     tolerance and image-dimension changes fail. This is not exact pixel
-    equality. See [CI and review evidence](ci.md#screenshot-comparison-and-review).
+    equality. Intentional baseline updates require review of CI failure
+    actuals and traces, copying only the exact needed actuals; local baseline
+    updates use the pinned container and existing guards. No tags, assertions
+    or tolerances are weakened. See
+    [CI and review evidence](ci.md#screenshot-comparison-and-review).
 - **Accessibility:** keyboard-only operation, visible focus, reduced motion,
   forced colours and the contrast checks above.
 - **Bootstrap-first review:** the pull request template asks two questions.
@@ -551,8 +560,8 @@ The implemented workflows build and test pushes to `main`. A trusted listener
 then scans the exact candidate and permits Pages deployment only when every
 required job and privacy status succeeds. Vite's `base` is
 `/dayframe-dashboard/`. Pull request builds are configured as workflow artifacts.
-The canonical 400-image replacement set has been reviewed and all comparisons
-passed at `8c58cba`. Every candidate still requires its applicable CI, the trusted
+The historical 400-image replacement set was reviewed and all comparisons
+passed at `8c58cba`. Every candidate still requires three-job CI, the trusted
 full-history secret scan and separately approved Pages setup before deployment.
 
 Prelaunch builds exclude search engines with `noindex` and `robots.txt`. A
@@ -585,16 +594,14 @@ Launch checklist:
 Pinned Noble [run `39643918557`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39643918557)
 at `8c58cba` passed 188 functional tests per browser plus all 400 screenshot
 comparisons (964 browser tests total), 84 unit tests, types, lint, build and
-secret scanning. GitGuardian also passed. Routine CI now uses the smaller
-approved selection; full mode remains required for Bootstrap upgrades and
-substantial theme changes. The
+secret scanning. GitGuardian also passed. These results are historical;
+current CI requires the 34-case selection for all changes. The
 [baseline review evidence](ci.md#screenshot-comparison-and-review) records the
 400-image replacement set and the approved comparison tolerance.
 
-That run predates the current review fixes. The final follow-ups pass local
+That run predates the current review fixes. Local checks at `a2a4926` passed
 type, lint, tooling, build and all 104 unit checks, plus 48 targeted Chromium
-and Firefox cases. Routine CI still selects 34 cases; the complete suite now
-contains 1,027 cases.
+and Firefox cases.
 Pinned Noble capture run `39656395929` supplied all 400 intended baseline
 updates. Independent visual review and root hash verification accepted the
 complete set. Routine CI passed all three jobs and 34 selected browser cases
@@ -603,14 +610,14 @@ upgrade is tracked in the [dependency audit](dependencies.md). Resolute capture
 run `39665070867` leaves 399 images byte-identical and updates only Default
 dark Summary at 1280×720 DPR 1 for reviewed rounded-edge rasterization. The
 [CI evidence](ci.md#screenshot-comparison-and-review) records exact provenance.
-The final candidate still requires a successful full container run; its current
-results are recorded in the pull request.
+The pull request records current three-job CI results under the reduced
+policy.
 
 | Area                   | Implemented                                                                                                                                                  | Pending proof or external setup                                                                                                               |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | Views and state        | All five views, Settings, navigation, rotation and deterministic scenarios; independent persisted date format; full three-browser checks passed at `8c58cba` | Routine CI on later changes                                                                                                                   |
-| Bootstrap integration  | Real plugins through Svelte actions; Datepicker updates and NavOverflow clone navigation/active-state synchronization; full browser checks passed            | Full mode for Bootstrap upgrades                                                                                                              |
-| Layout and themes      | Default, Nebuchadnezzar and Tideline; reviewed 400-image canonical set passed at `8c58cba`; all six desktop dimensions fit without lowering the root floor   | Full mode for substantial theme changes; routine desktop/phone selection otherwise                                                            |
+| Bootstrap integration  | Real plugins through Svelte actions; Datepicker updates and NavOverflow clone navigation/active-state synchronization; historical full browser checks passed | Three-job CI and targeted manual upgrade review                                                                                               |
+| Layout and themes      | Default, Nebuchadnezzar and Tideline; historical reviewed 400-image set passed at `8c58cba`; all six desktop dimensions fit without lowering the root floor  | Three-job CI and targeted manual review of affected themes and viewports                                                                      |
 | Sources                | Allowed live adapters, caching, fallbacks, backoff and default ten-second deadlines; hosted adapter checks passed                                            | No real account connections are needed                                                                                                        |
 | Bootstrap tracking     | Exact `6.0.0-alpha.1` pin, lens, About panel, gap log and measured app CSS footprint                                                                         | Hosted maintenance workflow verification                                                                                                      |
 | Privacy and deployment | Trusted full-history secrets gate and gated static artifact deployment workflows                                                                             | Independent trusted secrets scan before first merge, listener/status verification on `main` and separately approved repository/Pages settings |
@@ -622,7 +629,7 @@ code and local fitting checks do not complete pending CI, privacy or launch work
 | --- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | M0  | Scaffold                | Licence, README, `AGENTS.md` and `CLAUDE.md`, and a Svelte, Vite and Bootstrap build. CI runs the tests and privacy checks, and the weekly skill-sync workflow is in place. The complete prelaunch dashboard supersedes the placeholder and deploys to Pages with `noindex` |
 | M1  | Views on simulated data | All five views, Settings, keyboard navigation, rotation and scenarios work on simulated data. They are built from Bootstrap components and plugins as the feature map lists. A fixed clock gives identical renders                                                          |
-| M2  | Token architecture      | Theme registry, token tiers, layers, scale unit, and the `standard` and `console` layouts. Default and Nebuchadnezzar built from their recorded briefs. Contract checks and screenshot matrix pass                                                                          |
+| M2  | Token architecture      | Theme registry, token tiers, layers, scale unit, and the `standard` and `console` layouts. Default and Nebuchadnezzar built from their recorded briefs. Theme contracts hold and required CI browser checks pass                                                            |
 | M3  | Live sources            | Weather and Bootstrap feeds are live, with caching and fallbacks. They degrade gracefully offline and under rate limits                                                                                                                                                     |
 | M4  | Bootstrap tracking      | The dedicated weekly registry check and release log are running. The Bootstrap lens and About Bootstrap panel are built, and the app SCSS source footprint is recorded                                                                                                      |
 | M5  | Launch                  | Launch checklist complete                                                                                                                                                                                                                                                   |

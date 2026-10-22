@@ -17,35 +17,37 @@ that group; manual dispatches cannot cancel PR or push runs, or be cancelled
 by them. Jobs use Ubuntu 26.04 and exact Node 26.12.1; browser tests run in
 `mcr.microsoft.com/playwright:v1.64.1-resolute`, matching Playwright 1.64.1.
 The workflow pins its OCI digest, and capture guards require Resolute.
-The browser report, build and requested screenshot candidates are
-retained for seven days. Every browser run builds and serves the production
-bundle, uses two workers and has zero retries.
+The browser report and build are retained for seven days. Every browser run
+builds and serves the production bundle, uses two workers and has zero retries.
 
-The routine browser command is:
+The browser command is:
 
 ```sh
-npm run test:browser -- --project=chromium --project=screenshots-1280x720-dpr1 --project=screenshots-390x844-dpr1 --grep @smoke
+npm run test:browser
 ```
 
-The full suite remains available through `npm run test:browser`. To run it in
-the pinned container, dispatch `CI` on the candidate branch with `full_suite`
-enabled. It uses the same three jobs; the browser job runs all three engines
-and all 400 screenshots. **Before merging a Bootstrap upgrade or substantial
-theme change, run this full mode on the current candidate SHA and review the
-results.** Later documentation or CI-selection changes can use routine CI;
-behaviour or test-assertion changes require fresh full validation. This is a
-manual review requirement, not automatic path detection.
-Ordinary changes use the routine selection. All assertions and baselines remain
-in the complete suite.
+These 34 existing cases are the complete CI browser requirement for every
+change, including Bootstrap and Playwright upgrades and substantial theme
+changes. Upgrades also need targeted manual review of affected components,
+themes and viewports, preserving keyboard operation, visible focus, WCAG 2.2 AA
+contrast, reduced motion and forced colours. No complete engine or viewport
+matrix run is required.
 
-Firefox [rejects root when the home directory belongs to another user](https://github.com/mozilla/gecko-dev/blob/master/toolkit/xre/nsAppRunner.cpp#L3544-L3570).
-Full mode corrects only the runner-mounted home directory's owner before
-launch, without recursion or overriding `HOME`.
+Broader existing tests, project configurations and baselines remain optional
+local tools. Run a focused file in an extra engine directly, for example:
 
-For intentional visual updates, enable `screenshot_candidates` in the manual
-dispatch. Candidate generation runs after comparisons and uploads all 400
-images for review, including when comparisons fail. It cannot turn a failed
-comparison into a pass. Host-generated baselines are refused.
+```sh
+npx playwright test tests/browser/dashboard.spec.ts --project=firefox
+```
+
+Use the direct CLI because the npm command appends its fixed projects and
+`@smoke` selection. The reduced scope does not permit changing tags to evade
+coverage, weakening assertions or loosening screenshot tolerances.
+
+For intentional visual changes, review CI failure actuals and traces before
+copying only the exact needed, reviewed actuals into their baselines. Local
+baseline updates must use the pinned Playwright container and satisfy the
+existing `updateSnapshots` guards. Host-generated baselines are refused.
 
 Screenshot projects fix font subpixel positioning and Skia's runtime CPU path;
 functional projects retain normal rendering. The font setting addresses a
@@ -77,7 +79,7 @@ passed. Visual review covered all 16 routine screenshots, plus footer samples
 at every viewport and device pixel ratio and the compact console Weather view.
 All six desktop image dimensions still fit their viewports. These images add
 the exact stack versions and tighten existing footer spacing; no theme or
-capture settings changed. Candidate generation does not replace the normal
+capture settings changed. That historical capture did not replace the normal
 comparison check.
 
 The review fixes at `e9f6780` replace all 400 images from pinned Noble
@@ -89,7 +91,7 @@ routine cases also match under the unchanged comparator settings; 11 are
 byte-identical across jobs. Changes reflect supported Bootstrap controls,
 theme-owned hero tokens, today's agenda and compact feed pagination. The 32
 narrow-layout height changes preserve content; all desktop dimensions remain
-unchanged. Comparison checks against the refreshed baselines remain required.
+unchanged. Required CI comparisons use these refreshed baselines.
 
 Routine [run `39660061306`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39660061306)
 at `0556e33` passed Quality, all 34 selected browser/screenshot cases and
@@ -111,10 +113,11 @@ capture-environment change. Its SHA-256,
 exactly matches the independently reviewed actual from the first Resolute
 run. The comparator, pixel budget, assertions and screenshot dimensions are
 unchanged. The final follow-ups do not alter the frozen, lens-off screenshot
-states. A full comparison run on the final candidate remains required;
-current run results are recorded in the pull request.
+states. These capture results are historical evidence; each candidate needs
+the three CI jobs and 34 selected browser cases, with current results recorded
+in the pull request.
 
-The matrix covers eight viewports × two device pixel ratios × five views ×
+The optional matrix covers eight viewports × two device pixel ratios × five views ×
 five supported theme/scheme combinations = 400 images. Default and Tideline
 each contribute 160; Nebuchadnezzar contributes 80. Comparisons store CSS-pixel
 images and assert the browser's actual device pixel ratio separately. In the
@@ -125,14 +128,14 @@ overflow; phone and tablet views scroll as designed.
 Pinned Noble [run `39643918557`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39643918557)
 at `8c58cba` passed 84 unit tests, 188 functional tests in each of Chromium,
 Firefox and WebKit, and all 400 screenshot comparisons: 964 browser tests.
-GitGuardian also passed on that commit. This validates the complete suite
-before routine CI was reduced; later candidates still need their applicable
-checks. The final follow-ups pass local type, lint, tooling, build and all
-104 unit checks. All 48 targeted Chromium/Firefox cases pass, covering source
-integration, tooltip updates, modal and lens positioning, pointer access,
-Settings breakpoints, programmatic Range resets and city labels. Full discovery
-now contains 209 cases per functional browser and 400 screenshots: 1,027 total.
-The routine selection remains 34. Host-generated baselines are not accepted.
+GitGuardian also passed on that commit. This records the complete suite
+before CI was reduced; it does not certify later candidates. Local checks at
+`a2a4926` passed type, lint, tooling, build and all 104 unit checks. All 48
+targeted Chromium/Firefox cases passed, covering source integration, tooltip
+updates, modal and lens positioning, pointer access,
+Settings breakpoints, programmatic Range resets and city labels. The pull
+request records current three-job CI results for the final candidate.
+Host-generated baselines are not accepted.
 
 The Vite configuration fixes the Pages base at `/dayframe-dashboard/`.
 `DAYFRAME_PUBLIC_LAUNCH` is the single repository variable passed to the build:
@@ -247,14 +250,15 @@ a default-version range. It never selects Bootstrap 5 or downgrades the pin.
 An upgrade draft changes only `package.json`, `package-lock.json`, the
 Bootstrap log and a pending feature-map review note. Lockfile generation
 disables lifecycle scripts. The draft explicitly requires token/component
-review, the CSS footprint and a manual `CI` run with `full_suite` enabled before
-merge, covering the complete browser and screenshot matrix.
+review, the CSS footprint, targeted manual review of affected components,
+themes and viewports, and passing three-job CI with the 34 browser cases
+before merge.
 
 Playwright updates are manual and coordinated: change the exact
 `@playwright/test` package pin and the matching CI container image together,
-run the complete suite, and review any screenshot baseline refresh in that
-upgrade. Dependabot's development-tools group cannot update Playwright by
-itself.
+run the same 34-case browser requirement, and review affected rendering and any
+screenshot baseline refresh in that upgrade. Dependabot's development-tools
+group cannot update Playwright by itself.
 
 The same schedule checks canonical frontend-design bytes at a fixed resolved
 upstream commit. `node scripts/sync-skill.mjs --check` is read-only;

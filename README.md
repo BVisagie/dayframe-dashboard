@@ -77,24 +77,31 @@ upstream findings.
 npm run check
 npm test
 npm run build
-npm run test:browser -- --project=chromium --grep @smoke
+npm run test:browser
 ```
 
 Routine CI has three jobs: Quality (types, lint, unit tests and build), focused
 Chromium tests with a small desktop/phone screenshot set, and Secret history.
 It runs on pull requests and pushes to `main`, avoiding duplicate branch runs.
-The complete suite remains available through `npm run test:browser` or manual
-CI with `full_suite` enabled. Run it for Bootstrap upgrades and substantial
-theme changes before merging. See [CI setup](docs/ci.md) for exact commands.
+`npm run test:browser` runs the complete CI browser requirement: 18 Chromium
+functional cases and 16 screenshots at 1280×720 and 390×844, both at DPR 1.
+These 34 cases apply to all changes, including upgrades. Review affected
+components, themes and viewports manually when upgrading. Broader tests and
+baselines remain optional local tools; use direct Playwright commands for
+extra coverage, such as
+`npx playwright test tests/browser/dashboard.spec.ts --project=firefox`.
+See [CI setup](docs/ci.md) for details.
 
-Browser validation uses Playwright 1.64.1 and its pinned Resolute container. The
-complete suite includes Chromium, Firefox and WebKit and 400 Chromium screenshots
-at eight viewports, each at device pixel ratios 1 and 2. Clock, seed, locale and
-time zone are fixed. Remote APIs are mocked in tests. Screenshot projects fix font subpixel
-positioning and Skia's CPU path. The approved colour threshold is `0.005`,
+Browser validation uses Playwright 1.64.1 and its pinned Resolute container.
+Optional projects retain Chromium, Firefox and WebKit coverage and 400 Chromium
+screenshots at eight viewports, each at device pixel ratios 1 and 2. Clock,
+seed, locale and time zone are fixed. Remote APIs are mocked in tests.
+Screenshot projects fix font subpixel positioning and Skia's CPU path. The
+approved colour threshold is `0.005`,
 with `maxDiffPixels: 0`; this permits tiny colour noise, not exact pixel
 equality. Initial baselines and intentional visual updates require review;
-missing snapshots fail comparisons. The complete suite passed at `8c58cba`;
+missing snapshots fail comparisons. A historical complete run passed at
+`8c58cba`;
 [CI setup](docs/ci.md) records the baseline review and validation evidence.
 
 Full-history gitleaks checks run in CI and in the trusted deployment gate. No

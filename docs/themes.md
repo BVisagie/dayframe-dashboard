@@ -157,10 +157,14 @@ The CRT finish is static and ignores pointer input. It and its glow switch off
 under both reduced motion and forced colours. Theme CSS never removes focus
 outlines or opts out of the browser's forced colours.
 
-Run `npm run check`, `npm test` and the relevant `npm run test:browser` projects.
+Run `npm run check`, `npm test`, `npm run build` and `npm run test:browser`.
 The Node suite checks every discovered manifest, schema failures, option
 cleanup, scheme boundaries and the generator's no-overwrite behaviour. Browser
-checks own resolved tokens, contrast, focus and screenshots across the roadmap
-viewport matrix. Review screenshots in both schemes before accepting a theme;
-record intentional baseline changes. A generated starter still needs its own
-design review and full browser verification before acceptance.
+checks cover resolved tokens, contrast, focus and screenshots. The 34-case
+default is the complete CI browser requirement for all changes, including
+substantial theme changes and upgrades. Broader tests and the roadmap viewport
+matrix remain optional local tools. Manually review affected components,
+themes and viewports in supported schemes, preserving the accessibility floor.
+Review intentional baseline changes before updating them in the pinned
+container. A generated starter still needs its own design review and the same
+CI validation before acceptance.

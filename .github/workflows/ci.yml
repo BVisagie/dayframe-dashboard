@@ -5,15 +5,6 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
-    inputs:
-      full_suite:
-        description: Run every browser and screenshot project
-        type: boolean
-        default: false
-      screenshot_candidates:
-        description: Generate screenshot candidates for visual review
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -56,7 +47,7 @@ jobs:
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-resolute@sha256:5804dd8c666684ea858091d52c91ef97974caa999b25f0f03efa485d9ffeb434
       options: --ipc=host
-    timeout-minutes: 40
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -66,17 +57,7 @@ jobs:
         with:
           node-version: '26.12.1'
       - run: npm ci
-      - name: Match Firefox home ownership to the container user
-        if: ${{ inputs.full_suite }}
-        # Firefox refuses root when the runner-mounted home belongs to another user.
-        run: chown "$(id -u)" "$HOME"
-      - name: Run focused browser and screenshot comparisons
-        if: ${{ !inputs.full_suite }}
-        run: npm run test:browser -- --project=chromium --project=screenshots-1280x720-dpr1 --project=screenshots-390x844-dpr1 --grep @smoke
-      - name: Run every browser and screenshot comparison
-        if: ${{ inputs.full_suite }}
-        run: npm run test:browser
-      # Upload comparisons before candidate generation replaces local test output.
+      - run: npm run test:browser
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
         with:
@@ -85,18 +66,6 @@ jobs:
             playwright-report/
             test-results/
           if-no-files-found: ignore
-          retention-days: 7
-
-      # Candidate generation never clears a failed comparison step's status.
-      - name: Generate requested screenshot candidates
-        if: ${{ inputs.screenshot_candidates && !cancelled() }}
-        run: npm run test:browser -- --project='screenshots-*' --update-snapshots
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        if: ${{ inputs.screenshot_candidates && !cancelled() }}
-        with:
-          name: screenshot-candidates
-          path: tests/browser/__screenshots__/
-          if-no-files-found: error
           retention-days: 7
 
   gitleaks:

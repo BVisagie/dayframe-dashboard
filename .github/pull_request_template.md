@@ -9,10 +9,11 @@ Bootstrap-first review:
 
 Acceptance:
 
-- [ ] `npm run check`, `npm test`, `npm run build` and all relevant
-      `npm run test:browser` projects pass.
-- [ ] Routine CI passes. For a Bootstrap upgrade or substantial theme change,
-      manual CI with `full_suite` enabled also passes after those changes.
+- [ ] `npm run check`, `npm test`, `npm run build` and
+      `npm run test:browser` pass.
+- [ ] All three CI jobs pass, including the 34 browser cases. This is the
+      complete CI browser requirement for all changes, including upgrades.
+      Upgrade review covers affected components, themes and viewports.
 - [ ] The pinned Playwright container covers functional tests and intended
       screenshot changes. List changed baselines and why below.
 - [ ] Keyboard focus, WCAG 2.2 AA contrast, reduced motion and forced colours

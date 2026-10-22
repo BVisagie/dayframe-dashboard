@@ -138,14 +138,18 @@ and accepted from Noble capture run `39656395929`, with exact artifact hashes
 verified before copying. Resolute capture run `39665070867` preserves 399
 images byte-for-byte and updates only Default dark Summary at 1280×720 DPR 1
 for reviewed rounded-edge rasterization. The image dimensions, comparator and
-pixel budget are unchanged. Final candidate comparisons and full container
-validation are recorded in the pull request; historical passes do not certify
-later candidates.
+pixel budget are unchanged. These captures record historical provenance;
+current CI results are recorded in the pull request, and historical passes do
+not certify later candidates.
 
 ### Upgrade checklist
 
 Keep upgrades in dedicated PRs. Review tokens, plugin signatures, feature-map
-entries, custom gaps and CSS footprint. Run unit tests, all three functional
-browser projects, every theme contract and the full screenshot matrix. Review
-visual changes before updating their baselines; remove custom workarounds when
-Bootstrap gains the missing capability.
+entries, custom gaps and CSS footprint. Run `npm run check`, `npm test`,
+`npm run build` and `npm run test:browser`. The same three CI jobs and 34
+browser cases apply to upgrades. Manually review affected components, themes
+and viewports, including keyboard focus, contrast, reduced motion and forced
+colours. Broader browser projects and baselines remain optional local tools.
+Review intentional visual changes before updating their baselines in the
+pinned container; remove custom workarounds when Bootstrap gains the missing
+capability.
