@@ -582,13 +582,14 @@ single build flag controls both. Pages setup/deployment, repository settings,
 enabling indexing, making the repository public and public announcements each
 require separate maintainer approval.
 
-The site is live at
-[Dayframe](https://bvisagie.github.io/dayframe-dashboard/). At `3d66994`, all
-three CI jobs passed, and the trusted listener passed its full-history secret
-scan, published `Privacy / private history` on that exact commit and deployed
-the tested artifact. HTTPS, `noindex, nofollow` and the crawl-disallowing
-`robots.txt` were verified on 2026-10-22. See
-[deployment evidence](ci.md#prelaunch-deployment-evidence).
+The public demo is live at
+[Dayframe](https://bvisagie.github.io/dayframe-dashboard/) with indexing enabled.
+At launch commit `8358b7e`, all three CI jobs passed, and the trusted listener
+passed its full-history secret scan, published `Privacy / private history` on
+that exact commit and deployed the tested artifact. On 2026-10-22, the live
+HTML and `robots.txt` both returned HTTP 200 over HTTPS and matched that
+artifact byte for byte, with `index, follow` and `Allow: /`. See the
+[launch evidence](ci.md#public-launch).
 
 Pages uses GitHub Actions, and only the `main` branch can deploy to the
 `github-pages` environment. The solo-maintainer policy requires pull requests,
@@ -607,9 +608,8 @@ remain required. See the [launch record](ci.md#public-launch).
 
 ### Launch checklist
 
-The first three items were verified on 2026-10-22 against `989c971`.
-Indexing and launch deployment are approved; publication belongs to the
-maintainer and remains pending.
+Verified on 2026-10-22 against launch commit `8358b7e`. Five of six items are
+complete; publication belongs to the maintainer and remains pending.
 
 - [x] README has dedicated showcase screenshots, a live link and a short tour
   of all three themes and five views.
@@ -617,14 +617,15 @@ maintainer and remains pending.
   contract, Bootstrap pin, component use and known gaps. The feature map above
   still describes `6.0.0-alpha.1`; no Bootstrap upgrade is part of launch.
 - [x] Full-history privacy checks pass. Main
-  [CI run `39765176659`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39765176659)
+  [CI run `39768826113`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39768826113)
   passed all three jobs; trusted
-  [run `39765335024`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39765335024)
+  [run `39768982683`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39768982683)
   repeated the scan, published `Privacy / private history` on the exact SHA
   and deployed the tested artifact.
-- [ ] Enable indexing with `DAYFRAME_PUBLIC_LAUNCH=true` and deploy a fresh
-  tested main build. Approval is recorded; check this item only after the
-  live HTML and `robots.txt` have been verified.
+- [x] Enable indexing with `DAYFRAME_PUBLIC_LAUNCH=true` and deploy a fresh
+  tested main build. The live HTML contains `index, follow`, and `robots.txt`
+  permits crawling. Both match the tested main artifact; the deployed SHA and
+  successful runs are recorded in the [launch evidence](ci.md#public-launch).
 - [x] Repository is public. Protection of `main` still requires PRs, all four
   checks, an up-to-date branch and resolved conversations, with administrator
   enforcement and no force pushes or deletion. Pages still deploys only from
@@ -700,7 +701,7 @@ policy.
 | Layout and themes      | Default, Nebuchadnezzar and Tideline; historical reviewed 400-image set passed at `8c58cba`; all six desktop dimensions fit without lowering the root floor         | Three-job CI and targeted manual review of affected themes and viewports                                                                               |
 | Sources                | Allowed live adapters, caching, fallbacks, backoff and default ten-second deadlines; hosted adapter checks passed                                                   | No real account connections are needed                                                                                                                 |
 | Bootstrap tracking     | Exact `6.0.0-alpha.1` pin, lens, About panel, gap log, measured app CSS footprint and hosted maintenance checks at `989c971`                                         | Maintenance draft creation is outside the approved launch scope                                                                                         |
-| Privacy and deployment | Public repository; Pages deployment, full-history scans and exact-SHA status at `989c971`; HTTPS and branch protection verified                                        | Approved indexing deployment and live verification; publication belongs to the maintainer                                                               |
+| Privacy and deployment | Public repository; indexed Pages launch, full-history scans and exact-SHA status at `8358b7e`; live artifact match, HTTPS and branch protection verified                 | Publication belongs to the maintainer; M5 remains open until publication links are recorded                                                            |
 
 Milestone completion requires the proof in each definition below. Implemented
 code and local fitting checks do not complete pending CI, privacy or launch work.

@@ -283,10 +283,11 @@ separate approval; implementation does not authorize them:
    deploys only after a push to `main`.
    Fork/Dependabot status verification is outside the maintainer-approved
    launch scope. Changes to these settings remain external work.
-3. Permit Actions to create pull requests for scheduled maintenance. Keep the
-   weekly workflow's write permissions limited to contents and pull requests.
-   No bot PAT, external service credential or change to local Git identity is
-   required.
+3. Automated maintenance drafts need permission for Actions to create pull
+   requests. The maintainer excluded enabling that permission from this launch;
+   hosted update checks still run. Keep the weekly workflow's write permissions
+   limited to contents and pull requests. No bot PAT, external service credential
+   or change to local Git identity is required.
 
 ## Prelaunch deployment evidence
 
@@ -356,10 +357,32 @@ launch build and recording the result. Publication of the announcement and
 upstream feedback belongs to the maintainer; no posting is part of this work.
 
 The launch uses the existing `DAYFRAME_PUBLIC_LAUNCH=true` build flag and the
-unchanged main-push deployment gate. The release PR updates the README's
-prelaunch notice. Live verification is pending deployment: require HTTP 200
-over HTTPS, `index, follow` in the HTML and `Allow: /` in `robots.txt`, then
-record the deployed commit and successful CI and deployment runs here.
+unchanged main-push deployment gate. [Release PR #9](https://github.com/BVisagie/dayframe-dashboard/pull/9)
+updates the README's prelaunch notice. Its required checks and exact-head
+trusted privacy status passed before merge.
+
+Verified on 2026-10-22:
+
+- Launch commit: `8358b7e91eee73a54e884725659a97273ab1e445` on `main`.
+- [Main CI run `39768826113`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39768826113)
+  passed Quality, all 34 required Browser and screenshots cases, and Secret
+  history. No screenshot baselines, assertions or comparison settings changed.
+- [Trusted deployment run `39768982683`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39768982683)
+  passed the full-history scan, published `Privacy / private history=success`
+  on the launch commit, passed the deployment gate and deployed Pages.
+  The GitHub `github-pages` deployment record identifies that exact SHA.
+- The repository launch variable is the literal `true`. The live
+  [demo](https://bvisagie.github.io/dayframe-dashboard/) and its
+  [robots.txt](https://bvisagie.github.io/dayframe-dashboard/robots.txt) return
+  HTTP 200 over HTTPS. The HTML contains `index, follow`; `robots.txt` contains
+  exactly `User-agent: *` and `Allow: /`, each followed by a newline.
+- Both live responses match the `dayframe-build` artifact from the main CI run
+  byte for byte. The HTML SHA-256 is
+  `c1072d0ba65164b8ddc4e92e14c577e99f99aefb69dff789bb5cf71d86e9b88e`;
+  the robots.txt SHA-256 is
+  `16ceb5ee3e0dc13aa9adf31a3ebbe45a1d965b8c2b9f72eaf84e5911e140ed95`.
+- Required checks, strict up-to-date branches and administrator enforcement
+  remain enabled on `main`; force pushes and deletion remain disabled.
 
 M5 remains open until the maintainer supplies publication links. The
 [roadmap checklist](roadmap.md#launch-checklist) tracks that remaining item.
