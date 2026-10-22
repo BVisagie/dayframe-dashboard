@@ -190,3 +190,8 @@ themes and viewports in supported schemes, preserving the accessibility floor.
 Review intentional baseline changes before updating them in the pinned
 container. A generated starter still needs its own design review and the same
 CI validation before acceptance.
+
+The README shows a curated set of themes. A new theme works without appearing
+there; to feature it, add its Summary to the `shots` list in
+`scripts/showcase.mjs` and run `npm run showcase`. Recapture after any change
+to a featured theme's visible design.

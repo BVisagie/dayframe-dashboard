@@ -143,6 +143,7 @@ theme-effects, bootstrap-utilities`. Never use `!important` or specificity
 | `npm run test:browser`   | Focused Chromium and screenshot checks |
 | `npm run check`          | Type, Svelte and lint checks           |
 | `npm run new-theme <id>` | Create a theme                         |
+| `npm run showcase`       | Recapture the README images            |
 
 ## Before you finish
 
@@ -155,7 +156,8 @@ theme-effects, bootstrap-utilities`. Never use `!important` or specificity
   visually and preserve the accessibility floor. The approved scope does not
   permit weakening assertions or accepting unintended baseline changes.
 - Update screenshot baselines only for intended visual changes, and say which
-  changed and why.
+  changed and why. Run `npm run showcase` when a change alters what the README
+  images show.
 - Keep the docs current: the feature map in `docs/roadmap.md`,
   `docs/bootstrap-log.md` and `docs/themes.md`.
 - Work on a branch and open a pull request. CI must pass before merging.

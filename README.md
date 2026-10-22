@@ -9,10 +9,7 @@ place. Agent usage, calendars and non-Bootstrap stories are always simulated.
 Weather uses Open-Meteo; Bootstrap headlines come from its blog and public
 release feed. No accounts, credentials, analytics or backend are involved.
 
-![Default Summary with simulated data](tests/browser/__screenshots__/screenshots-1280x720-dpr1/default-light-summary.png)
-
-Both screenshots show the compact desktop layout at 1280×720, with links to
-the remaining agents and events.
+![Summary in the Default light theme: OpenCode is running low, with agent capacity, the next events, weather and headlines](docs/images/showcase/default-light-summary.png)
 
 **[Open the live Dayframe demo](https://bvisagie.github.io/dayframe-dashboard/).**
 
@@ -34,6 +31,11 @@ npm run dev
 Open the development server at `/dayframe-dashboard/`. `npm run build` produces
 the static site in `dist/`; `npm run preview` serves that production build.
 
+`npm run showcase` rebuilds the site and recaptures the README images in
+`docs/images/showcase/`. It uses a 1440×900 window at device pixel ratio 2 and
+replays the reference clock and seed, with no live requests. These images are
+documentation, not test baselines; recapture them after visible changes.
+
 ## Explore the demo
 
 - **Summary:** the most urgent event or constrained agent, capacity, agenda,
@@ -54,6 +56,12 @@ controls. Number keys 1–5, `s`, `a`, `c`, `w`, `f` and arrow keys navigate;
 `,` opens Settings. Editable controls keep their native keys. Rotation pauses
 during interaction and while the page is hidden.
 
+| Agents | Calendar |
+| --- | --- |
+| ![Agents view with allowance meters and reset countdowns for six simulated agents](docs/images/showcase/default-light-agents.png) | ![Calendar view with a November month grid and the selected day's agenda](docs/images/showcase/default-light-calendar.png) |
+| **Weather** | **Feeds** |
+| ![Weather view with a seven-day forecast and an hourly outlook](docs/images/showcase/default-light-weather.png) | ![Feeds view with simulated stories, category filters and the Bootstrap rail](docs/images/showcase/default-light-feeds.png) |
+
 URL settings override saved preferences only for that visit. For a repeatable
 replay, use `?clock=2026-11-03T09:30:00Z&seed=reference`. A frozen clock and
 non-steady scenarios use simulated sources, with no live requests. Try
@@ -66,7 +74,11 @@ non-steady scenarios use simulated sources, with no live requests. Try
   optional static CRT finish.
 - **Tideline:** a teal and coral instrument panel, in light and dark.
 
-![Nebuchadnezzar Summary with simulated data](tests/browser/__screenshots__/screenshots-1280x720-dpr1/nebuchadnezzar-dark-summary.png)
+| Default dark | Nebuchadnezzar |
+| --- | --- |
+| ![Summary in the Default dark theme](docs/images/showcase/default-dark-summary.png) | ![Summary in the Nebuchadnezzar console theme, with the CRT finish](docs/images/showcase/nebuchadnezzar-dark-summary.png) |
+| **Tideline light** | **Tideline dark** |
+| ![Summary in the Tideline light theme](docs/images/showcase/tideline-light-summary.png) | ![Summary in the Tideline dark theme](docs/images/showcase/tideline-dark-summary.png) |
 
 Run `npm run new-theme <id>` to create a theme. The registry and tests discover
 its folder automatically. The [theme contract](docs/themes.md) describes the
