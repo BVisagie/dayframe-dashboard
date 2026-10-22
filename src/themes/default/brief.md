@@ -86,3 +86,14 @@ clipping, overlap, unintended desktop overflow or disclosure issue was found.
 Phone and tablet scrolling preserves the intended reading order. These are
 initial images rather than replacements. Independent token, contrast and
 functional browser checks remain required for each candidate.
+
+The October 2026 once-over was reviewed at 1920×1080 and 1280×720 in light
+and dark. The single navbar row and the Geist face give the page one voice;
+the hero's aside fills the space that used to sit empty, and its progress bar
+and ready-to-use list read before the body copy. Weather's range bars line up
+down the week like one thermometer, and the hourly strip's per-hour icons and
+rain bars replace twelve table rows. On Feeds the live rail carries the only
+primary tint and the series rules stay thin beside readable publication
+names; four stories per page leave space below the list at 1080p. Settings'
+theme cards and vertical pills sit on a white dialog surface now that the
+surface tokens are re-pointed.

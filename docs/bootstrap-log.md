@@ -110,6 +110,24 @@ in how Dayframe uses Bootstrap.
   rules ship in the single stylesheet and the browser downloads a family only
   when the active theme uses it. Licences are appended to the third-party
   notices.
+- **Weather.** The seven-day forecast is a borderless table whose rows hold a
+  `progress-stacked` temperature range on the week's shared scale; the hourly
+  outlook is a table laid out as `list-group list-group-horizontal` inside a
+  `contains-inline` container, each hour with its own icon and a `progress`
+  rain bar; a `placeholder-glow` skeleton covers the first live load.
+- **Feeds.** Stories and a live Bootstrap rail in a two-column `.grid`; story
+  rows carry a series-coloured `border-start` rule. `theme-border` sets the
+  whole border shorthand and `theme-*` on a card cascades into nested list
+  items, so the rule sits on an inner wrapper with `border-<role>`. Alpha.1's
+  `.chip:focus-visible { outline: 0 }` draws no ring, so chips carry the
+  `focus-ring` helper, and the active filter chip keeps a check icon so it
+  survives forced colours.
+- **Settings, About and lens.** Sections use `nav-pills-vertical`; theme
+  choices are `card card-subtle` toggle buttons with a swatch strip; fields use
+  `form-field`, `form-text` and `input-group`; About lists every component as
+  a `badge` link; lens labels are badges placed with utilities, which removed
+  the custom label and placement rules. A docs-section map now resolves each
+  `data-bs-component` name to the right documentation path.
 - **Simulation.** Hourly precipitation now drifts around the day's chance,
   and dry hours of a wet day show cloud, so the hourly strip has something
   to show.
