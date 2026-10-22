@@ -59,7 +59,24 @@ export default defineConfig(({ command }) => ({
       load(id) {
         if (id !== '\0virtual:bootstrap.css') return;
         const css = compileString(
-          `@use "bootstrap/scss/bootstrap" with ($theme-colors: (${roleMap}), $card-tokens: (--card-body-gap: 0, --card-bg: var(--bg-1), --card-spacer-x: 1.25rem, --card-spacer-y: 1.25rem));`,
+          // Dayframe paints its canvas with --bg-body and raised panels with --bg-1,
+          // the reverse of Bootstrap's light-mode order. Components that assume the
+          // body is the raised surface are re-pointed here, in Bootstrap's own
+          // token maps, so themes and the app layer never compensate for it.
+          `@use "bootstrap/scss/bootstrap" with (
+            $theme-colors: (${roleMap}),
+            $card-tokens: (--card-bg: var(--bg-1), --card-spacer-x: 1.25rem, --card-spacer-y: 1.25rem),
+            $list-group-tokens: (--list-group-bg: transparent, --list-group-action-hover-bg: var(--bg-2), --list-group-action-active-bg: var(--bg-3)),
+            $table-tokens: (--table-bg: transparent),
+            $nav-tokens: (--nav-link-hover-bg: var(--bg-2), --nav-link-active-bg: var(--bg-3)),
+            $nav-pills-tokens: (--nav-pills-bg: transparent, --nav-pills-padding: 0),
+            $navbar-tokens: (--navbar-padding-y: 0, --navbar-brand-font-size: var(--font-size-xl), --navbar-brand-font-weight: var(--font-weight-bold)),
+            $dialog-tokens: (--dialog-bg: var(--bg-1)),
+            $menu-tokens: (--menu-bg: var(--bg-1), --menu-item-hover-bg: var(--bg-2)),
+            $popover-tokens: (--popover-bg: var(--bg-1), --popover-header-bg: var(--bg-2)),
+            $toast-tokens: (--toast-bg: var(--bg-1), --toast-header-bg: var(--bg-2)),
+            $datepicker-tokens: (--datepicker-bg: var(--bg-1), --datepicker-day-hover-bg: var(--bg-2))
+          );`,
           { loadPaths: ['node_modules'], style: 'expanded' },
         ).css;
         const parsed = postcss.parse(css);

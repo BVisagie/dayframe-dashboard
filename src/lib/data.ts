@@ -268,11 +268,15 @@ export function simulateWeather(now: Date, seed: string, offsetMinutes = 0): Wea
     const day = weatherDay(dayStart(hour), seed, offset);
     const hourOfDay = new Date(hour).getUTCHours();
     const warmth = (1 + Math.cos((hourOfDay - 15) / 24 * 2 * Math.PI)) / 2;
+    // Showers come and go within a day: each hour drifts around the day's chance,
+    // and dry hours of a wet day show cloud rather than rain.
+    const drift = hash(`${isoWeek(hour)}:${seed}:weather:${hour}:rain`) % 41 - 20;
+    const precipitation = Math.max(0, Math.min(100, day.precipitation + drift));
     return {
       time: new Date(hour + offset).toISOString(),
       temperature: Math.round((day.low + (day.high - day.low) * warmth) * 10) / 10,
-      code: day.code,
-      precipitation: day.precipitation,
+      code: day.code >= 50 && precipitation < 35 ? 3 : day.code,
+      precipitation,
     };
   });
   const key = `${isoWeek(time)}:${seed}:${today}:conditions`;

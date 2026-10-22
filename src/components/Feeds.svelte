@@ -106,10 +106,7 @@
               >{story.title}<Icon name="box-arrow-up-right" /></a
             >{:else}{story.title}{/if}
         </h3>
-        {#if story.excerpt}<p
-            class="prose story-excerpt fg-2 mb-0"
-            data-bs-component="prose"
-          >
+        {#if story.excerpt}<p class="story-excerpt fg-2 mb-0">
             {story.excerpt}
           </p>{/if}
       </li>

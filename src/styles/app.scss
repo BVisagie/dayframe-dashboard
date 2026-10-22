@@ -9,46 +9,20 @@
   .form-range {
     --range-fill: var(--bs-range-fill, 0);
   }
-  /* Bootstrap does not define dashboard information hierarchy or branded shell dimensions. */
+  /* Bootstrap does not define dashboard shell dimensions. */
   .dashboard-shell {
     max-width: 150rem;
     margin-inline: auto;
-    padding: 1.75rem 2.5rem 0.25rem;
+    padding: 1.25rem 2.5rem 0.25rem;
   }
-  .brand {
-    font-size: 1.65rem;
-    font-weight: 750;
-    letter-spacing: -0.055em;
-    color: var(--fg-body);
-    text-decoration: none;
-  }
-  .brand-symbol {
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: var(--radius-5);
-  }
-  .clock {
-    font-size: 1.5rem;
-    font-weight: 650;
+  /* Bootstrap has no numeric-figure utility; readings and the clock must not jitter. */
+  .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
-  .view-heading {
-    font-size: 2rem;
-    font-weight: 650;
-    letter-spacing: -0.04em;
-    margin: 0;
-  }
-  .panel-title {
-    font-size: 1.125rem;
-    font-weight: 650;
-  }
+  /* Themes may give the hero its own display face; Bootstrap has no font-family token for it. */
   .hero-title {
     font-family: var(--display-font-family, var(--body-font-family));
-    font-size: clamp(1.75rem, 2.8rem, 3rem);
-    line-height: 1.1;
-    letter-spacing: -0.04em;
-    font-weight: 650;
-    max-width: 23ch;
+    max-width: 24ch;
   }
   .hero-context {
     max-width: 52ch;
@@ -241,12 +215,6 @@
     .month-day {
       min-height: 3rem;
       padding: 0.35rem;
-    }
-    .clock {
-      font-size: 1.125rem;
-    }
-    .brand {
-      font-size: 1.4rem;
     }
   }
   @media (forced-colors: active) {

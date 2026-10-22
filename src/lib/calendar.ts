@@ -14,3 +14,15 @@ export function eventsForDate(
         Date.parse(event.end) > start.getTime(),
   );
 }
+
+/** Simulated calendars map onto the dashboard's chart series roles so Bootstrap's theme-* classes colour them. */
+export function calendarRole(calendar: string): string {
+  const roles: Record<string, string> = {
+    Studio: 'series-1',
+    Research: 'series-2',
+    Focus: 'series-3',
+    Milestones: 'series-4',
+    Reminders: 'series-5',
+  };
+  return roles[calendar] ?? 'series-6';
+}

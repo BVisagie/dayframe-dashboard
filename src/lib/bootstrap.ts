@@ -45,9 +45,29 @@ export const navOverflow: Action<HTMLElement> = (node) => {
       attributeFilter: ['class', 'aria-current', 'aria-keyshortcuts'],
     }),
   );
+  // The originals are Tab triggers. Their clones live in a menu, so the tab
+  // semantics and the roving tabindex must not come along.
+  const sanitize = () => {
+    for (const clone of node.querySelectorAll<HTMLElement>(
+      '.nav-overflow-menu .menu-item[data-view]',
+    )) {
+      for (const name of [
+        'role',
+        'aria-selected',
+        'aria-controls',
+        'tabindex',
+        'data-bs-target',
+      ])
+        clone.removeAttribute(name);
+    }
+  };
+  const clones = new MutationObserver(sanitize);
+  clones.observe(node, { childList: true, subtree: true });
+  sanitize();
   return {
     destroy() {
       observer.disconnect();
+      clones.disconnect();
       cancelAnimationFrame(frame);
       plugin.dispose();
     },
@@ -134,6 +154,10 @@ export const range: Action<HTMLElement, number> = (node) => {
 };
 export const chips = attach(Chips as Factory);
 export const tab = attach(Tab as Factory);
+/** Bootstrap owns view switching; application state asks the plugin to show a tab. */
+export function showTab(node: HTMLElement): Promise<void> {
+  return Tab.getOrCreateInstance(node).show();
+}
 export const toast: Action<HTMLElement> = (node) => {
   const plugin = new Toast(node, { autohide: false });
   void plugin.show();

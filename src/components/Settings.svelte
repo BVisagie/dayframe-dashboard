@@ -168,7 +168,7 @@
           <h3 class="h5 mb-3">Appearance</h3>
           <div class="vstack gap-2 mb-4">
             {#each themes as theme}<button
-                class="btn btn-outline theme-secondary theme-choice"
+                class="btn btn-outline theme-secondary theme-choice flex-column align-items-start"
                 aria-pressed={settings.theme === theme.id}
                 onclick={() => onchange({ theme: theme.id })}
                 ><span class="d-flex align-items-center gap-2"

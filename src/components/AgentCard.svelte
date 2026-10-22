@@ -1,10 +1,6 @@
 <script lang="ts">
   import type { Agent } from '../lib/types';
-  import {
-    capacityRole,
-    limitingAllowance,
-    primaryAllowance,
-  } from '../lib/agents';
+  import { capacityRole, limitingAllowance } from '../lib/agents';
   import { formatCountdown, formatNumber, formatRelative } from '../lib/format';
   import Icon from './Icon.svelte';
   let {
@@ -21,7 +17,9 @@
     locale?: string;
   } = $props();
   const limiting = $derived(limitingAllowance(agent));
-  const reading = $derived(compact ? limiting : primaryAllowance(agent));
+  // The headline must agree with the status badge, so it reads the tightest
+  // shared window rather than the plan's named main allowance.
+  const reading = $derived(limiting);
   const role = $derived(capacityRole(limiting.remainingPercent, agent.status));
   const status = $derived(
     agent.status === 'reconnect'
