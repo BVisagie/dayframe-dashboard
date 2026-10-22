@@ -11,10 +11,13 @@ release feed. No accounts, credentials, analytics or backend are involved.
 
 ![Default Summary with simulated data](tests/browser/__screenshots__/screenshots-1920x1080-dpr1/default-light-summary.png)
 
-The initial build is prelaunch. Indexing is disabled. The live URL will appear
-in the GitHub Pages deployment summary after repository setup and validation.
-Public launch remains a separate approval. See the [roadmap](docs/roadmap.md)
-and [CI setup](docs/ci.md) for pending release operations.
+**[Open the live Dayframe demo](https://bvisagie.github.io/dayframe-dashboard/).**
+
+The site is deployed on GitHub Pages as a prelaunch demo with indexing disabled.
+Public launch remains a separate approval. See the
+[deployment evidence](docs/ci.md#prelaunch-deployment-evidence) and
+[roadmap](docs/roadmap.md#deployment-and-launch) for completed setup and pending
+release operations.
 
 ## Run locally
 

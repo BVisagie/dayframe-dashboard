@@ -181,10 +181,11 @@ installed on `main`. **Before merging that first installation**, independently
 scan the exact candidate and complete reachable history for secrets using
 independent trusted gitleaks policy. The candidate's own workflow cannot
 certify its installation. Record the candidate SHA and nonsensitive results.
-The listener is not activated on `main` yet. Activation does not waive the
-check or defer it until launch. After installation, verify the trusted
-listener and required status on real CI runs, including a fork or Dependabot
-pull request.
+The listener is now installed on `main`; its post-merge scan and status
+publication are recorded below. That success does not establish that the
+independent pre-merge check ran. Retain its candidate SHA and nonsensitive
+results separately. Verification on a real fork or Dependabot pull request
+also remains outstanding in this record.
 
 Private credentials, private contact details and addresses, home-directory
 paths, private hostnames, private account/project IDs and private repository
@@ -216,22 +217,59 @@ again after acquiring the deployment
 lock. The deploy job receives only the static artifact from that exact run;
 it does not rebuild it. Only this job has `pages: write` and `id-token: write`.
 
-The maintainer must complete these external settings. Each repository settings
-change, Pages setup or deployment, indexing change, visibility change and public
-announcement needs separate approval; implementation does not authorize them:
+The following external settings define the deployment policy. The verified
+setup is recorded below. Each repository settings change, Pages setup or
+deployment, indexing change, visibility change and public announcement needs
+separate approval; implementation does not authorize them:
 
 1. Select GitHub Actions as the Pages source and allow the `github-pages`
    environment to deploy from `main`. Leave `DAYFRAME_PUBLIC_LAUNCH` unset or
    explicitly `false` until launch is approved.
-2. Protect `main` with pull request review and required checks: Quality,
+2. Protect `main` with required pull requests and checks: Quality,
    Browser and screenshots, Secret history, and
-   `Privacy / private history`. Require checks for the current candidate SHA.
+   `Privacy / private history`. Require an up-to-date branch and checks for the
+   current candidate SHA, resolve review conversations and enforce the rules
+   for administrators. While there is one maintainer, do not require approving
+   reviews, Code Owner reviews or approval of the most recent push. The
+   maintainer reviews the diff before merging their own PR after CI passes.
+   Disable force pushes and deletion; revisit approvals when another reviewer
+   joins. Do not require a successful deployment before merging, because Pages
+   deploys only after a push to `main`.
    Confirm the trusted status appears on a real fork or Dependabot PR before
-   treating this setup as complete. Rulesets/settings remain external work.
+   treating this setup as complete. Changes to these settings remain external
+   work.
 3. Permit Actions to create pull requests for scheduled maintenance. Keep the
    weekly workflow's write permissions limited to contents and pull requests.
    No bot PAT, external service credential or change to local Git identity is
    required.
+
+## Prelaunch deployment evidence
+
+Verified on 2026-10-22:
+
+- The live demo at [Dayframe](https://bvisagie.github.io/dayframe-dashboard/)
+  returns HTTP 200 over HTTPS. Pages uses the GitHub Actions publishing source
+  and enforces HTTPS.
+- At `3d669944c2c349d60456c9c93282fa4a7cfca829`, `CI` run `39718379913`
+  passed Quality, Browser and screenshots, and Secret history.
+  `Secret checks and deployment` run `39718533185`, attempt 2, succeeded after
+  Pages setup. Its trusted full-history scan, exact-SHA status publication,
+  deployment gate and Pages deployment passed. The initial attempt stopped at
+  deployment because Pages was not enabled.
+- `DAYFRAME_PUBLIC_LAUNCH` is unset. The deployed HTML contains
+  `noindex, nofollow`, and the deployed `robots.txt` returns
+  `User-agent: *` with `Disallow: /`.
+- The `github-pages` environment permits only the `main` branch. Classic
+  branch protection requires PRs, all four checks from GitHub Actions, an
+  up-to-date branch and resolved conversations. Administrator enforcement is
+  enabled. Required approvals are zero; Code Owner reviews, last-push approval,
+  force pushes and deletion are disabled.
+
+This records the completed prelaunch setup, not public-launch approval.
+Independent pre-installation scan evidence, trusted status verification on a
+real fork or Dependabot PR, and hosted weekly maintenance verification remain
+to be recorded. Repository visibility changes, enabling indexing and public
+announcements remain separate launch decisions.
 
 ## Weekly maintenance
 

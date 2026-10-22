@@ -536,7 +536,7 @@ and 2. Required CI selects 1280×720 and 390×844 at DPR 1.
   Concurrency groups include event name and branch, so manual dispatches do not
   cancel pull-request or push runs, or get cancelled by those runs.
 - **Privacy checks** run with routine CI, and before every
-  deploy once the trusted listener is installed on `main`:
+  deploy through the trusted listener installed on `main`:
   - `gitleaks` scans the complete reachable history for secrets;
   - the trusted listener fetches the exact candidate and complete history as
     passive Git objects, then repeats the secret scan using trusted `main`
@@ -569,13 +569,27 @@ single build flag controls both. Pages setup/deployment, repository settings,
 enabling indexing, making the repository public and public announcements each
 require separate maintainer approval.
 
-The trusted `workflow_run` listener activates only after installation on
-`main`. It is not activated yet. Before that first installation merges, an
-independent check must scan the exact candidate and full reachable history for
-secrets using trusted policy. This requirement applies before merge and
-deployment, not only before public launch. Verify the listener and its exact-SHA
-status publication after installation, including on a fork or Dependabot PR;
-never treat activation as a secret-scan pass.
+The prelaunch site is live at
+[Dayframe](https://bvisagie.github.io/dayframe-dashboard/). At `3d66994`, all
+three CI jobs passed, and the trusted listener passed its full-history secret
+scan, published `Privacy / private history` on that exact commit and deployed
+the tested artifact. HTTPS, `noindex, nofollow` and the crawl-disallowing
+`robots.txt` were verified on 2026-10-22. See
+[deployment evidence](ci.md#prelaunch-deployment-evidence).
+
+Pages uses GitHub Actions, and only the `main` branch can deploy to the
+`github-pages` environment. The solo-maintainer policy requires pull requests,
+all four checks, an up-to-date branch and resolved review conversations, and
+applies to administrators. Required approvals, Code Owner reviews and approval
+of the most recent push are disabled so the maintainer can merge their own PRs
+after checking the diff and passing CI. Force pushes and branch deletion are
+disabled. Revisit mandatory approvals when another reviewer joins.
+
+The trusted `workflow_run` listener is installed on `main`. Its successful
+post-merge scan does not establish the independent trusted scan required before
+its first installation merged. Retain that pre-merge evidence separately, and
+verify exact-SHA status publication on a real fork or Dependabot PR; those
+proofs remain outstanding in this record.
 
 Launch checklist:
 
@@ -583,7 +597,7 @@ Launch checklist:
 2. `docs/themes.md` and `docs/bootstrap-log.md` are up to date.
 3. The privacy checks pass on the full history, not only the latest commit.
 4. Turn off the `noindex` build flag and redeploy.
-5. Make the repository public and protect `main`.
+5. Make the repository public; retain the configured protection of `main`.
 6. Share the project in Bootstrap's GitHub Discussions (Show & Tell) and
    contribute findings to the v6 Feedback threads.
 
@@ -620,7 +634,7 @@ policy.
 | Layout and themes      | Default, Nebuchadnezzar and Tideline; historical reviewed 400-image set passed at `8c58cba`; all six desktop dimensions fit without lowering the root floor  | Three-job CI and targeted manual review of affected themes and viewports                                                                      |
 | Sources                | Allowed live adapters, caching, fallbacks, backoff and default ten-second deadlines; hosted adapter checks passed                                            | No real account connections are needed                                                                                                        |
 | Bootstrap tracking     | Exact `6.0.0-alpha.1` pin, lens, About panel, gap log and measured app CSS footprint                                                                         | Hosted maintenance workflow verification                                                                                                      |
-| Privacy and deployment | Trusted full-history secrets gate and gated static artifact deployment workflows                                                                             | Independent trusted secrets scan before first merge, listener/status verification on `main` and separately approved repository/Pages settings |
+| Privacy and deployment | Prelaunch Pages deployment at `3d66994`, trusted full-history scan and exact-SHA status on `main`, HTTPS and indexing checks, and solo-maintainer branch protection | Record independent trusted pre-merge scan evidence and verify the trusted status on a fork or Dependabot PR; public launch remains separately approved |
 
 Milestone completion requires the proof in each definition below. Implemented
 code and local fitting checks do not complete pending CI, privacy or launch work.
