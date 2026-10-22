@@ -106,6 +106,7 @@
             >{formatDate(story.publishedAt, locale, {
               day: 'numeric',
               month: 'short',
+              year: 'numeric',
             })}</time
           ><Icon name="box-arrow-up-right" class="fg-2 align-self-center" /></a
         >{/each}

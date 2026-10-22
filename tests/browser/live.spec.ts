@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { test, expect, visit, settings, closeSettings, apiOrigins } from './fixtures';
+import { test, expect, visit, settings, closeSettings, apiOrigins, noHorizontalOverflow } from './fixtures';
 import { referenceClock } from './matrix';
 
 // Routine live-source coverage must exercise browser-default geocoding outside UTC.
@@ -85,7 +85,7 @@ async function mockSources(page: Page, failing = false) {
             tag_name: 'validation',
             html_url:
               'https://github.com/twbs/bootstrap/releases/tag/validation',
-            published_at: '2026-11-03T09:00:00Z',
+            published_at: '2025-11-03T09:00:00Z',
             draft: false,
           },
         ],
@@ -254,6 +254,8 @@ test('live Bootstrap headlines show original links and refresh respects the rele
   );
   await expect(page.locator('.story-excerpt')).toHaveCount(0);
   await expect(page.locator('.story-title')).toHaveCount(2);
+  const rail = page.getByRole('region', { name: 'Bootstrap blog and releases', exact: true });
+  await expect(rail.locator('time')).toHaveText(['3 Nov 2026', '3 Nov 2025']);
   const refresh = page.getByRole('button', { name: 'Refresh live sources', exact: true });
   await expect(refresh).toBeEnabled();
   expect(releases).toBe(1);
@@ -263,6 +265,10 @@ test('live Bootstrap headlines show original links and refresh respects the rele
   await blogRequest;
   await expect(refresh).toBeEnabled();
   expect(releases).toBe(1);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(rail.locator('time').first()).toBeVisible();
+  await expect(rail.locator('time').last()).toBeVisible();
+  await noHorizontalOverflow(page);
 });
 
 test('failed live forecast falls back and reconnect refresh recovers after backoff', { tag: '@smoke' }, async ({
