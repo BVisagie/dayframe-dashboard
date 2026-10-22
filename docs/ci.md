@@ -310,11 +310,58 @@ Verified on 2026-10-22:
   enabled. Required approvals are zero; Code Owner reviews, last-push approval,
   force pushes and deletion are disabled.
 
-This records the completed prelaunch setup, not public-launch approval.
-Independent pre-installation scan evidence, trusted status verification on a
-real fork or Dependabot PR, and hosted weekly maintenance verification remain
-to be recorded. Repository visibility changes, enabling indexing and public
-announcements remain separate launch decisions.
+This records the initial prelaunch setup, not public-launch approval. Current
+verification and the remaining evidence gaps follow below.
+
+## Launch readiness evidence
+
+Verified on 2026-10-22 against main commit
+`989c971f751d2ac6d9dae83277ba2e03738babd0`:
+
+- [CI run `39765176659`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39765176659)
+  passed Quality, Browser and screenshots (all 34 required cases), and Secret
+  history. Trusted
+  [run `39765335024`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39765335024)
+  passed the independent full-history scan, status publication, deployment gate
+  and Pages deployment. The commit's `Privacy / private history` status is
+  `success` and points to that trusted run.
+- The repository is already public. Protection still requires all four
+  checks from GitHub Actions, an up-to-date branch, PRs and resolved
+  conversations, including for administrators. Required approvals remain zero;
+  force pushes and deletion remain disabled. The Pages environment permits
+  only `main`, uses Actions and enforces HTTPS.
+- The live demo and `robots.txt` return HTTP 200 over HTTPS. The launch variable
+  is unset, HTML contains `noindex, nofollow`, and `robots.txt` disallows
+  crawling. Visibility alone has not enabled indexing.
+- Manually dispatched
+  [weekly maintenance run `39766411779`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39766411779)
+  passed both jobs. The skill matches canonical upstream bytes and the exact
+  Bootstrap pin is current. Both update-draft steps were skipped as intended.
+  This verifies hosted checks, not a timer-triggered run or draft creation.
+- Local builds were checked with the launch variable unset and with the literal
+  `true`: the former emits `noindex, nofollow` and `Disallow: /`, while the
+  latter emits `index, follow` and `Allow: /`. The default build was restored
+  afterward; no repository variable was changed.
+
+Remaining operational evidence:
+
+- The independent scan before the trusted listener's first installation has
+  no recorded candidate SHA and result. A later successful scan cannot
+  retroactively prove that this happened.
+- There is no real fork or Dependabot PR in the repository's PR record to
+  verify the trusted status on that path. Do not substitute a same-repository
+  maintainer PR for this proof.
+- Maintenance did not need an update draft. Actions currently reports
+  `can_approve_pull_request_reviews=false`, which also controls permission for
+  workflows to create PRs; see [GitHub's workflow permission setting](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository#preventing-github-actions-from-creating-or-approving-pull-requests).
+  Verify and separately approve the required setting
+  before relying on automatic draft creation, then test it with a real update.
+  The successful no-change run does not establish that capability.
+
+Indexing, deployment of the launch build and public announcements require the
+separate approvals and live verification in the
+[launch procedure](roadmap.md#launch-procedure). No announcement or
+upstream feedback was posted during this readiness check.
 
 ## Weekly maintenance
 

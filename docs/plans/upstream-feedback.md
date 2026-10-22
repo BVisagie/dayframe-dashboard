@@ -1,6 +1,30 @@
 # Bootstrap 6.0.0-alpha.1: upstream feedback drafts
 
-Prepared 2026-10-22. These are research notes and drafts only. Nothing has been posted, and no issue, discussion or PR was created or edited.
+Prepared 2026-10-22. These are research notes and drafts only. No upstream issue, discussion or PR has been created or edited.
+
+## Show & Tell launch draft
+
+Prepared for maintainer review; do not post until separately approved. Post
+the announcement after the launch deployment is verified. Recheck the current
+Show & Tell category before submitting. Keep bug reports and proposals in
+their own threads using the drafts below.
+
+**Title:** Dayframe: a static dashboard built with Bootstrap 6
+
+```markdown
+I've built Dayframe, a glanceable dashboard for people who work with AI coding agents, and a real application for trying Bootstrap 6 as it develops.
+
+Live demo: https://bvisagie.github.io/dayframe-dashboard/
+Source (MIT): https://github.com/BVisagie/dayframe-dashboard
+
+It has five views: Summary, Agents, Calendar, Weather and Feeds. Agent usage, calendars and non-Bootstrap stories are clearly labelled simulations. Weather comes from Open-Meteo; Bootstrap news comes from its public blog and release feed. Everything runs in the browser on GitHub Pages, without accounts, a backend or analytics.
+
+The current build uses Bootstrap 6.0.0-alpha.1 with Svelte 5 and Vite. It uses Bootstrap's components and JavaScript plugins, including tabs, nav overflow, menus, dialogs, drawers, datepicker and combobox, plus its tokens, theme roles and container-query layout utilities. A Bootstrap lens identifies components in the live UI, and the repository's Bootstrap log records custom gaps and upstream limitations.
+
+There are three themes: Default in light and dark, Nebuchadnezzar as a dark console, and Tideline in light and dark. Adding a theme takes one folder and has an automated contract check. The dashboard fits desktop displays and scrolls on phones.
+
+I'd welcome feedback on the Bootstrap integration, keyboard navigation and theme contract. The README includes screenshots and local setup instructions.
+```
 
 ## Summary
 
