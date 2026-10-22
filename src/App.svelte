@@ -732,258 +732,261 @@
         id="view-summary"
         aria-labelledby="tab-summary"
       >
-        <div class="grid dashboard-grid">
-          <Panel
-            title={reminder
-              ? 'Starting soon'
-              : attentionAgent
-                ? 'Needs attention'
-                : heroEvent && Date.parse(heroEvent.start) <= now.getTime()
-                  ? 'Happening now'
-                  : 'Next on your calendar'}
-            kind="hero"
-            class="hero-panel summary-hero"
-          >
-            <div
-              class="grid align-items-start mt-2"
-              style="--gap: var(--spacer-7)"
+        {#if view === 'summary'}
+          <div class="grid dashboard-grid">
+            <Panel
+              title={reminder
+                ? 'Starting soon'
+                : attentionAgent
+                  ? 'Needs attention'
+                  : heroEvent && Date.parse(heroEvent.start) <= now.getTime()
+                    ? 'Happening now'
+                    : 'Next on your calendar'}
+              kind="hero"
+              class="hero-panel summary-hero"
             >
-              <div class="g-col-12 md:g-col-7 vstack gap-3 align-items-start">
-                {#if attentionAgent && !reminder}<p class="small m-0">
-                    <Icon name="exclamation-circle" />
-                    {attentionAgent.status === 'reconnect'
-                      ? 'Connection needs attention'
-                      : 'Agent capacity'}
-                  </p>
-                  <h2 class="hero-title text-3xl fw-semibold m-0">
-                    {attentionAgent.status === 'reconnect'
-                      ? `${attentionAgent.name} needs reconnecting`
-                      : attentionAllowance?.remainingPercent === 0
-                        ? `${attentionAgent.name}'s ${attentionAllowance.label.toLowerCase()} allowance is used up`
-                        : `${attentionAgent.name} is running low`}
-                  </h2>
-                  <p class="hero-context m-0">
-                    {#if attentionAgent.status === 'reconnect'}
-                      This simulated account has lost its connection. Other
-                      agents remain available.
-                    {:else if attentionAllowance}
-                      {attentionAllowance.remainingPercent === 0
-                        ? `It resets in ${formatCountdown(attentionAllowance.resetsAt, now, settings.locale)}.`
-                        : `${attentionAllowance.remainingPercent}% of the ${attentionAllowance.label.toLowerCase()} allowance remains, and it resets in ${formatCountdown(attentionAllowance.resetsAt, now, settings.locale)}.`}
-                      {#if attentionPrimary && attentionPrimary.id !== attentionAllowance.id}
-                        The {attentionPrimary.label.toLowerCase()} allowance still
-                        has {attentionPrimary.remainingPercent}% left.
+              <div
+                class="grid align-items-start mt-2"
+                style="--gap: var(--spacer-7)"
+              >
+                <div class="g-col-12 md:g-col-7 vstack gap-3 align-items-start">
+                  {#if attentionAgent && !reminder}<p class="small m-0">
+                      <Icon name="exclamation-circle" />
+                      {attentionAgent.status === 'reconnect'
+                        ? 'Connection needs attention'
+                        : 'Agent capacity'}
+                    </p>
+                    <h2 class="hero-title text-3xl fw-semibold m-0">
+                      {attentionAgent.status === 'reconnect'
+                        ? `${attentionAgent.name} needs reconnecting`
+                        : attentionAllowance?.remainingPercent === 0
+                          ? `${attentionAgent.name}'s ${attentionAllowance.label.toLowerCase()} allowance is used up`
+                          : `${attentionAgent.name} is running low`}
+                    </h2>
+                    <p class="hero-context m-0">
+                      {#if attentionAgent.status === 'reconnect'}
+                        This simulated account has lost its connection. Other
+                        agents remain available.
+                      {:else if attentionAllowance}
+                        {attentionAllowance.remainingPercent === 0
+                          ? `It resets in ${formatCountdown(attentionAllowance.resetsAt, now, settings.locale)}.`
+                          : `${attentionAllowance.remainingPercent}% of the ${attentionAllowance.label.toLowerCase()} allowance remains, and it resets in ${formatCountdown(attentionAllowance.resetsAt, now, settings.locale)}.`}
+                        {#if attentionPrimary && attentionPrimary.id !== attentionAllowance.id}
+                          The {attentionPrimary.label.toLowerCase()} allowance still
+                          has {attentionPrimary.remainingPercent}% left.
+                        {/if}
                       {/if}
-                    {/if}
-                  </p>
-                  <button
-                    class="btn btn-solid theme-primary mt-2"
-                    onclick={() => navigate('agents')}
-                    >Review agent capacity</button
-                  >
-                {:else if heroEvent}<p class="small m-0">
-                    <Icon name="calendar-event" />
-                    {formatRelative(heroEvent.start, now, settings.locale)}
-                  </p>
-                  <h2 class="hero-title text-3xl fw-semibold m-0">
-                    {heroEvent.title}
-                  </h2>
-                  <p class="hero-context m-0">
-                    <span class="tabular-nums"
-                      >{formatTime(heroEvent.start, settings)}–{formatTime(
-                        heroEvent.end,
-                        settings,
-                      )}</span
+                    </p>
+                    <button
+                      class="btn btn-solid theme-primary mt-2"
+                      onclick={() => navigate('agents')}
+                      >Review agent capacity</button
                     >
-                    <br />{heroEvent.description}
-                  </p>
-                  <button
-                    class="btn btn-solid theme-primary mt-2"
-                    onclick={() => navigate('calendar')}
-                    >View your calendar</button
-                  >
-                {:else}<h2 class="hero-title text-3xl fw-semibold m-0">
-                    A clear stretch ahead
-                  </h2>
-                  <p class="hero-context m-0">
-                    No upcoming timed events. Your agent capacity is ready for
-                    the next task.
-                  </p>
-                  <button
-                    class="btn btn-solid theme-primary mt-2"
-                    onclick={() => navigate('agents')}
-                    >View agent capacity</button
-                  >{/if}
-              </div>
-              <div class="g-col-12 md:g-col-5 vstack gap-3">
-                {#if attentionAgent && attentionAllowance && !reminder}
-                  <div>
-                    <div
-                      class="d-flex justify-content-between gap-2 small mb-1"
-                    >
-                      <span class="fw-semibold"
-                        >{attentionAgent.name} · {attentionAllowance.label}</span
-                      ><span class="tabular-nums"
-                        >{attentionAllowance.remainingPercent}% left</span
+                  {:else if heroEvent}<p class="small m-0">
+                      <Icon name="calendar-event" />
+                      {formatRelative(heroEvent.start, now, settings.locale)}
+                    </p>
+                    <h2 class="hero-title text-3xl fw-semibold m-0">
+                      {heroEvent.title}
+                    </h2>
+                    <p class="hero-context m-0">
+                      <span class="tabular-nums"
+                        >{formatTime(heroEvent.start, settings)}–{formatTime(
+                          heroEvent.end,
+                          settings,
+                        )}</span
                       >
-                    </div>
-                    <div
-                      class="progress"
-                      role="progressbar"
-                      aria-label={`${attentionAgent.name} ${attentionAllowance.label} remaining`}
-                      aria-valuenow={attentionAllowance.remainingPercent}
-                      aria-valuemin="0"
-                      aria-valuemax="100"
-                      data-bs-component="progress"
+                      <br />{heroEvent.description}
+                    </p>
+                    <button
+                      class="btn btn-solid theme-primary mt-2"
+                      onclick={() => navigate('calendar')}
+                      >View your calendar</button
                     >
+                  {:else}<h2 class="hero-title text-3xl fw-semibold m-0">
+                      A clear stretch ahead
+                    </h2>
+                    <p class="hero-context m-0">
+                      No upcoming timed events. Your agent capacity is ready for
+                      the next task.
+                    </p>
+                    <button
+                      class="btn btn-solid theme-primary mt-2"
+                      onclick={() => navigate('agents')}
+                      >View agent capacity</button
+                    >{/if}
+                </div>
+                <div class="g-col-12 md:g-col-5 vstack gap-3">
+                  {#if attentionAgent && attentionAllowance && !reminder}
+                    <div>
                       <div
-                        class={`progress-bar theme-${attentionAgent.status === 'reconnect' ? 'secondary' : attentionAllowance.remainingPercent <= 10 ? 'danger' : 'warning'}`}
-                        style:width={`${attentionAllowance.remainingPercent}%`}
-                      ></div>
-                    </div>
-                    <time
-                      class="small fg-2 d-block mt-1"
-                      datetime={attentionAllowance.resetsAt}
-                      >Resets in {formatCountdown(
-                        attentionAllowance.resetsAt,
-                        now,
-                        settings.locale,
-                      )}</time
-                    >
-                  </div>
-                {:else if heroEvent}
-                  {#if heroEvent.attendees.length}
-                    <div class="d-flex align-items-center gap-3">
-                      <div
-                        class="avatar-stack avatar-stack-sm"
-                        data-bs-component="avatar"
-                        aria-hidden="true"
+                        class="d-flex justify-content-between gap-2 small mb-1"
                       >
-                        {#each heroEvent.attendees as name (name)}<span
-                            class="avatar">{initials(name)}</span
-                          >{/each}
+                        <span class="fw-semibold"
+                          >{attentionAgent.name} · {attentionAllowance.label}</span
+                        ><span class="tabular-nums"
+                          >{attentionAllowance.remainingPercent}% left</span
+                        >
                       </div>
-                      <span class="small">{heroEvent.attendees.join(', ')}</span
+                      <div
+                        class="progress"
+                        role="progressbar"
+                        aria-label={`${attentionAgent.name} ${attentionAllowance.label} remaining`}
+                        aria-valuenow={attentionAllowance.remainingPercent}
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        data-bs-component="progress"
                       >
+                        <div
+                          class={`progress-bar theme-${attentionAgent.status === 'reconnect' ? 'secondary' : attentionAllowance.remainingPercent <= 10 ? 'danger' : 'warning'}`}
+                          style:width={`${attentionAllowance.remainingPercent}%`}
+                        ></div>
+                      </div>
+                      <time
+                        class="small fg-2 d-block mt-1"
+                        datetime={attentionAllowance.resetsAt}
+                        >Resets in {formatCountdown(
+                          attentionAllowance.resetsAt,
+                          now,
+                          settings.locale,
+                        )}</time
+                      >
+                    </div>
+                  {:else if heroEvent}
+                    {#if heroEvent.attendees.length}
+                      <div class="d-flex align-items-center gap-3">
+                        <div
+                          class="avatar-stack avatar-stack-sm"
+                          data-bs-component="avatar"
+                          aria-hidden="true"
+                        >
+                          {#each heroEvent.attendees as name (name)}<span
+                              class="avatar">{initials(name)}</span
+                            >{/each}
+                        </div>
+                        <span class="small"
+                          >{heroEvent.attendees.join(', ')}</span
+                        >
+                      </div>
+                    {/if}
+                    <div class="d-flex flex-wrap gap-2">
+                      <span
+                        class={`badge badge-subtle theme-${calendarRole(heroEvent.calendar)}`}
+                        data-bs-component="badge">{heroEvent.calendar}</span
+                      ><span class="badge badge-outline theme-secondary"
+                        ><Icon name="geo-alt" /> {heroEvent.location}</span
+                      >
+                    </div>
+                    {#if followingEvent}<p class="small fg-2 m-0">
+                        Then <span class="tabular-nums"
+                          >{formatTime(followingEvent.start, settings)}</span
+                        >
+                        {followingEvent.title}
+                      </p>{/if}
+                  {/if}
+                  {#if readyAgents.length && (!heroEvent || (attentionAgent && !reminder))}
+                    <div>
+                      <p class="small fw-semibold mb-1">Ready to use</p>
+                      <ul
+                        class="list-group list-group-flush"
+                        data-bs-component="list-group"
+                      >
+                        {#each readyAgents as agent (agent.id)}<li
+                            class="list-group-item px-0 py-1 d-flex align-items-center gap-2"
+                          >
+                            <span
+                              class={`avatar avatar-xs theme-${agent.id}`}
+                              aria-hidden="true">{agent.initials}</span
+                            ><span class="flex-grow-1">{agent.name}</span><span
+                              class="badge badge-subtle theme-success tabular-nums"
+                              >{limitingAllowance(agent).remainingPercent}% {limitingAllowance(
+                                agent,
+                              ).label.toLowerCase()}</span
+                            >
+                          </li>{/each}
+                      </ul>
                     </div>
                   {/if}
-                  <div class="d-flex flex-wrap gap-2">
-                    <span
-                      class={`badge badge-subtle theme-${calendarRole(heroEvent.calendar)}`}
-                      data-bs-component="badge">{heroEvent.calendar}</span
-                    ><span class="badge badge-outline theme-secondary"
-                      ><Icon name="geo-alt" /> {heroEvent.location}</span
-                    >
-                  </div>
-                  {#if followingEvent}<p class="small fg-2 m-0">
-                      Then <span class="tabular-nums"
-                        >{formatTime(followingEvent.start, settings)}</span
-                      >
-                      {followingEvent.title}
-                    </p>{/if}
-                {/if}
-                {#if readyAgents.length && (!heroEvent || (attentionAgent && !reminder))}
-                  <div>
-                    <p class="small fw-semibold mb-1">Ready to use</p>
-                    <ul
-                      class="list-group list-group-flush"
-                      data-bs-component="list-group"
-                    >
-                      {#each readyAgents as agent (agent.id)}<li
-                          class="list-group-item px-0 py-1 d-flex align-items-center gap-2"
-                        >
-                          <span
-                            class={`avatar avatar-xs theme-${agent.id}`}
-                            aria-hidden="true">{agent.initials}</span
-                          ><span class="flex-grow-1">{agent.name}</span><span
-                            class="badge badge-subtle theme-success tabular-nums"
-                            >{limitingAllowance(agent).remainingPercent}% {limitingAllowance(
-                              agent,
-                            ).label.toLowerCase()}</span
-                          >
-                        </li>{/each}
-                    </ul>
-                  </div>
-                {/if}
+                </div>
               </div>
-            </div>
-          </Panel>
-          <Panel title="Outside now" class="summary-weather"
-            ><WeatherPanel
-              {weather}
-              status={sourceState}
-              units={settings.units}
-              locale={settings.locale}
-              live={!replay && weatherLive}
-              dense={compactDesktop}
-              previewDays={compactDesktop ? 0 : 2}
-            />{#snippet action()}<button
-                class="btn btn-text theme-secondary btn-sm"
-                onclick={() => navigate('weather')}
-                aria-label="View full weather"
-                ><Icon name="arrow-up-right" /></button
-              >{/snippet}</Panel
-          >
-          <Panel title="Agent capacity" class="summary-agents"
-            ><div class="grid" style="--gap: 0 1.5rem">
-              {#each simulation.agents.slice(0, summaryAgentCount) as agent (agent.id)}<div
-                  class={agentColumns}
-                >
-                  <AgentCard {agent} {now} compact locale={settings.locale} />
-                </div>{/each}
-            </div>
-            {#if summaryAgentCount < simulation.agents.length}<button
-                class="btn btn-link p-0 mt-2"
-                onclick={() => navigate('agents')}
-                >+{simulation.agents.length - summaryAgentCount} more agents</button
-              >{/if}
-            {#snippet action()}<button
-                class="btn btn-text theme-secondary btn-sm"
-                onclick={() => navigate('agents')}>View all</button
-              >{/snippet}</Panel
-          >
-          <Panel title="Coming up" kind="quiet" class="summary-calendar"
-            >{#if todaysEvents.length}<Agenda
-                events={todaysEvents}
+            </Panel>
+            <Panel title="Outside now" class="summary-weather"
+              ><WeatherPanel
+                {weather}
+                status={sourceState}
+                units={settings.units}
                 locale={settings.locale}
-                hourCycle={settings.hourCycle}
-                max={compactDesktop ? 1 : 2}
-                compact
-                onmore={() => navigate('calendar')}
-              />{:else}<p class="fg-2 mb-0">
-                No more events today.
-              </p>{/if}</Panel
-          >
-          <Panel title="Across your feeds" kind="quiet" class="summary-feeds"
-            ><ul
-              class="list-group list-group-flush"
-              data-bs-component="list-group"
+                live={!replay && weatherLive}
+                dense={compactDesktop}
+                previewDays={compactDesktop ? 0 : 2}
+              />{#snippet action()}<button
+                  class="btn btn-text theme-secondary btn-sm"
+                  onclick={() => navigate('weather')}
+                  aria-label="View full weather"
+                  ><Icon name="arrow-up-right" /></button
+                >{/snippet}</Panel
             >
-              {#each stories
-                .filter((story) => settings.categories.includes(story.category))
-                .slice(0, compactDesktop ? 1 : 3) as story (story.id)}<li
-                  class="list-group-item px-0"
-                >
-                  <div class="small fg-2 mb-1">
-                    {story.publication} · {story.live ? 'Live' : 'Demo'}
-                  </div>
-                  <h3 class="agent-name mb-0">
-                    {#if story.live && story.url}<a
-                        href={story.url}
-                        target="_blank"
-                        rel="noreferrer">{story.title}</a
-                      >{:else}{story.title}{/if}
-                  </h3>
-                </li>{:else}<li class="list-group-item px-0">
-                  No categories selected. Enable feeds in Settings.
-                </li>{/each}
-            </ul>
-            {#snippet action()}<button
-                class="btn btn-text theme-secondary btn-sm"
-                onclick={() => navigate('feeds')}>All stories</button
-              >{/snippet}</Panel
-          >
-        </div>
+            <Panel title="Agent capacity" class="summary-agents"
+              ><div class="grid" style="--gap: 0 1.5rem">
+                {#each simulation.agents.slice(0, summaryAgentCount) as agent (agent.id)}<div
+                    class={agentColumns}
+                  >
+                    <AgentCard {agent} {now} compact locale={settings.locale} />
+                  </div>{/each}
+              </div>
+              {#if summaryAgentCount < simulation.agents.length}<button
+                  class="btn btn-link p-0 mt-2"
+                  onclick={() => navigate('agents')}
+                  >+{simulation.agents.length - summaryAgentCount} more agents</button
+                >{/if}
+              {#snippet action()}<button
+                  class="btn btn-text theme-secondary btn-sm"
+                  onclick={() => navigate('agents')}>View all</button
+                >{/snippet}</Panel
+            >
+            <Panel title="Coming up" kind="quiet" class="summary-calendar"
+              >{#if todaysEvents.length}<Agenda
+                  events={todaysEvents}
+                  locale={settings.locale}
+                  hourCycle={settings.hourCycle}
+                  max={compactDesktop ? 1 : 2}
+                  compact
+                  onmore={() => navigate('calendar')}
+                />{:else}<p class="fg-2 mb-0">
+                  No more events today.
+                </p>{/if}</Panel
+            >
+            <Panel title="Across your feeds" kind="quiet" class="summary-feeds"
+              ><ul
+                class="list-group list-group-flush"
+                data-bs-component="list-group"
+              >
+                {#each stories
+                  .filter( (story) => settings.categories.includes(story.category) )
+                  .slice(0, compactDesktop ? 1 : 3) as story (story.id)}<li
+                    class="list-group-item px-0"
+                  >
+                    <div class="small fg-2 mb-1">
+                      {story.publication} · {story.live ? 'Live' : 'Demo'}
+                    </div>
+                    <h3 class="agent-name mb-0">
+                      {#if story.live && story.url}<a
+                          href={story.url}
+                          target="_blank"
+                          rel="noreferrer">{story.title}</a
+                        >{:else}{story.title}{/if}
+                    </h3>
+                  </li>{:else}<li class="list-group-item px-0">
+                    No categories selected. Enable feeds in Settings.
+                  </li>{/each}
+              </ul>
+              {#snippet action()}<button
+                  class="btn btn-text theme-secondary btn-sm"
+                  onclick={() => navigate('feeds')}>All stories</button
+                >{/snippet}</Panel
+            >
+          </div>
+        {/if}
       </section>
       <section
         class="tab-pane"
@@ -992,12 +995,14 @@
         id="view-agents"
         aria-labelledby="tab-agents"
       >
-        <AgentsView
-          agents={simulation.agents}
-          {now}
-          dense={compactDesktop}
-          locale={settings.locale}
-        />
+        {#if view === 'agents'}
+          <AgentsView
+            agents={simulation.agents}
+            {now}
+            dense={compactDesktop}
+            locale={settings.locale}
+          />
+        {/if}
       </section>
       <section
         class="tab-pane"
@@ -1006,12 +1011,14 @@
         id="view-calendar"
         aria-labelledby="tab-calendar"
       >
-        <Calendar
-          events={simulation.events}
-          {now}
-          {settings}
-          compact={compactDesktop}
-        />
+        {#if view === 'calendar'}
+          <Calendar
+            events={simulation.events}
+            {now}
+            {settings}
+            compact={compactDesktop}
+          />
+        {/if}
       </section>
       <section
         class="tab-pane"
@@ -1020,14 +1027,16 @@
         id="view-weather"
         aria-labelledby="tab-weather"
       >
-        <WeatherView
-          {weather}
-          status={sourceState}
-          {settings}
-          live={!replay && weatherLive}
-          compact={compactDesktop}
-          onsettings={openSettings}
-        />
+        {#if view === 'weather'}
+          <WeatherView
+            {weather}
+            status={sourceState}
+            {settings}
+            live={!replay && weatherLive}
+            compact={compactDesktop}
+            onsettings={openSettings}
+          />
+        {/if}
       </section>
       <section
         class="tab-pane"
@@ -1036,14 +1045,16 @@
         id="view-feeds"
         aria-labelledby="tab-feeds"
       >
-        <Feeds
-          {stories}
-          {settings}
-          {now}
-          compact={compactDesktop}
-          status={feedState}
-          onchange={changeSettings}
-        />
+        {#if view === 'feeds'}
+          <Feeds
+            {stories}
+            {settings}
+            {now}
+            compact={compactDesktop}
+            status={feedState}
+            onchange={changeSettings}
+          />
+        {/if}
       </section>
     </div>
   </main>

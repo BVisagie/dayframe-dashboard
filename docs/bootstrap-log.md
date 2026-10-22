@@ -63,6 +63,61 @@ Escape, selection and reopening. The warning and additional listeners remain
 upstream limitations; no warning is suppressed or dependency patched. Track
 [Bootstrap issue 42965](https://github.com/twbs/bootstrap/issues/42965).
 
+### UI once-over (October 2026)
+
+A full review against the frontend-design skill and the theme briefs is
+recorded in `docs/plans/ui-once-over.md`; this entry records what it changed
+in how Dayframe uses Bootstrap.
+
+- **Shell.** The header is a `navbar`: `navbar-brand` with an inline SVG mark
+  filled with theme tokens, the view `nav` inside `nav-overflow`, the clock
+  and the control `btn-group`. Below `md` a `w-100 order-last md:d-contents`
+  wrapper moves the nav to its own row without custom CSS.
+- **Views as tabs.** The five views are `tab-pane`s shown by the Tab plugin.
+  Application state follows `shown.bs.tab` and asks the plugin to show a view
+  for shortcuts, rotation and the URL. NavOverflow clones the triggers into
+  its menu, so the action strips `role`, `aria-selected`, `aria-controls`,
+  `tabindex` and `data-bs-target` from the clones; delegated clicks on
+  `[data-view]` still navigate.
+- **Header menu.** `menu-header`, `menu-divider`, `menu-item-icon` swatches,
+  `menu-item-content` with `menu-item-description`, and `selected` with
+  `menu-item-check` make one menu switch both theme and colour scheme.
+- **Surface mapping.** Dayframe paints its canvas with `--bg-body` and raised
+  panels with `--bg-1`, the reverse of Bootstrap's light-mode order. The
+  component token maps that assumed the body is the raised surface are
+  re-pointed in the Sass configuration: list group and table backgrounds are
+  transparent, nav and pill backgrounds use `--bg-2`/`--bg-3`, and dialog,
+  menu, popover, toast and datepicker surfaces use `--bg-1`. This removed the
+  striped list rows, grey table cells and the white bar behind the view pills
+  without any app-layer CSS. The missing "raised surface" role is drafted as
+  upstream feedback.
+- **Scales.** Theme-base no longer redefines `--radius-1…9` or the
+  `--box-shadow*` tokens; Bootstrap's `$radius` and `$shadows` (with
+  `--shadow-color` and `--shadow-strength`) now apply, so dark mode deepens
+  shadows on its own.
+- **Grid.** Responsive `g-col` utilities are container queries against the
+  nearest `.grid`, not viewport media queries. Nested grids therefore use the
+  breakpoint that matches their own width (the hero's aside splits at `md`).
+- **Nav overflow.** `.nav-overflow` is `flex: 1 1 0`. As a direct child of a
+  column flex shell it grew into the free height and pushed the view heading
+  down by up to 90 px. Placing it in the navbar's row removes the growth; the
+  column case is drafted as an upstream bug report.
+- **Prose.** `.prose` sets `max-width: 1000px; margin-inline: auto`, so a
+  feed excerpt using it was centred inside its row. `prose` now styles only
+  the About dialog's running text.
+- **Fonts.** The Default theme imports `@fontsource-variable/geist` and
+  `@fontsource-variable/geist-mono` in its own `theme.css`; the `@font-face`
+  rules ship in the single stylesheet and the browser downloads a family only
+  when the active theme uses it. Licences are appended to the third-party
+  notices.
+- **Simulation.** Hourly precipitation now drifts around the day's chance,
+  and dry hours of a wet day show cloud, so the hourly strip has something
+  to show.
+
+The three upstream drafts (nav-overflow growth, surface token, prose
+centring) are in `docs/plans/upstream-feedback.md`, checked against open and
+closed issues, pull requests and the v6 Feedback discussions on 2026-10-22.
+
 ### Custom code inventory
 
 Bootstrap does not provide these dashboard-specific capabilities:
@@ -88,9 +143,10 @@ Bootstrap does not provide these dashboard-specific capabilities:
   lifecycle and updates to application state.
 - Tooltip titles and Range fills follow Svelte updates through the plugins'
   own APIs, including shortcut changes and programmatic settings resets.
-- Dashboard typography hierarchy, branded shell dimensions, compact quota
-  rows, source attribution and theme-preview swatches. These rules live in
-  the `app` layer and use Bootstrap tokens and rem units.
+- Shell dimensions, the hero's optional display face, tabular figures for
+  readings and the clock (Bootstrap has no `font-variant-numeric` utility),
+  compact quota rows and source attribution. These rules live in the `app`
+  layer and use Bootstrap tokens and rem units.
 - A calendar month event grid, weekend/outside-month surfaces and event dots.
   Date selection enhancements use Bootstrap Datepicker; event details use
   Popover. All-day membership compares date-only values with exclusive ends;

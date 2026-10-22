@@ -13,8 +13,9 @@ async function browserDate(page: Page, date: string, locale: string, options: In
 test('all views navigate by controls, letters, numbers and wrapping arrows', { tag: '@smoke' }, async ({ page, audit }) => {
   await visit(page);
   const nav = page.getByRole('navigation', { name: 'Dashboard views' });
+  // Views are Bootstrap tabs, so the controls carry the tab role.
   for (const view of views) {
-    await nav.getByRole('button', { name: new RegExp(`^${view}$`, 'i') }).click();
+    await nav.getByRole('tab', { name: new RegExp(`^${view}$`, 'i') }).click();
     await expectView(page, view);
     await expect(page).toHaveURL(new RegExp(`view=${view}`));
   }
@@ -64,11 +65,13 @@ test('mobile navigation exposes overflowing views through the Bootstrap More men
   await visit(page);
   const nav = page.getByRole('navigation', { name: 'Dashboard views' });
   for (const view of views) {
-    const control = nav.getByRole('button', { name: new RegExp(`^${view}$`, 'i') });
+    // Visible views are tabs; views moved into More are plain menu buttons.
+    let control = nav.getByRole('tab', { name: new RegExp(`^${view}$`, 'i') });
     if (!await control.isVisible()) {
       await nav.getByRole('button', { name: 'More', exact: true }).focus();
       await page.keyboard.press('Enter');
       await expect(nav.locator('.menu.show')).toBeVisible();
+      control = nav.locator('.menu.show').getByRole('button', { name: new RegExp(`^${view}$`, 'i') });
     }
     await control.click();
     await expectView(page, view);

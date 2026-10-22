@@ -20,11 +20,11 @@ legibility rather than copied from an agent's brand.
 
 ## Type
 
-`system-ui, sans-serif` carries prose and controls: familiar, clear shapes keep
-the dashboard readable at distance. `ui-rounded, system-ui, sans-serif` gives
-headings a slightly wider, confident silhouette without an asset download.
-`ui-monospace, monospace` is reserved for the clock and measured quantities,
-with tabular figures; labels stay in the body face. Body copy is left aligned.
+Geist carries prose, controls and headings: one family, with weight doing the
+work, whose large sizes stay crisp at a distance. Geist Mono is reserved for
+the clock and measured quantities, with tabular figures; labels stay in the
+body face. Both ship with the site under the SIL Open Font License and
+download only while this theme is active. Body copy is left aligned.
 
 ## Layout
 
@@ -65,7 +65,9 @@ limits rather than smaller root text.
 Equal rounded cards would obscure urgency, so the plan uses an asymmetric
 hero, compact capacity readings and a quiet feed list. A decorative monospace label
 system would resemble a generic developer template; only numeric instruments
-use that face. Porcelain and navy belong to this mission-control brief, and
+use that face. System fonts in every theme were themselves a default, so the
+2026 once-over gave this theme a bundled face while the other briefs kept
+theirs. Porcelain and navy belong to this mission-control brief, and
 cobalt is reserved for decisions rather than every heading.
 
 ## Screenshot critique

@@ -103,28 +103,38 @@ ink when off and the primary contrast colour when on. Alpha.1 declares
 bridges it to `--switch-indicator-bg` in the checked state. This token bridge
 can be removed when Bootstrap consumes its checked-indicator token directly.
 
-System font roles download no assets. Body and display stacks are deliberate
-generic families; monospace is reserved for readings except in the console.
+A theme may bundle fonts: Default imports `@fontsource-variable/geist` and
+`@fontsource-variable/geist-mono` at the top of its `theme.css`, so the
+`@font-face` rules ship in the single stylesheet while the browser downloads a
+family only when the active theme uses it. Record each font's licence in
+`public/third-party-notices.txt`. Tideline and Nebuchadnezzar keep system
+stacks; monospace is reserved for the clock and readings except in the console.
+
+The brand mark is an inline SVG filled with `--primary-bg`, `--primary-contrast`
+and `--accent-bg`, so a theme recolours it through its roles with no extra
+asset or token. Bootstrap generates the radius and shadow scales from `$radius`
+and `$shadows`; themes change radii per token (as Nebuchadnezzar does) and tint
+shadows through `--shadow-color` rather than redefining the scales.
 
 ## Layout integration
 
 Use Bootstrap layout and spacing utilities inside and around these classes:
 
-| Class                                                        | Responsibility                                               |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| `.dashboard-shell`                                           | Full-height page shell and optional CRT overlay anchor       |
-| `.grid.dashboard-grid`                                       | Summary's named areas; switches with `data-layout`           |
-| `.summary-hero`                                              | Urgent Summary item; use on a Bootstrap card                 |
-| `.summary-agents`                                            | Compact Summary capacity panel                               |
-| `.summary-calendar`                                          | Summary's today-only "Coming up" panel                       |
-| `.summary-weather`                                           | Summary forecast panel                                       |
-| `.summary-feeds`                                             | Quiet Summary feed strip                                     |
+| Class                                                        | Responsibility                                                  |
+| ------------------------------------------------------------ | --------------------------------------------------------------- |
+| `.dashboard-shell`                                           | Full-height page shell and optional CRT overlay anchor          |
+| `.grid.dashboard-grid`                                       | Summary's named areas; switches with `data-layout`              |
+| `.summary-hero`                                              | Urgent Summary item; use on a Bootstrap card                    |
+| `.summary-agents`                                            | Compact Summary capacity panel                                  |
+| `.summary-calendar`                                          | Summary's today-only "Coming up" panel                          |
+| `.summary-weather`                                           | Summary forecast panel                                          |
+| `.summary-feeds`                                             | Quiet Summary feed strip                                        |
 | `.grid.agents-grid`                                          | Agent cards using responsive Bootstrap column and gap utilities |
-| `.grid` with `g-col-12 lg:g-col-8` and `g-col-12 lg:g-col-4` | Calendar's month and selected-day agenda columns             |
-| `.grid` with `g-col-12 lg:g-col-7` and `g-col-12 lg:g-col-5` | Weather's forecast and hourly columns                        |
-| `.month-grid` and `.month-day`                               | Seven equal month columns and readable day-button dimensions |
-| `.dashboard-panel`                                           | Allows panel content to shrink within a grid column          |
-| `.dashboard-clock`                                           | Optional static CRT glow target                              |
+| `.grid` with `g-col-12 lg:g-col-8` and `g-col-12 lg:g-col-4` | Calendar's month and selected-day agenda columns                |
+| `.grid` with `g-col-12 lg:g-col-7` and `g-col-12 lg:g-col-5` | Weather's forecast and hourly columns                           |
+| `.month-grid` and `.month-day`                               | Seven equal month columns and readable day-button dimensions    |
+| `.dashboard-panel`                                           | Allows panel content to shrink within a grid column             |
+| `.dashboard-clock`                                           | Optional static CRT glow target                                 |
 
 Only `.dashboard-grid` adds custom column definitions to Bootstrap's `.grid`.
 Agent cards use `g-col-12 md:g-col-6 lg:g-col-4`, preserve every allowance in

@@ -9,29 +9,31 @@ package graph is in `package-lock.json`; workflow Actions use full commit SHAs.
 
 All direct pins were checked against their supported release tracks:
 
-| Package                        | Pin                                 |
-| ------------------------------ | ----------------------------------- |
-| `@floating-ui/dom`             | `1.8.0`                             |
-| `bootstrap`                    | `6.0.0-alpha.1`                     |
-| `bootstrap-icons`              | `1.13.2`                            |
-| `svelte`                       | `5.57.2`                            |
-| `vanilla-calendar-pro`         | `3.4.0`                             |
-| `@axe-core/playwright`         | `4.14.0`                            |
-| `@eslint/js`                   | `10.0.1`                            |
-| `@playwright/test`             | `1.64.1`                            |
-| `@sveltejs/vite-plugin-svelte` | `7.3.1`                             |
-| `@types/node`                  | `26.6.5`                            |
-| `@typescript/native`           | `npm:typescript@7.0.2`              |
-| `eslint`                       | `10.13.0`                           |
-| `globals`                      | `17.13.0`                           |
-| `lightningcss`                 | `1.33.0`                            |
-| `postcss`                      | `8.5.31`                            |
-| `prettier`                     | `3.9.10`                            |
-| `prettier-plugin-svelte`       | `4.1.1`                             |
-| `sass`                         | `1.106.0`                           |
-| `svelte-check`                 | `4.7.7`                             |
-| `typescript`                   | `npm:@typescript/typescript6@6.0.2` |
-| `vite`                         | `8.3.5`                             |
+| Package                           | Pin                                 |
+| --------------------------------- | ----------------------------------- |
+| `@floating-ui/dom`                | `1.8.0`                             |
+| `@fontsource-variable/geist`      | `5.3.0`                             |
+| `@fontsource-variable/geist-mono` | `5.3.0`                             |
+| `bootstrap`                       | `6.0.0-alpha.1`                     |
+| `bootstrap-icons`                 | `1.13.2`                            |
+| `svelte`                          | `5.57.2`                            |
+| `vanilla-calendar-pro`            | `3.4.0`                             |
+| `@axe-core/playwright`            | `4.14.0`                            |
+| `@eslint/js`                      | `10.0.1`                            |
+| `@playwright/test`                | `1.64.1`                            |
+| `@sveltejs/vite-plugin-svelte`    | `7.3.1`                             |
+| `@types/node`                     | `26.6.5`                            |
+| `@typescript/native`              | `npm:typescript@7.0.2`              |
+| `eslint`                          | `10.13.0`                           |
+| `globals`                         | `17.13.0`                           |
+| `lightningcss`                    | `1.33.0`                            |
+| `postcss`                         | `8.5.31`                            |
+| `prettier`                        | `3.9.10`                            |
+| `prettier-plugin-svelte`          | `4.1.1`                             |
+| `sass`                            | `1.106.0`                           |
+| `svelte-check`                    | `4.7.7`                             |
+| `typescript`                      | `npm:@typescript/typescript6@6.0.2` |
+| `vite`                            | `8.3.5`                             |
 
 TypeScript 7.0.2 supplies `tsc` for tooling checks. Svelte checking retains
 TypeScript API 6.0.3 through the 6.0.2 compatibility facade: TypeScript 7.0
