@@ -650,7 +650,9 @@
                         scenario: e.currentTarget.value as Settings['scenario'],
                       })}
                     >{#each ['steady', 'running-low', 'reconnect', 'reminder-due', 'stale', 'offline'] as scenario}<option
-                        value={scenario}>{scenario.replaceAll('-', ' ')}</option
+                        value={scenario}
+                        >{scenario.charAt(0).toUpperCase() +
+                          scenario.slice(1).replaceAll('-', ' ')}</option
                       >{/each}</select
                   >
                 </div>

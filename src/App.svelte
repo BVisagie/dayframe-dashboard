@@ -701,7 +701,8 @@
           class="badge badge-subtle theme-warning"
           data-bs-component="badge"
           ><Icon name={scenarioIcons[settings.scenario]} />
-          {settings.scenario.replaceAll('-', ' ')} scenario</span
+          {settings.scenario.charAt(0).toUpperCase() +
+            settings.scenario.slice(1).replaceAll('-', ' ')} scenario</span
         >{/if}
     </div>
     {#if notice}<div
