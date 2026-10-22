@@ -33,6 +33,19 @@ About, Settings and the full agenda use scrollable Dialog bodies on desktop
 and Drawer bodies on narrow screens. Dismiss buttons close through Bootstrap's
 plugin before Svelte unmounts the dialog, preserving focus restoration.
 
+Datepicker's default `left` placement always opens below its input. The
+Calendar uses the plugin's `auto` option so the calendar peer chooses the side
+with room and adjusts horizontally. This fixes the popup falling below the
+viewport without custom positioning or a dependency change.
+
+Agent cards use one Bootstrap Progress per allowance, with a fill and accessible
+value expressing percentage remaining. Shared windows, optional model pools,
+reset countdowns and Codex reset credits replace the old unit counts and SVG
+history charts for every agent. Bootstrap's responsive column utilities lay
+out one, two or three columns; compact desktop cards use spacing utilities to
+keep every window visible. The repeated Agents alert is removed; the footer
+retains the simulation disclosure.
+
 The feature map lists only components and helpers used by the app. Alpha.1
 buttons use `btn-text` or a themed `btn-outline`; loading indicators use
 `spinner-border spinner-sm`. Display scale uses `form-range` with a
@@ -84,8 +97,6 @@ Bootstrap does not provide these dashboard-specific capabilities:
   timed events use local midnight boundaries, including daylight-saving
   transitions. Browser time zones cannot shift an all-day event onto an
   adjacent date.
-- Small usage-history charts. Accessible SVG sparklines accompany numeric
-  quotas rather than replacing them.
 - A component-inspection lens. Marked component outlines include ordinary
   links to Bootstrap documentation. Dialog elements are excluded because the
   lens's positioning must not replace modal or drawer positioning. Labels sit

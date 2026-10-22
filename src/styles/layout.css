@@ -38,14 +38,6 @@
     grid-area: feeds;
   }
 
-  /* Bootstrap's column utilities remain useful within panels. Auto-fit keeps
-     the instrument bank usable when display scaling changes its capacity. */
-  .agents-grid {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 23rem), 1fr));
-    grid-template-rows: none;
-    --gap: var(--spacer-5);
-  }
-
   .dashboard-panel {
     min-inline-size: 0;
   }

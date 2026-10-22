@@ -1,4 +1,4 @@
-import type { Agent, CalendarEvent, Scenario, SourceStatus, Story, Weather, WeatherDay } from './types.ts';
+import type { Agent, AgentAllowance, CalendarEvent, Scenario, SourceStatus, Story, Weather, WeatherDay } from './types.ts';
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -46,29 +46,56 @@ function isoWeek(time: number): string {
   return `${year}-W${String(1 + Math.floor((monday(time) - firstMonday) / (7 * DAY))).padStart(2, '0')}`;
 }
 
-type WindowKind = 'session' | 'weekly' | 'monthly' | 'daily';
+type WindowKind = 'session' | 'weekly' | 'monthly';
+interface AllowanceProfile {
+  id: string;
+  label: string;
+  scope: AgentAllowance['scope'];
+  kind: WindowKind;
+  hours?: number;
+}
 interface AgentProfile {
   id: string;
   name: string;
   initials: string;
   plan: string;
-  limit: number;
-  unit: string;
-  window: string;
-  kind: WindowKind;
-  hours?: number;
+  primaryAllowanceId: string;
+  allowances: [AllowanceProfile, ...AllowanceProfile[]];
+  hasResetCredits?: boolean;
 }
 
+// These illustrate allowance shapes, not contractual limits or provider integrations.
 const PROFILES: AgentProfile[] = [
-  { id: 'codex', name: 'Codex', initials: 'CX', plan: 'Workspace demo', limit: 240, unit: 'messages', window: '5-hour session', kind: 'session', hours: 5 },
-  { id: 'claude', name: 'Claude', initials: 'CL', plan: 'Weekly demo', limit: 1200, unit: 'messages', window: 'Weekly allowance', kind: 'weekly' },
-  { id: 'cursor', name: 'Cursor', initials: 'CU', plan: 'Monthly demo', limit: 500, unit: 'credits', window: 'Monthly credits', kind: 'monthly' },
-  { id: 'grok', name: 'Grok', initials: 'GR', plan: 'Session demo', limit: 100, unit: 'requests', window: '2-hour session', kind: 'session', hours: 2 },
-  { id: 'opencode', name: 'OpenCode', initials: 'OC', plan: 'Model pool demo', limit: 80000, unit: 'tokens', window: 'Daily · fast model', kind: 'daily' },
-  { id: 'antigravity', name: 'Antigravity', initials: 'AG', plan: 'Model pool demo', limit: 650, unit: 'requests', window: 'Weekly · reasoning model', kind: 'weekly' },
+  { id: 'codex', name: 'Codex', initials: 'CX', plan: 'Pro', primaryAllowanceId: 'weekly', hasResetCredits: true, allowances: [
+    { id: 'session', label: 'Session', scope: 'shared', kind: 'session', hours: 5 },
+    { id: 'weekly', label: 'Weekly', scope: 'shared', kind: 'weekly' },
+  ] },
+  { id: 'claude', name: 'Claude', initials: 'CL', plan: 'Max', primaryAllowanceId: 'weekly', allowances: [
+    { id: 'session', label: 'Session', scope: 'shared', kind: 'session', hours: 5 },
+    { id: 'weekly', label: 'Weekly', scope: 'shared', kind: 'weekly' },
+    { id: 'fable', label: 'Weekly · Fable', scope: 'model', kind: 'weekly' },
+  ] },
+  { id: 'cursor', name: 'Cursor', initials: 'CU', plan: 'Pro', primaryAllowanceId: 'monthly', allowances: [
+    { id: 'monthly', label: 'Monthly', scope: 'shared', kind: 'monthly' },
+    { id: 'other', label: 'Other models', scope: 'model', kind: 'monthly' },
+    { id: 'cursor', label: 'Cursor models', scope: 'model', kind: 'monthly' },
+  ] },
+  { id: 'grok', name: 'Grok', initials: 'GR', plan: 'SuperGrok', primaryAllowanceId: 'weekly', allowances: [
+    { id: 'weekly', label: 'Weekly', scope: 'shared', kind: 'weekly' },
+  ] },
+  { id: 'opencode', name: 'OpenCode', initials: 'OC', plan: 'Go', primaryAllowanceId: 'monthly', allowances: [
+    { id: 'session', label: 'Session', scope: 'shared', kind: 'session', hours: 5 },
+    { id: 'weekly', label: 'Weekly', scope: 'shared', kind: 'weekly' },
+    { id: 'monthly', label: 'Monthly', scope: 'shared', kind: 'monthly' },
+  ] },
+  { id: 'antigravity', name: 'Antigravity', initials: 'AG', plan: 'Model quotas', primaryAllowanceId: 'pro', allowances: [
+    { id: 'pro', label: 'Pro model', scope: 'model', kind: 'session', hours: 5 },
+    { id: 'fast', label: 'Fast model', scope: 'model', kind: 'session', hours: 5 },
+    { id: 'reasoning', label: 'Reasoning model', scope: 'model', kind: 'weekly' },
+  ] },
 ];
 
-function quotaWindow(time: number, profile: AgentProfile): { start: number; end: number } {
+function quotaWindow(time: number, profile: AllowanceProfile): { start: number; end: number } {
   if (profile.kind === 'weekly') {
     const start = monday(time);
     return { start, end: start + 7 * DAY };
@@ -80,18 +107,18 @@ function quotaWindow(time: number, profile: AgentProfile): { start: number; end:
       end: Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1),
     };
   }
-  const duration = profile.kind === 'daily' ? DAY : (profile.hours ?? 5) * HOUR;
+  const duration = (profile.hours ?? 5) * HOUR;
   const start = Math.floor(time / duration) * duration;
   return { start, end: start + duration };
 }
 
-function quotaUsed(time: number, seed: string, profile: AgentProfile): number {
+function quotaRemaining(time: number, seed: string, profile: AllowanceProfile): number {
   const { start, end } = quotaWindow(time, profile);
-  // A window keeps its opening week's seed, so a Monday cannot lower a monthly quota.
+  // Keep the opening week's seed so Monday cannot replenish a monthly allowance.
   const key = `${isoWeek(start)}:${seed}:${profile.id}:${start}`;
   const eventualUse = 0.72 + fraction(`${key}:pace`) * 0.42;
   const progress = (time - start) / (end - start);
-  return Math.min(profile.limit, Math.floor(profile.limit * eventualUse * progress ** 0.9));
+  return Math.max(0, 100 - Math.floor(100 * eventualUse * progress ** 0.9));
 }
 
 function agentStatus(time: number, seed: string, profile: AgentProfile, scenario: Scenario, index: number): SourceStatus {
@@ -105,29 +132,30 @@ function agentStatus(time: number, seed: string, profile: AgentProfile, scenario
 
 function simulateAgents(time: number, seed: string, scenario: Scenario): Agent[] {
   return PROFILES.map((profile, index) => {
-    const { start, end } = quotaWindow(time, profile);
-    const sampleInterval = (end - start) / 12;
-    const history = Array.from({ length: 12 }, (_, sample) => {
-      const sampleTime = time - (11 - sample) * sampleInterval;
-      return Math.round(100 * quotaUsed(sampleTime, seed, profile) / profile.limit);
-    });
-    let used = quotaUsed(time, seed, profile);
-    if (scenario === 'running-low') {
-      used = Math.max(used, Math.ceil(profile.limit * (0.98 - index * 0.018)));
-      history[history.length - 1] = Math.round(100 * used / profile.limit);
-    }
+    const status = agentStatus(time, seed, profile, scenario, index);
+    const age = status === 'stale' || status === 'offline' ? 2 * HOUR : 3 * MINUTE;
+    const updatedAt = Math.floor(time / (5 * MINUTE)) * 5 * MINUTE - age;
+    // An unavailable source cannot report usage accumulated after its last update.
+    const readingsAt = status === 'fresh' ? time : updatedAt;
+    const allowances = profile.allowances.map((allowance) => ({
+      id: allowance.id,
+      label: allowance.label,
+      scope: allowance.scope,
+      remainingPercent: scenario === 'running-low'
+        ? Math.min(quotaRemaining(readingsAt, `${seed}:${profile.id}`, allowance), 2 + index)
+        : quotaRemaining(readingsAt, `${seed}:${profile.id}`, allowance),
+      resetsAt: new Date(quotaWindow(time, allowance).end).toISOString(),
+    })) as Agent['allowances'];
     return {
       id: profile.id,
       name: profile.name,
       initials: profile.initials,
       plan: profile.plan,
-      used,
-      limit: profile.limit,
-      unit: profile.unit,
-      window: profile.window,
-      resetsAt: new Date(end).toISOString(),
-      status: agentStatus(time, seed, profile, scenario, index),
-      history,
+      primaryAllowanceId: profile.primaryAllowanceId,
+      allowances,
+      ...(profile.hasResetCredits ? { resetCredits: hash(`${isoWeek(readingsAt)}:${seed}:reset-credits`) % 4 } : {}),
+      updatedAt: new Date(updatedAt).toISOString(),
+      status,
     };
   });
 }

@@ -1,6 +1,8 @@
 import type { Page } from '@playwright/test';
 import { test, expect, visit, settings, closeSettings, expectView, noHorizontalOverflow } from './fixtures';
 import { themes, views, referenceClock } from './matrix';
+import { simulate } from '../../src/lib/data';
+import { primaryAllowance } from '../../src/lib/agents';
 
 async function browserDate(page: Page, date: string, locale: string, options: Intl.DateTimeFormatOptions = {}) {
   // Locale punctuation and padding come from the tested browser's Intl data.
@@ -391,6 +393,10 @@ test('datepicker supports keyboard selection and Escape removes it visually and 
   const picker = page.locator('.vc');
   await expect(picker).toBeVisible();
   await expect(picker).toHaveCSS('opacity', '1');
+  const bounds = await picker.boundingBox();
+  expect(bounds).not.toBeNull();
+  expect(bounds!.y).toBeGreaterThanOrEqual(0);
+  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(page.viewportSize()!.height);
   await picker.locator('[data-vc-date="2026-11-05"] button').focus();
   await page.keyboard.press('ArrowRight');
   await expectView(page, 'calendar');
@@ -418,6 +424,56 @@ test('datepicker supports keyboard selection and Escape removes it visually and 
   await expect(picker).toHaveAttribute('inert', '');
   await expect(input).toBeFocused();
   await expectView(page, 'calendar');
+});
+
+test('every agent shows percentage allowances, independent reset times and no message counts', async ({ page }) => {
+  await visit(page, { view: 'agents' });
+  const agents = simulate(new Date(referenceClock), 'reference', 'steady').agents;
+  await expect(page.getByRole('article', { name: / capacity$/ })).toHaveCount(6);
+  for (const agent of agents) {
+    const card = page.getByRole('article', { name: `${agent.name} capacity`, exact: true });
+    await expect(card.getByRole('heading', { name: agent.name, exact: true })).toBeVisible();
+    await expect(card.locator('.quota-value')).toHaveText(`${primaryAllowance(agent).remainingPercent}% left`);
+    await expect(card.getByRole('progressbar')).toHaveCount(agent.allowances.length);
+    for (const allowance of agent.allowances) {
+      const meter = card.getByRole('progressbar', { name: `${agent.name} ${allowance.label} remaining`, exact: true });
+      await expect(meter).toHaveAttribute('aria-valuenow', String(allowance.remainingPercent));
+      expect(await meter.locator('.progress-bar').evaluate(node => (node as HTMLElement).style.width)).toBe(`${allowance.remainingPercent}%`);
+      await expect(meter.locator('..').locator('time')).toHaveAttribute('datetime', allowance.resetsAt);
+    }
+    await expect(card).not.toContainText(/(?:messages|requests|tokens|credits) left|% used/);
+  }
+  await expect(page.getByText('Reset credits', { exact: false })).toBeVisible();
+  await expect(page.locator('main')).not.toContainText('Invented usage follows');
+  await expect(page.locator('footer')).toContainText('Agent usage, accounts, calendars and non-Bootstrap feeds are simulated.');
+});
+
+test('the datepicker stays inside the viewport across themes, scale and resizing', async ({ page }) => {
+  const cases = [
+    { width: 1280, height: 720, scale: '100', theme: 'default', scheme: 'light' },
+    { width: 390, height: 844, scale: '100', theme: 'default', scheme: 'dark' },
+    { width: 1280, height: 720, scale: '150', theme: 'nebuchadnezzar', scheme: 'dark' },
+    { width: 1920, height: 1080, scale: '150', theme: 'tideline', scheme: 'light' },
+    { width: 1024, height: 768, scale: '100', theme: 'tideline', scheme: 'dark' },
+  ];
+  for (const { width, height, ...overrides } of cases) {
+    await page.setViewportSize({ width, height });
+    await visit(page, { view: 'calendar', ...overrides });
+    const input = page.getByLabel('Jump to a date', { exact: true });
+    const picker = page.locator('.vc');
+    await input.click();
+    await expect(picker).toHaveCSS('opacity', '1');
+    const fits = async () => picker.evaluate(node => {
+      const rect = node.getBoundingClientRect();
+      return rect.top >= 0 && rect.left >= 0 && rect.bottom <= innerHeight && rect.right <= innerWidth;
+    });
+    await expect.poll(fits, JSON.stringify({ width, height, ...overrides })).toBe(true);
+    await page.setViewportSize({ width: width - 30, height: height - 30 });
+    await expect.poll(fits, 'An open datepicker must reposition when the viewport changes').toBe(true);
+    await picker.locator('[data-vc-date="2026-11-05"] button').click();
+    await expect(input).toHaveValue('05/11/2026');
+    await expect(picker).toHaveAttribute('aria-hidden', 'true');
+  }
 });
 
 for (const { density, viewport, pageSize } of [

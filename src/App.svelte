@@ -8,6 +8,7 @@
     SourceStatus,
   } from './lib/types';
   import { simulate } from './lib/data';
+  import { limitingAllowance } from './lib/agents';
   import { parseReplayClock } from './lib/clock';
   import { eventsForDate } from './lib/calendar';
   import {
@@ -179,8 +180,16 @@
   const attentionAgent = $derived(
     simulation.agents.find((agent) => agent.status === 'reconnect') ??
       [...simulation.agents]
-        .sort((a, b) => b.used / b.limit - a.used / a.limit)
-        .find((agent) => agent.used / agent.limit >= 0.75),
+        .filter((agent) => agent.status === 'fresh')
+        .sort(
+          (a, b) =>
+            limitingAllowance(a).remainingPercent -
+            limitingAllowance(b).remainingPercent,
+        )
+        .find((agent) => limitingAllowance(agent).remainingPercent <= 25),
+  );
+  const attentionAllowance = $derived(
+    attentionAgent ? limitingAllowance(attentionAgent) : null,
   );
   const reminder = $derived(
     settings.reminders
@@ -621,7 +630,7 @@
             <p class="hero-context mb-4">
               {attentionAgent.status === 'reconnect'
                 ? 'This simulated account has lost its connection. Other agents remain available.'
-                : `${Math.round((1 - attentionAgent.used / attentionAgent.limit) * 100)}% remains in the current ${attentionAgent.window.toLowerCase()}. Plan the next task around available capacity.`}
+                : `${attentionAllowance?.remainingPercent}% remains in ${attentionAgent.name}'s ${attentionAllowance?.label.toLowerCase()} allowance. Plan the next task around available capacity.`}
             </p>
             <button
               class="btn btn-solid theme-primary"
@@ -679,7 +688,7 @@
                     ? 'g-col-6'
                     : 'g-col-12 sm:g-col-6'}
               >
-                <AgentCard {agent} compact locale={settings.locale} />
+                <AgentCard {agent} {now} compact locale={settings.locale} />
               </div>{/each}
           </div>
           {#if summaryAgentCount < simulation.agents.length}<button
@@ -732,15 +741,15 @@
             >{/snippet}</Panel
         >
       </div>
-    {:else if view === 'agents'}<div class="grid agents-grid">
+    {:else if view === 'agents'}<div
+        class="grid agents-grid gap-3 align-items-start"
+      >
         {#each simulation.agents as agent}<AgentCard
             {agent}
+            {now}
+            dense={compactDesktop}
             locale={settings.locale}
           />{/each}
-      </div>
-      <div class="alert theme-info mt-4" data-bs-component="alert">
-        <Icon name="info-circle" /> Invented usage follows typical session, weekly,
-        monthly and model allowance shapes. It is never connected to a real account.
       </div>
     {:else if view === 'calendar'}<Calendar
         events={simulation.events}

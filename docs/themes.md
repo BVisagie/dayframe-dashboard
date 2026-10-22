@@ -119,15 +119,20 @@ Use Bootstrap layout and spacing utilities inside and around these classes:
 | `.summary-calendar`                                          | Summary's today-only "Coming up" panel                       |
 | `.summary-weather`                                           | Summary forecast panel                                       |
 | `.summary-feeds`                                             | Quiet Summary feed strip                                     |
-| `.grid.agents-grid`                                          | Agent cards in automatically fitting columns                 |
+| `.grid.agents-grid`                                          | Agent cards using responsive Bootstrap column and gap utilities |
 | `.grid` with `g-col-12 lg:g-col-8` and `g-col-12 lg:g-col-4` | Calendar's month and selected-day agenda columns             |
 | `.grid` with `g-col-12 lg:g-col-7` and `g-col-12 lg:g-col-5` | Weather's forecast and hourly columns                        |
 | `.month-grid` and `.month-day`                               | Seven equal month columns and readable day-button dimensions |
 | `.dashboard-panel`                                           | Allows panel content to shrink within a grid column          |
 | `.dashboard-clock`                                           | Optional static CRT glow target                              |
 
-Only `.dashboard-grid` and `.agents-grid` add custom column definitions to
-Bootstrap's `.grid`. Both Summary layouts use three columns at ordinary
+Only `.dashboard-grid` adds custom column definitions to Bootstrap's `.grid`.
+Agent cards use `g-col-12 md:g-col-6 lg:g-col-4`, preserve every allowance in
+compact desktop layouts, and let content determine each card's height. Primary
+readings and progress bars show percentage remaining; each allowance retains
+its own reset countdown. Themes supply the existing typography and semantic
+colours without adding agent-specific units or a separate styling system.
+Both Summary layouts use three columns at ordinary
 desktop widths: the hero spans the first two beside weather, with capacity,
 calendar and feeds beneath. At 21:9 and wider, the standard layout moves the
 agenda beside the hero and gives capacity two columns below; console uses four
