@@ -54,9 +54,14 @@ outside their parents' ranges; upstream constraints are preserved. The
 TypeScript aliases add their locked compatibility/native packages. No forced
 overrides replace third-party internals.
 
-After the alias migration, the graph contains 203 lockfile nodes and 197
-package names. A fresh registry advisory query returned no findings, and
+The alias-migration audit snapshot contained 203 lockfile nodes and 197 actual
+package names. That audit's registry advisory query returned no findings, and
 `npm ls --all` reported no invalid dependency or peer edges.
+
+The current lockfile, recounted on 22 October 2026 after adding the bundled
+Geist and Geist Mono fonts, contains 205 non-root package nodes and 199 distinct
+actual package names, resolving aliases to their package names. This recount
+does not repeat the registry advisory audit.
 
 ## Actions and execution environment
 
@@ -97,6 +102,10 @@ records its historical provenance; older Noble evidence remains labelled
 Noble. Each candidate must pass three-job CI, including the 34 browser cases,
 with current results recorded in the pull request. Upgrades also need targeted
 manual review of affected components, themes and viewports. Broader browser
-projects and baselines remain optional local tools. Trusted deployment and
-maintenance activation still requires installation on `main` and the separately
-approved repository setup in [CI setup](ci.md).
+projects and baselines remain optional local tools. The trusted listener is
+installed on `main`; the separately approved prelaunch Pages setup and
+deployment are recorded in [CI evidence](ci.md#prelaunch-deployment-evidence).
+Independent trusted pre-installation scan evidence, exact-SHA status
+verification on a real fork or Dependabot PR, and hosted weekly maintenance
+verification remain outstanding. Public launch still requires separate
+approval.
