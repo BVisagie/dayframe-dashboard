@@ -137,6 +137,23 @@ Settings breakpoints, programmatic Range resets and city labels. The pull
 request records current three-job CI results for the final candidate.
 Host-generated baselines are not accepted.
 
+The remaining-allowance redesign at `7fce2c6` uses exact reviewed actuals from
+pinned Resolute [run `39725217194`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39725217194).
+It intentionally replaces ten focused baselines: `default-light-agents`,
+`default-light-summary`, `nebuchadnezzar-dark-summary`, `tideline-light-summary`
+and `tideline-dark-summary` in both `screenshots-1280x720-dpr1` and
+`screenshots-390x844-dpr1`. Agents now shows percentage remaining, independent
+allowances and resets, and no repeated disclosure; Summary uses the limiting
+allowance and updated attention item. All five desktop captures remain
+1280×720. Phone Agents grows to retain every allowance; phone Summary becomes
+slightly shorter with compact percentage readings. Each accepted PNG's SHA-256
+matches its CI actual. The other six required screenshots and all 18 functional
+cases passed unchanged in that capture run. All 80 local Agents/Summary
+theme/scheme/standard-viewport combinations were checked for horizontal
+overflow and desktop vertical fitting, with visual review of the affected
+layouts. Comparison settings and the 34-case CI selection are unchanged; the
+pull request records the fresh comparison run after these baseline updates.
+
 The Vite configuration fixes the Pages base at `/dayframe-dashboard/`.
 `DAYFRAME_PUBLIC_LAUNCH` is the single repository variable passed to the build:
 only the literal value `true` enables indexing. An unset variable, `false` or
