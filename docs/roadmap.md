@@ -235,13 +235,13 @@ first and leads its rail with the live Bootstrap posts and releases.
   Antigravity has independent model quotas. These are illustrative shapes,
   not contractual plan limits. Model pool names are illustrative. All numbers
   are invented; there are no message, request or token counts. Each allowance
-  decreases independently and replenishes on its own schedule. Primary
-  readings stay on the named main allowance, while Summary and status cues
-  use the tightest shared window or the selected independent model. An
-  exhausted optional model pool does not exhaust unrelated models. Last
-  update times and occasional stale/reconnect states remain simulated.
-  Unavailable readings reflect the recorded update instant; reset countdowns
-  continue to follow the current schedule.
+  decreases independently and replenishes on its own schedule. Card headlines,
+  Summary and capacity status cues use the tightest shared window or the
+  selected independent model. The named main allowance supplies context when
+  it differs. An exhausted optional model pool does not exhaust unrelated
+  models. Last update times and occasional stale/reconnect states remain
+  simulated. Unavailable readings reflect the recorded update instant; reset
+  countdowns continue to follow the current schedule.
 - **Calendar:** several calendars with invented people, places and
   organisations. Includes repeating meetings, all-day and multi-day events,
   overlapping events, and an event inside the reminder window. Events are

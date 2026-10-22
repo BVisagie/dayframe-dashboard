@@ -9,7 +9,10 @@ place. Agent usage, calendars and non-Bootstrap stories are always simulated.
 Weather uses Open-Meteo; Bootstrap headlines come from its blog and public
 release feed. No accounts, credentials, analytics or backend are involved.
 
-![Default Summary with simulated data](tests/browser/__screenshots__/screenshots-1920x1080-dpr1/default-light-summary.png)
+![Default Summary with simulated data](tests/browser/__screenshots__/screenshots-1280x720-dpr1/default-light-summary.png)
+
+Both screenshots show the compact desktop layout at 1280×720, with links to
+the remaining agents and events.
 
 **[Open the live Dayframe demo](https://bvisagie.github.io/dayframe-dashboard/).**
 
@@ -36,8 +39,8 @@ the static site in `dist/`; `npm run preview` serves that production build.
 - **Summary:** the most urgent event or constrained agent, capacity, agenda,
   weather and headlines. Short desktop windows collapse extra rows into
   explicit links; narrow windows scroll.
-- **Agents:** six invented quota histories and reset windows. Real product
-  names appear as plain text, without logos.
+- **Agents:** six simulated agents with named allowances and reset countdowns.
+  Real product names appear as plain text, without logos.
 - **Calendar:** a month view with repeating, overlapping, all-day and multi-day
   invented events. Select a date or open an event's details.
 - **Weather:** current conditions, seven days and an hourly table. Search for a
@@ -63,7 +66,7 @@ non-steady scenarios use simulated sources, with no live requests. Try
   optional static CRT finish.
 - **Tideline:** a teal and coral instrument panel, in light and dark.
 
-![Nebuchadnezzar Summary with simulated data](tests/browser/__screenshots__/screenshots-1920x1080-dpr1/nebuchadnezzar-dark-summary.png)
+![Nebuchadnezzar Summary with simulated data](tests/browser/__screenshots__/screenshots-1280x720-dpr1/nebuchadnezzar-dark-summary.png)
 
 Run `npm run new-theme <id>` to create a theme. The registry and tests discover
 its folder automatically. The [theme contract](docs/themes.md) describes the

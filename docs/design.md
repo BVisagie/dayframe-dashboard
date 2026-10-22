@@ -33,8 +33,10 @@ panels (agenda, headlines) are outlined on the canvas. The hero's aside
 answers the question the message raises: the limiting allowance's progress
 and the agents that are ready, or the attendees, calendar and location of the
 next event. Everything aligns left. Narrow screens follow the same reading
-order in one scrolling column. Ultrawide layouts add a column and give the
-capacity readings three columns.
+order in one scrolling column. On ultrawide desktops, the standard layout
+keeps three shell columns, moves the agenda beside the hero and spans capacity
+across two shell columns, with three columns of readings. The console layout
+adds a fourth shell column.
 
 Review against the brief rejected decorative gradients, identical card grids,
 all-cap labels and animation on every panel. The console finish is deliberate

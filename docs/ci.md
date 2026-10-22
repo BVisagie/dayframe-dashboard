@@ -11,6 +11,11 @@ Routine `CI` runs on pull requests and pushes to `main`, with three jobs:
   supported schemes.
 - **Secret history:** full-history gitleaks with the isolated default policy.
 
+README embeds the Default light and Nebuchadnezzar dark Summary baselines
+from `screenshots-1280x720-dpr1`. Both belong to the required selection, so
+reviewed visual updates also keep the example images current. Broader optional
+baselines record historical captures until compared with the current build.
+
 Feature-branch pushes do not start a second copy of PR CI. Concurrency groups
 include the event name and branch. A new run cancels an older run only within
 that group; manual dispatches cannot cancel PR or push runs, or be cancelled
