@@ -342,6 +342,14 @@ tokens, re-check contrast and fitting at 1280×720.
 
 Baselines: all 16.
 
+## Decisions taken
+
+On 2026-10-22 the maintainer agreed to every recommendation below: component
+token maps are re-pointed in Sass; Default bundles Geist and Geist Mono; views
+are Bootstrap tab panes; the header is a single navbar row; month cells show
+event titles at desktop heights; and the three upstream drafts are prepared
+after checking that nothing equivalent had been reported.
+
 ## Decisions needed
 
 1. **Surface tokens.** Re-point component tokens in Sass (recommended; keeps
