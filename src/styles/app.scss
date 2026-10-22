@@ -27,52 +27,14 @@
   .hero-context {
     max-width: 52ch;
   }
+  /* Bootstrap's link buttons keep the control min-height; an agenda title takes only its line. */
   .agenda-list .btn-link {
     --btn-min-height: auto;
   }
-  .agent-panel {
-    @include bs.set-container(inline-size, agent);
-  }
-  .agent-row .d-flex {
-    flex-wrap: wrap;
-  }
-  @include bs.container-breakpoint-up(
-    wide,
-    agent,
-    (
-      wide: 30rem,
-    )
-  ) {
-    .agent-row .d-flex {
-      flex-wrap: nowrap;
-    }
-  }
+  /* Only the Summary feed headlines still use this; fs-md fw-semibold can replace it there. */
   .agent-name {
     font-size: 1rem;
     font-weight: 650;
-  }
-  /* Bootstrap has no dashboard reading scale; short cards retain the compact quota size. */
-  .quota-value {
-    font-size: 2.5rem;
-    line-height: 1.2;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-  }
-  .agent-dense .quota-value {
-    font-size: 1.65rem;
-  }
-  .agent-panel .progress {
-    --progress-height: 0.5rem;
-  }
-  .agent-row {
-    padding-block: 0.5rem;
-    border-bottom: var(--border-width) solid var(--border-color);
-  }
-  .agent-row:last-child {
-    border-bottom: 0;
-  }
-  .agent-row .quota-value {
-    font-size: 1.125rem;
   }
   .weather-temperature {
     font-size: 4rem;
@@ -88,11 +50,6 @@
     color: var(--fg-2);
     max-width: 75ch;
   }
-  .agenda-time {
-    min-width: 4rem;
-    color: var(--fg-2);
-    font-variant-numeric: tabular-nums;
-  }
   .story-title {
     font-size: 1.125rem;
     font-weight: 600;
@@ -100,46 +57,21 @@
   .story-excerpt {
     max-width: 70ch;
   }
-  /* Bootstrap has no month-event grid or outside-month state. */
-  .month-grid {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 0.35rem;
-  }
+  /* Bootstrap's button sizes stop at btn-lg; a month day needs room for its events. */
   .month-day {
-    min-height: 4.25rem;
-    padding: 0.5rem;
-    text-align: start;
-    white-space: normal;
+    --btn-min-height: 5.25rem;
   }
   .compact-calendar .month-day {
-    min-height: 2.75rem;
-    padding: 0.25rem;
-  }
-  .compact-calendar .event-dot {
-    margin-top: 0.25rem;
+    --btn-min-height: 2.75rem;
   }
   .compact-weather .weather-temperature {
     font-size: 3rem;
   }
-  .month-day[aria-pressed='true']:not(:focus-visible) {
-    outline: var(--border-width) solid var(--primary-fg);
-    outline-offset: 0.1rem;
-  }
-  .month-day.outside-month {
-    color: var(--fg-2);
-    background: var(--calendar-outside-bg, var(--bg-2));
-  }
-  .month-day.weekend {
-    background: var(--calendar-weekend-bg, var(--bg-2));
-  }
+  /* Bootstrap has no inline dot marker; avatar-status only positions over an avatar. */
   .event-dot {
-    display: block;
-    width: 0.4rem;
-    height: 0.4rem;
-    margin-top: 0.5rem;
-    background: var(--primary-fg);
-    border-radius: 50%;
+    width: 0.375rem;
+    height: 0.375rem;
+    background: currentColor;
   }
   /* Bootstrap has no component inspection overlay. Its labels are badge links to the documentation. */
   .lens-target:not(:focus-visible) {
@@ -169,8 +101,7 @@
       padding: 1rem;
     }
     .month-day {
-      min-height: 3rem;
-      padding: 0.35rem;
+      --btn-min-height: 3rem;
     }
   }
   @media (forced-colors: active) {
@@ -178,8 +109,19 @@
     .event-dot {
       background: Highlight;
     }
-    .month-day[aria-pressed='true']:not(:focus-visible) {
-      outline-color: Highlight;
+    /* Forced colours drop the solid fill that marks the selected day, and the
+       text backplate would hide HighlightText, so the day paints the system
+       selection pair itself while its event titles follow the user's colours. */
+    .month-day[aria-pressed='true'] {
+      forced-color-adjust: none;
+      background: Highlight;
+      color: HighlightText;
+    }
+    .month-day[aria-pressed='true'] .badge {
+      forced-color-adjust: auto;
+    }
+    .month-day[aria-pressed='true'] .event-dot {
+      background: HighlightText;
     }
   }
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { CalendarEvent } from '../lib/types';
   import { popover } from '../lib/bootstrap';
+  import { calendarRole, sortForDay } from '../lib/calendar';
   import Icon from './Icon.svelte';
   let {
     events,
@@ -17,6 +18,7 @@
     compact?: boolean;
     onmore?: () => void;
   } = $props();
+  const ordered = $derived(sortForDay(events));
   function time(value: string) {
     return new Intl.DateTimeFormat(locale, {
       hour: 'numeric',
@@ -30,13 +32,20 @@
   class="list-group list-group-flush agenda-list"
   data-bs-component="list-group"
 >
-  {#each events.slice(0, max) as event (event.id)}
+  {#each ordered.slice(0, max) as event (event.id)}
     <li class="list-group-item px-0">
-      <div class="d-flex gap-3">
-        <span class="agenda-time small"
-          >{event.allDay ? 'All day' : time(event.start)}</span
-        >
-        <div class="flex-grow-1">
+      <div
+        class={`d-flex gap-3 border-start border-3 border-${calendarRole(event.calendar)} ps-3`}
+      >
+        <p class="w-4 flex-shrink-0 small tabular-nums m-0">
+          {#if event.allDay}All day{:else}<time datetime={event.start}
+              >{time(event.start)}</time
+            >{#if !compact}<time class="d-block fg-2" datetime={event.end}
+                ><span class="visually-hidden">until</span>
+                {time(event.end)}</time
+              >{/if}{/if}
+        </p>
+        <div class="flex-grow-1 min-w-0">
           <button
             class="btn btn-link p-0 text-start fw-semibold"
             use:popover={{
@@ -49,16 +58,16 @@
             data-bs-component="popover"
             aria-label={`Details for ${event.title}`}>{event.title}</button
           >
-          <p class="small fg-2 mb-1">
-            {event.calendar}{compact ? '' : ' · ' + event.location}
+          <p class="small fg-2 m-0 d-flex flex-wrap column-gap-3">
+            <span
+              >{event.calendar}<span class="visually-hidden"
+                >{' calendar,'}</span
+              ></span
+            >{#if !compact}<span
+                ><Icon name="geo-alt" class="me-1" />{event.location}</span
+              >{/if}
           </p>
-          {#if !compact}<span class="small"
-              >{event.allDay
-                ? 'All-day event'
-                : `${time(event.start)}–${time(event.end)}`}</span
-            >{/if}
         </div>
-        <Icon name="calendar-event" />
       </div>
     </li>
   {:else}<li class="list-group-item px-0 fg-2">

@@ -14,7 +14,8 @@
   } = $props();
 </script>
 
-<div class="grid agents-grid gap-3 align-items-start">
+<!-- Cards in a row share its height, so their footers line up. -->
+<div class="grid gap-3">
   {#each agents as agent (agent.id)}
     <AgentCard {agent} {now} {dense} {locale} />
   {/each}

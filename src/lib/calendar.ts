@@ -26,3 +26,13 @@ export function calendarRole(calendar: string): string {
   };
   return roles[calendar] ?? 'series-6';
 }
+
+/** Month cells and agendas list all-day events before timed ones, then by start. */
+export function sortForDay(events: CalendarEvent[]): CalendarEvent[] {
+  return [...events].sort(
+    (left, right) =>
+      Number(right.allDay) - Number(left.allDay) ||
+      left.start.localeCompare(right.start) ||
+      left.id.localeCompare(right.id),
+  );
+}

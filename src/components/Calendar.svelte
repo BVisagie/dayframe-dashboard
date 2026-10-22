@@ -2,7 +2,7 @@
   import { untrack } from 'svelte';
   import type { CalendarEvent, Settings } from '../lib/types';
   import { datepicker, settingsDialog } from '../lib/bootstrap';
-  import { eventsForDate } from '../lib/calendar';
+  import { calendarRole, eventsForDate, sortForDay } from '../lib/calendar';
   import { formatDate } from '../lib/format';
   import Panel from './Panel.svelte';
   import Agenda from './Agenda.svelte';
@@ -27,6 +27,7 @@
   let month = $state(
     untrack(() => new Date(now.getFullYear(), now.getMonth(), 1)),
   );
+  const today = $derived(dateKey(now));
   const weekdays = $derived(
     Array.from({ length: 7 }, (_, i) =>
       new Intl.DateTimeFormat(settings.locale, { weekday: 'short' }).format(
@@ -65,6 +66,24 @@
       },
     };
   }
+  // Selection is solid, today is outlined, and only in-month weekends carry a
+  // fill, so the days that matter outweigh the ones around them. Outside the
+  // month, days keep dots instead of titles.
+  function dayClass(day: Date, date: string) {
+    const outside = day.getMonth() !== month.getMonth();
+    const weekend = day.getDay() === 0 || day.getDay() === 6;
+    const variant =
+      selected === date
+        ? 'btn-solid theme-primary'
+        : date === today
+          ? 'btn-outline theme-primary'
+          : outside
+            ? 'btn-text theme-secondary fg-3'
+            : weekend
+              ? 'btn-subtle theme-secondary fg-body'
+              : 'btn-text theme-secondary fg-body';
+    return `btn ${variant} month-day flex-grow-1 min-w-0 p-2 d-flex flex-column align-items-stretch justify-content-start gap-1 text-start`;
+  }
 </script>
 
 <div class="grid" class:compact-calendar={compact}>
@@ -75,61 +94,105 @@
     })}
     class="g-col-12 lg:g-col-8"
   >
+    <!-- A zero basis lets the controls wrap before the month name does. -->
     {#snippet action()}<div
-        class="btn-group"
-        aria-label="Month navigation"
-        data-bs-component="button-group"
+        class="d-flex flex-grow-1 flex-wrap align-items-center justify-content-end gap-2"
+        style="flex-basis: 0"
       >
-        <button
-          class="btn btn-outline theme-secondary"
-          onclick={() => moveMonth(-1)}
-          aria-label="Previous month"><Icon name="chevron-left" /></button
-        ><button
-          class="btn btn-outline theme-secondary"
-          onclick={() => {
-            chooseDate(dateKey(now));
-          }}>Today</button
-        ><button
-          class="btn btn-outline theme-secondary"
-          onclick={() => moveMonth(1)}
-          aria-label="Next month"><Icon name="chevron-right" /></button
+        <div
+          class="btn-group btn-group-sm"
+          role="group"
+          aria-label="Month navigation"
+          data-bs-component="button-group"
+        >
+          <button
+            class="btn btn-outline theme-secondary"
+            onclick={() => moveMonth(-1)}
+            aria-label="Previous month"><Icon name="chevron-left" /></button
+          ><button
+            class="btn btn-outline theme-secondary"
+            onclick={() => {
+              chooseDate(today);
+            }}>Today</button
+          ><button
+            class="btn btn-outline theme-secondary"
+            onclick={() => moveMonth(1)}
+            aria-label="Next month"><Icon name="chevron-right" /></button
+          >
+        </div>
+        <label
+          class="form-control form-control-sm form-adorn w-auto"
+          data-bs-component="datepicker"
+          ><span class="form-adorn-icon"><Icon name="calendar3" /></span><span
+            class="visually-hidden">Jump to a date</span
+          ><input
+            id="jump-date"
+            class="form-ghost tabular-nums"
+            size="10"
+            use:datepicker={{
+              placement: 'auto',
+              // Bootstrap anchors to a .form-adorn wrapper by default, but the
+              // calendar peer restores a clone of its anchor when the picker is
+              // rebuilt for a new locale. Anchoring to the input keeps the
+              // node Svelte owns, and keeps aria-haspopup on the input.
+              positionElement: '#jump-date',
+              selectedDates: [selected],
+              locale: settings.locale,
+              firstWeekday: settings.firstDay,
+            }}
+            use:pickerChange
+            aria-label="Jump to a date"
+            placeholder="Choose date"
+            readonly
+          /></label
         >
       </div>{/snippet}
-    <div class="month-grid mb-2">
-      {#each weekdays as day}<span class="small fg-2 text-center">{day}</span
-        >{/each}
+    <div class="grid mb-2" style="--columns: 7; --gap: 0.25rem">
+      {#each weekdays as day}<span class="small fg-2 ps-2">{day}</span>{/each}
     </div>
-    <div class="month-grid" aria-label="Choose a date">
-      {#each days as day}{@const date = dateKey(day)}{@const count =
-          eventsOn(date).length}<button
-          class="btn btn-text theme-secondary month-day"
-          class:outside-month={day.getMonth() !== month.getMonth()}
-          class:weekend={day.getDay() === 0 || day.getDay() === 6}
-          aria-pressed={selected === date}
-          aria-label={`${formatDate(day, settings.locale, { dateStyle: 'full' })}, ${count} ${count === 1 ? 'event' : 'events'}`}
-          onclick={() => chooseDate(date)}
-          ><span class:fw-bold={date === dateKey(now)}>{day.getDate()}</span
-          >{#if count}<span class="event-dot" aria-hidden="true"></span><span
-              class="visually-hidden"
-              >{count} {count === 1 ? 'event' : 'events'}</span
-            >{/if}</button
-        >{/each}
-    </div>
-    <div class="mt-3 form-field" data-bs-component="datepicker">
-      <label for="jump-date">Jump to a date</label><input
-        id="jump-date"
-        class="form-control"
-        use:datepicker={{
-          placement: 'auto',
-          selectedDates: [selected],
-          locale: settings.locale,
-          firstWeekday: settings.firstDay,
-        }}
-        use:pickerChange
-        aria-label="Jump to a date"
-        placeholder="Choose date"
-        readonly
-      />
+    <div
+      class="grid"
+      style="--columns: 7; --rows: 6; --gap: 0.25rem"
+      role="group"
+      aria-label="Choose a date"
+    >
+      <!-- Event titles sit over the day button rather than inside it, so the
+           button's visible text stays within its name (WCAG 2.5.3); they
+           repeat the agenda and ignore the pointer. -->
+      {#each days as day}{@const date = dateKey(day)}{@const dayEvents =
+          sortForDay(eventsOn(date))}{@const count = dayEvents.length}{@const titled =
+          !compact && count > 0 && day.getMonth() === month.getMonth()}<div
+          class="position-relative d-flex min-w-0"
+        >
+          <button
+            class={dayClass(day, date)}
+            aria-pressed={selected === date}
+            aria-label={`${formatDate(day, settings.locale, { dateStyle: 'full' })}, ${count} ${count === 1 ? 'event' : 'events'}`}
+            onclick={() => chooseDate(date)}
+            ><span class:fw-bold={date === today} class="tabular-nums"
+              >{day.getDate()}</span
+            >{#if count}<span
+                class={`d-flex gap-1 ${titled ? 'lg:d-none' : ''}`}
+                aria-hidden="true"
+                >{#each dayEvents.slice(0, 3) as event (event.id)}<span
+                    class={`event-dot rounded-circle ${selected === date ? '' : `fg-${calendarRole(event.calendar)}`}`}
+                  ></span>{/each}</span
+              ><span class="visually-hidden"
+                >{count} {count === 1 ? 'event' : 'events'}</span
+              >{/if}</button
+          >{#if titled}<span
+              class="position-absolute top-0 start-0 end-0 p-2 pe-none d-none lg:d-flex flex-column gap-1"
+              aria-hidden="true"
+              ><span class="d-flex align-items-center justify-content-between"
+                ><span class="invisible">{day.getDate()}</span>{#if count > 2}<span
+                    class="badge">+{count - 2}</span
+                  >{/if}</span
+              >{#each dayEvents.slice(0, 2) as event (event.id)}<span
+                  class={`badge badge-subtle theme-${calendarRole(event.calendar)} d-block text-truncate text-start`}
+                  >{event.title}</span
+                >{/each}</span
+            >{/if}
+        </div>{/each}
     </div>
   </Panel>
   <Panel
