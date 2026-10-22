@@ -64,11 +64,15 @@ test('all six agents expose percentage allowances, primary readings and future r
   assert.ok(Number.isInteger(agents.find(({ id }) => id === 'codex')!.resetCredits));
 });
 
-test('every allowance decreases within its window and fully replenishes at its own reset', () => {
-  for (const agent of simulate(NOW, SEED, 'steady').agents) {
+test('every fresh allowance decreases within its window and fully replenishes at its own reset', () => {
+  for (const agent of simulate(NOW, SEED, 'reminder-due').agents) {
     for (const allowance of agent.allowances) {
       const reset = Date.parse(allowance.resetsAt);
-      const at = (time: number) => simulate(new Date(time), SEED, 'steady').agents.find(({ id }) => id === agent.id)!.allowances.find(({ id }) => id === allowance.id)!;
+      const at = (time: number) => {
+        const snapshot = simulate(new Date(time), SEED, 'reminder-due').agents.find(({ id }) => id === agent.id)!;
+        assert.equal(snapshot.status, 'fresh');
+        return snapshot.allowances.find(({ id }) => id === allowance.id)!;
+      };
       const before = at(reset - 60_000);
       const after = at(reset);
       const later = at(reset + 60_000);
@@ -82,7 +86,11 @@ test('every allowance decreases within its window and fully replenishes at its o
 });
 
 test('monthly usage stays monotonic across ISO week changes and handles leap years', () => {
-  const monthly = (date: string) => simulate(new Date(date), SEED, 'steady').agents.find(({ id }) => id === 'cursor')!.allowances.find(({ id }) => id === 'monthly')!;
+  const monthly = (date: string) => {
+    const agent = simulate(new Date(date), SEED, 'reminder-due').agents.find(({ id }) => id === 'cursor')!;
+    assert.equal(agent.status, 'fresh');
+    return agent.allowances.find(({ id }) => id === 'monthly')!;
+  };
   const sunday = monthly('2026-11-08T23:59:00Z');
   const monday = monthly('2026-11-09T00:01:00Z');
   assert.ok(monday.remainingPercent <= sunday.remainingPercent);
@@ -95,8 +103,9 @@ test('monthly usage stays monotonic across ISO week changes and handles leap yea
 });
 
 test('weekly quotas use Monday resets across an ISO week-year boundary', () => {
-  const before = simulate(new Date('2027-01-03T23:59:00Z'), SEED, 'steady').agents;
-  const after = simulate(new Date('2027-01-04T00:00:00Z'), SEED, 'steady').agents;
+  const before = simulate(new Date('2027-01-03T23:59:00Z'), SEED, 'reminder-due').agents;
+  const after = simulate(new Date('2027-01-04T00:00:00Z'), SEED, 'reminder-due').agents;
+  assert.ok([...before, ...after].every(({ status }) => status === 'fresh'));
   for (const [agentId, allowanceId] of [['codex', 'weekly'], ['claude', 'weekly'], ['claude', 'fable'], ['grok', 'weekly'], ['opencode', 'weekly'], ['antigravity', 'reasoning']]) {
     const allowance = (agents: typeof before) => agents.find(({ id }) => id === agentId)!.allowances.find(({ id }) => id === allowanceId)!;
     assert.equal(allowance(before).resetsAt, '2027-01-04T00:00:00.000Z');
@@ -296,7 +305,9 @@ test('formatters respect explicit locales, units and clocks and handle missing v
   assert.doesNotThrow(() => formatDate(NOW, 'invalid_locale'));
   assert.doesNotThrow(() => formatNumber(10, 'invalid_locale'));
   assert.equal(formatCountdown('2026-11-05T20:30:00Z', NOW), '2d 11h');
+  assert.equal(formatCountdown('2026-11-05T09:30:00Z', NOW), '2d');
   assert.equal(formatCountdown('2026-11-03T13:21:00Z', NOW), '3h 51m');
+  assert.equal(formatCountdown('2026-11-03T12:30:00Z', NOW), '3h');
   assert.equal(formatCountdown('2026-11-03T09:30:01Z', NOW), '1m');
   assert.equal(formatCountdown('2026-11-03T09:29:00Z', NOW), '0m');
   assert.equal(formatCountdown('invalid', NOW), '—');

@@ -50,8 +50,9 @@ test('remaining capacity thresholds include empty and full allowances and mute s
 });
 
 test('a session reset does not replenish the weekly, monthly or independent model pools', () => {
-  const before = simulate(new Date('2026-11-03T09:59:59Z'), 'allowances', 'steady').agents;
-  const after = simulate(new Date('2026-11-03T10:00:00Z'), 'allowances', 'steady').agents;
+  const before = simulate(new Date('2026-11-03T09:59:59Z'), 'allowances', 'reminder-due').agents;
+  const after = simulate(new Date('2026-11-03T10:00:00Z'), 'allowances', 'reminder-due').agents;
+  assert.ok([...before, ...after].every(({ status }) => status === 'fresh'));
   for (const id of ['codex', 'claude', 'opencode']) {
     const prior = before.find(agent => agent.id === id)!;
     const current = after.find(agent => agent.id === id)!;
@@ -60,6 +61,35 @@ test('a session reset does not replenish the weekly, monthly or independent mode
       const next = current.allowances.find(candidate => candidate.id === allowance.id)!;
       assert.equal(next.resetsAt, allowance.resetsAt);
       assert.ok(next.remainingPercent <= allowance.remainingPercent);
+    }
+  }
+});
+
+test('unavailable readings reflect their recorded update time across session, weekly and monthly resets', () => {
+  for (const clock of [NOW, new Date('2026-11-03T10:01:00Z'), new Date('2026-11-02T00:01:00Z'), new Date('2026-11-01T00:01:00Z')]) {
+    const current = simulate(clock, 'snapshots', 'reminder-due').agents;
+    for (const scenario of ['stale', 'offline', 'reconnect'] as const) {
+      const unavailable = simulate(clock, 'snapshots', scenario).agents.filter(({ status }) => status !== 'fresh');
+      assert.ok(unavailable.length > 0);
+      for (const agent of unavailable) {
+        const recorded = simulate(new Date(agent.updatedAt), 'snapshots', 'reminder-due').agents.find(({ id }) => id === agent.id)!;
+        const latest = current.find(({ id }) => id === agent.id)!;
+        assert.deepEqual(agent.allowances.map(({ remainingPercent }) => remainingPercent), recorded.allowances.map(({ remainingPercent }) => remainingPercent));
+        assert.deepEqual(agent.allowances.map(({ resetsAt }) => resetsAt), latest.allowances.map(({ resetsAt }) => resetsAt));
+        assert.equal(agent.resetCredits, recorded.resetCredits);
+      }
+    }
+  }
+});
+
+test('unavailable percentages stay fixed until the recorded update instant changes', () => {
+  for (const scenario of ['stale', 'offline', 'reconnect'] as const) {
+    const before = simulate(NOW, 'snapshots', scenario).agents.filter(({ status }) => status !== 'fresh');
+    const after = simulate(new Date(NOW.getTime() + 60_000), 'snapshots', scenario).agents;
+    for (const agent of before) {
+      const next = after.find(({ id }) => id === agent.id)!;
+      assert.equal(next.updatedAt, agent.updatedAt);
+      assert.deepEqual(next.allowances, agent.allowances);
     }
   }
 });

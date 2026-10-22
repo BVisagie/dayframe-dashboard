@@ -92,7 +92,7 @@ export function formatCountdown(value: DateInput, now: Date, locale = 'en-GB'): 
   const days = Math.floor(minutes / 1440);
   const hours = Math.floor(minutes % 1440 / 60);
   const part = (amount: number, unit: string) => formatNumber(amount, locale, { style: 'unit', unit, unitDisplay: 'narrow' });
-  if (days) return `${part(days, 'day')} ${part(hours, 'hour')}`;
-  if (hours) return `${part(hours, 'hour')} ${part(minutes % 60, 'minute')}`;
+  if (days) return hours ? `${part(days, 'day')} ${part(hours, 'hour')}` : part(days, 'day');
+  if (hours) return minutes % 60 ? `${part(hours, 'hour')} ${part(minutes % 60, 'minute')}` : part(hours, 'hour');
   return part(minutes, 'minute');
 }

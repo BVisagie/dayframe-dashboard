@@ -448,7 +448,7 @@ test('every agent shows percentage allowances, independent reset times and no me
   await expect(page.locator('footer')).toContainText('Agent usage, accounts, calendars and non-Bootstrap feeds are simulated.');
 });
 
-test('the datepicker stays inside the viewport across themes, scale, scrolling and resizing', async ({ page }) => {
+test('the datepicker stays inside the viewport across themes, scale and resizing', async ({ page }) => {
   const cases = [
     { width: 1280, height: 720, scale: '100', theme: 'default', scheme: 'light' },
     { width: 390, height: 844, scale: '100', theme: 'default', scheme: 'dark' },

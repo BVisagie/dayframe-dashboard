@@ -138,7 +138,7 @@
         {/each}
       </div>
       <div
-        class={`d-flex flex-wrap justify-content-between gap-2 mt-auto small fg-2 ${dense ? 'pt-1' : 'pt-2'}`}
+        class={`d-flex flex-wrap justify-content-between gap-2 small fg-2 ${dense ? 'pt-1' : 'pt-2'}`}
       >
         <time datetime={agent.updatedAt}
           >Updated {formatRelative(agent.updatedAt, now, locale)}</time

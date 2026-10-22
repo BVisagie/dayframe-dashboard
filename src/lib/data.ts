@@ -61,11 +61,12 @@ interface AgentProfile {
   plan: string;
   primaryAllowanceId: string;
   allowances: [AllowanceProfile, ...AllowanceProfile[]];
+  hasResetCredits?: boolean;
 }
 
 // These illustrate allowance shapes, not contractual limits or provider integrations.
 const PROFILES: AgentProfile[] = [
-  { id: 'codex', name: 'Codex', initials: 'CX', plan: 'Pro', primaryAllowanceId: 'weekly', allowances: [
+  { id: 'codex', name: 'Codex', initials: 'CX', plan: 'Pro', primaryAllowanceId: 'weekly', hasResetCredits: true, allowances: [
     { id: 'session', label: 'Session', scope: 'shared', kind: 'session', hours: 5 },
     { id: 'weekly', label: 'Weekly', scope: 'shared', kind: 'weekly' },
   ] },
@@ -131,16 +132,20 @@ function agentStatus(time: number, seed: string, profile: AgentProfile, scenario
 
 function simulateAgents(time: number, seed: string, scenario: Scenario): Agent[] {
   return PROFILES.map((profile, index) => {
+    const status = agentStatus(time, seed, profile, scenario, index);
+    const age = status === 'stale' || status === 'offline' ? 2 * HOUR : 3 * MINUTE;
+    const updatedAt = Math.floor(time / (5 * MINUTE)) * 5 * MINUTE - age;
+    // An unavailable source cannot report usage accumulated after its last update.
+    const readingsAt = status === 'fresh' ? time : updatedAt;
     const allowances = profile.allowances.map((allowance) => ({
       id: allowance.id,
       label: allowance.label,
       scope: allowance.scope,
       remainingPercent: scenario === 'running-low'
-        ? Math.min(quotaRemaining(time, `${seed}:${profile.id}`, allowance), 2 + index)
-        : quotaRemaining(time, `${seed}:${profile.id}`, allowance),
+        ? Math.min(quotaRemaining(readingsAt, `${seed}:${profile.id}`, allowance), 2 + index)
+        : quotaRemaining(readingsAt, `${seed}:${profile.id}`, allowance),
       resetsAt: new Date(quotaWindow(time, allowance).end).toISOString(),
     })) as Agent['allowances'];
-    const age = scenario === 'stale' || scenario === 'offline' ? 2 * HOUR : 3 * MINUTE;
     return {
       id: profile.id,
       name: profile.name,
@@ -148,9 +153,9 @@ function simulateAgents(time: number, seed: string, scenario: Scenario): Agent[]
       plan: profile.plan,
       primaryAllowanceId: profile.primaryAllowanceId,
       allowances,
-      ...(profile.id === 'codex' ? { resetCredits: hash(`${isoWeek(time)}:${seed}:reset-credits`) % 4 } : {}),
-      updatedAt: new Date(Math.floor(time / (5 * MINUTE)) * 5 * MINUTE - age).toISOString(),
-      status: agentStatus(time, seed, profile, scenario, index),
+      ...(profile.hasResetCredits ? { resetCredits: hash(`${isoWeek(readingsAt)}:${seed}:reset-credits`) % 4 } : {}),
+      updatedAt: new Date(updatedAt).toISOString(),
+      status,
     };
   });
 }
