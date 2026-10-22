@@ -87,3 +87,11 @@ functional browser checks remain required for each candidate.
 A separate normal-motion on/off review confirmed that the static CRT lines
 and clock glow preserve readability. The baseline matrix uses reduced motion,
 so its captures deliberately omit that decorative finish.
+
+The October 2026 once-over was reviewed at 1920×1080 and 1280×720 in the
+dark scheme. The brand tile is phosphor on black, the hero aside's bars and
+avatars read as instruments, and the outlined quiet panels suit the console.
+The mono face wraps excerpts at 70ch, and the weather strip's two-digit hours
+and readings align in columns. Amber and danger series rules carry no state
+meaning, so each publication's name sits beside its rule. Compact height
+keeps one agent reading and a more-agents link, as before. Amber-graded agent cards and the phosphor selection in the month grid keep the console's instrument feel; series badges stay quiet on olive glass.

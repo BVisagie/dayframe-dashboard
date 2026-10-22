@@ -20,11 +20,11 @@ legibility rather than copied from an agent's brand.
 
 ## Type
 
-`system-ui, sans-serif` carries prose and controls: familiar, clear shapes keep
-the dashboard readable at distance. `ui-rounded, system-ui, sans-serif` gives
-headings a slightly wider, confident silhouette without an asset download.
-`ui-monospace, monospace` is reserved for the clock and measured quantities,
-with tabular figures; labels stay in the body face. Body copy is left aligned.
+Geist carries prose, controls and headings: one family, with weight doing the
+work, whose large sizes stay crisp at a distance. Geist Mono is reserved for
+the clock and measured quantities, with tabular figures; labels stay in the
+body face. Both ship with the site under the SIL Open Font License and
+download only while this theme is active. Body copy is left aligned.
 
 ## Layout
 
@@ -65,7 +65,9 @@ limits rather than smaller root text.
 Equal rounded cards would obscure urgency, so the plan uses an asymmetric
 hero, compact capacity readings and a quiet feed list. A decorative monospace label
 system would resemble a generic developer template; only numeric instruments
-use that face. Porcelain and navy belong to this mission-control brief, and
+use that face. System fonts in every theme were themselves a default, so the
+2026 once-over gave this theme a bundled face while the other briefs kept
+theirs. Porcelain and navy belong to this mission-control brief, and
 cobalt is reserved for decisions rather than every heading.
 
 ## Screenshot critique
@@ -84,3 +86,14 @@ clipping, overlap, unintended desktop overflow or disclosure issue was found.
 Phone and tablet scrolling preserves the intended reading order. These are
 initial images rather than replacements. Independent token, contrast and
 functional browser checks remain required for each candidate.
+
+The October 2026 once-over was reviewed at 1920×1080 and 1280×720 in light
+and dark. The single navbar row and the Geist face give the page one voice;
+the hero's aside fills the space that used to sit empty, and its progress bar
+and ready-to-use list read before the body copy. Weather's range bars line up
+down the week like one thermometer, and the hourly strip's per-hour icons and
+rain bars replace twelve table rows. On Feeds the live rail carries the only
+primary tint and the series rules stay thin beside readable publication
+names; four stories per page leave space below the list at 1080p. Settings'
+theme cards and vertical pills sit on a white dialog surface now that the
+surface tokens are re-pointed. Agents are graded by status so the two low cards stand out from the four plain ones, and the month grid's series badges make the week readable from a distance.

@@ -8,16 +8,21 @@
     SourceStatus,
   } from './lib/types';
   import { simulate } from './lib/data';
-  import { limitingAllowance } from './lib/agents';
+  import { limitingAllowance, primaryAllowance } from './lib/agents';
   import { parseReplayClock } from './lib/clock';
-  import { eventsForDate } from './lib/calendar';
+  import { eventsForDate, calendarRole } from './lib/calendar';
   import {
     defaultSettings,
     loadSettings,
     saveSettings,
     applyUrlSettings,
   } from './lib/settings';
-  import { formatTime, formatDate, formatRelative } from './lib/format';
+  import {
+    formatTime,
+    formatDate,
+    formatRelative,
+    formatCountdown,
+  } from './lib/format';
   import {
     createWeatherSource,
     createBootstrapSource,
@@ -30,19 +35,24 @@
     navOverflow,
     tooltip,
     lens,
-    settingsDialog,
+    tab,
+    showTab,
     toast,
   } from './lib/bootstrap';
   import appCss from './styles/app.scss?raw';
-  import brand from './assets/dayframe.svg';
+  import Brand from './components/Brand.svelte';
   import Panel from './components/Panel.svelte';
   import Icon from './components/Icon.svelte';
   import AgentCard from './components/AgentCard.svelte';
+  import AgentsView from './components/AgentsView.svelte';
   import WeatherPanel from './components/WeatherPanel.svelte';
+  import WeatherView from './components/WeatherView.svelte';
   import Agenda from './components/Agenda.svelte';
   import Settings from './components/Settings.svelte';
+  import About from './components/About.svelte';
   import Calendar from './components/Calendar.svelte';
   import Feeds from './components/Feeds.svelte';
+  import StoryRow from './components/StoryRow.svelte';
 
   const stack = __STACK_VERSIONS__;
   const views: { id: View; name: string; icon: string; key: string }[] = [
@@ -52,6 +62,20 @@
     { id: 'weather', name: 'Weather', icon: 'cloud-sun', key: 'w' },
     { id: 'feeds', name: 'Feeds', icon: 'rss', key: 'f' },
   ];
+  const schemes: { id: SettingsType['scheme']; label: string }[] = [
+    { id: 'system', label: 'Follow system' },
+    { id: 'auto', label: 'Sunrise and sunset' },
+    { id: 'light', label: 'Light' },
+    { id: 'dark', label: 'Dark' },
+  ];
+  const scenarioIcons: Record<SettingsType['scenario'], string> = {
+    steady: 'check-circle',
+    'running-low': 'battery-half',
+    reconnect: 'plug',
+    'reminder-due': 'bell',
+    stale: 'hourglass-split',
+    offline: 'wifi-off',
+  };
   const params = new URLSearchParams(location.search);
   const requestedClock = params.get('clock');
   const parsedClock = parseReplayClock(requestedClock);
@@ -73,6 +97,10 @@
     views.find((item) => item.id === params.get('view'))?.id ??
       untrack(() => settings.startupView),
   );
+  // Bootstrap's Tab plugin owns the active classes after first render, so the
+  // initial state is a one-time snapshot rather than a binding.
+  const startView = untrack(() => view);
+  const triggers: Partial<Record<View, HTMLButtonElement>> = {};
   let viewportWidth = $state(window.innerWidth);
   let viewportHeight = $state(window.innerHeight);
   const compactDesktop = $derived(
@@ -87,22 +115,29 @@
         ) <
         60,
   );
+  const consoleLayout = $derived(getTheme(settings.theme).layout === 'console');
+  // Short desktops keep two compact readings beside the hero's aside; the
+  // console's mono face gets one reading and a more-agents link.
   const summaryAgentCount = $derived(
-    compactDesktop
-      ? getTheme(settings.theme).layout === 'console'
-        ? 1
-        : 2
-      : getTheme(settings.theme).layout === 'console'
-        ? 3
-        : 6,
+    compactDesktop ? (consoleLayout ? 1 : 2) : consoleLayout ? 3 : 6,
+  );
+  // At 21:9 the capacity panel spans two columns, so readings take three.
+  const ultrawide = $derived(
+    viewportWidth >= 1100 && viewportWidth / viewportHeight >= 21 / 9,
+  );
+  const agentColumns = $derived(
+    summaryAgentCount === 1
+      ? 'g-col-12'
+      : viewportWidth >= 1100
+        ? ultrawide && !consoleLayout
+          ? 'g-col-4'
+          : 'g-col-6'
+        : 'g-col-12 sm:g-col-6',
   );
   let settingsOpen = $state(false);
   let aboutOpen = $state(false);
-  let aboutSmall = $state(false);
   let notice = $state('');
   let refreshing = $state(false);
-  let hourPage = $state(0);
-  const hourRows = $derived(compactDesktop ? 6 : 12);
   let dismissedReminder = $state('');
   let lastInteraction = Date.now();
   let settingsTrigger: HTMLButtonElement;
@@ -145,12 +180,6 @@
   const weather = $derived(
     replay ? convertedWeather : (sourceWeather ?? convertedWeather),
   );
-  const hourPages = $derived(
-    Math.max(1, Math.ceil(weather.hours.length / hourRows)),
-  );
-  $effect(() => {
-    if (hourPage >= hourPages) hourPage = hourPages - 1;
-  });
   const stories = $derived(
     replay || !sourceStories
       ? simulation.stories
@@ -191,6 +220,9 @@
   const attentionAllowance = $derived(
     attentionAgent ? limitingAllowance(attentionAgent) : null,
   );
+  const attentionPrimary = $derived(
+    attentionAgent ? primaryAllowance(attentionAgent) : null,
+  );
   const reminder = $derived(
     settings.reminders
       ? nextEvents.find(
@@ -204,6 +236,39 @@
       : undefined,
   );
   const heroEvent = $derived(reminder ?? nextEvent);
+  // The hero aside answers "what can I use instead" or "who is in this".
+  const readyAgents = $derived(
+    simulation.agents
+      .filter(
+        (agent) =>
+          agent.status === 'fresh' &&
+          agent.id !== attentionAgent?.id &&
+          limitingAllowance(agent).remainingPercent >= 50,
+      )
+      .sort(
+        (a, b) =>
+          limitingAllowance(b).remainingPercent -
+          limitingAllowance(a).remainingPercent,
+      )
+      .slice(0, 3),
+  );
+  const followingEvent = $derived(
+    heroEvent
+      ? nextEvents.find(
+          (event) =>
+            !event.allDay &&
+            event.id !== heroEvent.id &&
+            Date.parse(event.start) >= Date.parse(heroEvent.start),
+        )
+      : undefined,
+  );
+  function initials(name: string): string {
+    return name
+      .split(' ')
+      .map((part) => part[0] ?? '')
+      .join('')
+      .slice(0, 2);
+  }
   const sourceState = $derived(
     settings.scenario === 'offline'
       ? 'offline'
@@ -212,6 +277,25 @@
         : replay
           ? 'fresh'
           : weatherStatus,
+  );
+  const feedState = $derived(
+    settings.scenario === 'offline'
+      ? 'offline'
+      : settings.scenario === 'stale'
+        ? 'stale'
+        : replay
+          ? 'fresh'
+          : feedStatus,
+  );
+  const summaryStories = $derived(
+    stories
+      .filter((story) => settings.categories.includes(story.category))
+      .slice(0, compactDesktop ? 1 : 3),
+  );
+  const heading = $derived(
+    view === 'summary'
+      ? 'Your day, in focus'
+      : (views.find((item) => item.id === view)?.name ?? ''),
   );
 
   function changeSettings(patch: Partial<SettingsType>) {
@@ -229,6 +313,8 @@
     const url = new URL(location.href);
     url.searchParams.set('view', next);
     history.replaceState(null, '', url);
+    const trigger = triggers[next];
+    if (trigger && !trigger.classList.contains('active')) void showTab(trigger);
   }
   function viewNavigation(node: HTMLElement) {
     // NavOverflow clones its menu items. Delegate application state changes
@@ -241,20 +327,108 @@
       const next = views.find((item) => item.id === target?.dataset.view)?.id;
       if (next) navigate(next);
     };
+    const triggerList = () => [
+      ...node.querySelectorAll<HTMLElement>('.nav-link[data-view]'),
+    ];
+    const isVisible = (trigger: HTMLElement) =>
+      !trigger.closest('.nav-item')?.classList.contains('d-none');
+    // Tab's roving tabindex leaves no tab stop when NavOverflow has hidden the
+    // active trigger, so the first visible trigger takes it instead.
+    const ensureTabStop = () => {
+      const triggers = triggerList();
+      const active = triggers.find((trigger) =>
+        trigger.classList.contains('active'),
+      );
+      const stop =
+        active && isVisible(active) ? active : triggers.find(isVisible);
+      for (const trigger of triggers) {
+        if (trigger === stop) trigger.removeAttribute('tabindex');
+        else trigger.setAttribute('tabindex', '-1');
+      }
+    };
+    // Focus stays on a visible control: the trigger itself, or More when the
+    // view's trigger has moved into the overflow menu.
+    const focusView = (id: View) => {
+      const trigger = triggers[id];
+      const target =
+        trigger && isVisible(trigger)
+          ? trigger
+          : node.querySelector<HTMLElement>('.nav-overflow-toggle');
+      target?.focus();
+    };
+    // Tab would move focus to the next trigger even when it is hidden, which
+    // blurs the tablist. Choose the next view here, before Tab sees the key.
+    const keydown = (event: KeyboardEvent) => {
+      const target =
+        event.target instanceof HTMLElement
+          ? event.target.closest<HTMLElement>('.nav-link[data-view]')
+          : null;
+      const keys = [
+        'ArrowLeft',
+        'ArrowRight',
+        'ArrowUp',
+        'ArrowDown',
+        'Home',
+        'End',
+      ];
+      if (
+        !target ||
+        !keys.includes(event.key) ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey
+      )
+        return;
+      event.preventDefault();
+      event.stopPropagation();
+      const from = Math.max(
+        0,
+        views.findIndex((item) => item.id === target.dataset.view),
+      );
+      const next =
+        event.key === 'Home'
+          ? views[0].id
+          : event.key === 'End'
+            ? views[views.length - 1].id
+            : views[
+                (from +
+                  (['ArrowRight', 'ArrowDown'].includes(event.key)
+                    ? 1
+                    : views.length - 1)) %
+                  views.length
+              ].id;
+      navigate(next);
+      focusView(next);
+      ensureTabStop();
+    };
+    const shown = (event: Event) => {
+      const target =
+        event.target instanceof HTMLElement ? event.target.dataset.view : '';
+      const next = views.find((item) => item.id === target)?.id;
+      if (next && next !== view) navigate(next);
+      ensureTabStop();
+    };
+    // NavOverflow hides and reveals items as the width changes.
+    const overflow = new MutationObserver(ensureTabStop);
+    for (const item of node.querySelectorAll('.nav-item'))
+      overflow.observe(item, { attributes: true, attributeFilter: ['class'] });
     node.addEventListener('click', click);
+    node.addEventListener('keydown', keydown, true);
+    node.addEventListener('shown.bs.tab', shown);
+    ensureTabStop();
     return {
       destroy() {
+        overflow.disconnect();
         node.removeEventListener('click', click);
+        node.removeEventListener('keydown', keydown, true);
+        node.removeEventListener('shown.bs.tab', shown);
       },
     };
   }
   function openSettings() {
     settingsOpen = true;
     lastInteraction = Date.now();
-  }
-  function openAbout() {
-    aboutSmall = matchMedia('(max-width: 43rem)').matches;
-    aboutOpen = true;
   }
   async function closeSettings() {
     settingsOpen = false;
@@ -372,6 +546,12 @@
       String(settings.scale / 100),
     );
     document.documentElement.lang = settings.locale;
+    // Browser chrome follows the resolved canvas colour of the active theme and scheme.
+    const themeColor = document.querySelector<HTMLMetaElement>(
+      'meta[name="theme-color"]',
+    );
+    if (themeColor)
+      themeColor.content = getComputedStyle(document.body).backgroundColor;
   });
   const weatherUnits = $derived(settings.units);
   const weatherLocationKey = $derived(JSON.stringify(settings.location));
@@ -469,24 +649,55 @@
 
 <div class="dashboard-shell d-flex flex-column" use:lens={settings.lens}>
   <a href="#main" class="visually-hidden-focusable">Skip to dashboard</a>
-  <header
-    class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4"
-  >
+  <header class="navbar gap-3 mb-4" data-bs-component="navbar">
     <a
       href="?view=summary"
       onclick={(e) => {
         e.preventDefault();
         navigate('summary');
       }}
-      class="brand d-flex align-items-center gap-2"
-      ><img src={brand} class="brand-symbol" alt="" />Dayframe</a
+      class="navbar-brand d-flex align-items-center gap-2 m-0"
+      ><Brand class="w-2 h-2" />Dayframe</a
     >
+    <!-- Below md the views take their own row; from md the wrapper dissolves
+         and the overflow nav fills the space between brand and controls. -->
+    <div class="w-100 order-last md:d-contents">
+      <nav
+        aria-label="Dashboard views"
+        use:navOverflow
+        use:viewNavigation
+        data-bs-component="nav-overflow"
+      >
+        <ul class="nav nav-pills gap-1" data-bs-component="tab">
+          {#each views as item, i}<li class="nav-item">
+              <button
+                class="nav-link"
+                class:active={startView === item.id}
+                id={`tab-${item.id}`}
+                data-bs-target={`#view-${item.id}`}
+                aria-controls={`view-${item.id}`}
+                aria-current={view === item.id ? 'page' : undefined}
+                data-view={item.id}
+                aria-keyshortcuts={settings.keyboardShortcuts
+                  ? `${i + 1} ${item.key}`
+                  : undefined}
+                use:tab
+                bind:this={triggers[item.id]}
+                ><Icon name={item.icon} /><span>{item.name}</span></button
+              >
+            </li>{/each}
+        </ul>
+      </nav>
+    </div>
     <div class="d-flex align-items-center gap-3 ms-auto">
       <div class="text-end">
-        <div class="clock dashboard-clock" aria-label="Current time">
+        <div
+          class="dashboard-clock font-monospace fs-xl fw-semibold lh-1 tabular-nums"
+          aria-label="Current time"
+        >
           {formatTime(now, settings)}
         </div>
-        <div class="small fg-2">
+        <div class="small fg-2 mt-1">
           {formatDate(
             now,
             settings.locale,
@@ -510,16 +721,51 @@
             class="btn btn-outline theme-secondary"
             use:menu
             data-bs-toggle="menu"
+            data-bs-placement="bottom-end"
             aria-label="Choose theme"
             ><Icon name="palette" /><span class="d-none sm:d-inline">Theme</span
             ></button
           >
           <div class="menu" data-bs-component="menu">
-            {#each themes as theme}<button
+            <h6 class="menu-header">Theme</h6>
+            {#each themes as theme (theme.id)}<button
                 class="menu-item"
+                class:selected={settings.theme === theme.id}
                 aria-current={settings.theme === theme.id ? 'true' : undefined}
                 onclick={() => changeSettings({ theme: theme.id })}
-                >{theme.name}</button
+                ><svg
+                  class="menu-item-icon"
+                  viewBox="0 0 16 16"
+                  aria-hidden="true"
+                  ><circle
+                    cx="8"
+                    cy="8"
+                    r="7"
+                    fill={theme.preview.canvas}
+                    stroke={theme.preview.ink}
+                    stroke-opacity="0.4"
+                  /><path
+                    d="M8 1a7 7 0 0 1 0 14z"
+                    fill={theme.preview.accent}
+                  /></svg
+                ><span class="menu-item-content"
+                  >{theme.name}<small
+                    class="menu-item-description"
+                    aria-hidden="true">{theme.description}</small
+                  ></span
+                ><Icon name="check-lg" class="menu-item-check" /></button
+              >{/each}
+            <hr class="menu-divider" />
+            <h6 class="menu-header">Colour scheme</h6>
+            {#each schemes as scheme (scheme.id)}<button
+                class="menu-item"
+                class:selected={settings.scheme === scheme.id}
+                aria-pressed={settings.scheme === scheme.id}
+                onclick={() => changeSettings({ scheme: scheme.id })}
+                >{scheme.label}<Icon
+                  name="check-lg"
+                  class="menu-item-check"
+                /></button
               >{/each}
           </div>
         </div>
@@ -535,54 +781,18 @@
       </div>
     </div>
   </header>
-  <nav
-    aria-label="Dashboard views"
-    class="mb-4"
-    use:navOverflow
-    use:viewNavigation
-    data-bs-component="nav-overflow"
-  >
-    <ul class="nav nav-pills gap-1">
-      {#each views as item, i}<li class="nav-item">
-          <button
-            class={`nav-link ${view === item.id ? 'active' : ''}`}
-            aria-current={view === item.id ? 'page' : undefined}
-            data-view={item.id}
-            aria-keyshortcuts={settings.keyboardShortcuts
-              ? `${i + 1} ${item.key}`
-              : undefined}
-            ><Icon name={item.icon} /><span>{item.name}</span></button
-          >
-        </li>{/each}
-    </ul>
-  </nav>
   <main id="main" class="flex-grow-1" tabindex="-1">
     <div
-      class="d-flex align-items-end justify-content-between flex-wrap gap-3 mb-4"
+      class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3"
     >
-      <div>
-        <h1 class="view-heading">
-          {view === 'summary'
-            ? 'Your day, in focus'
-            : views.find((item) => item.id === view)?.name}
-        </h1>
-        <p class="fg-2 mt-1 mb-0">
-          {view === 'summary'
-            ? 'Capacity, commitments and the world outside.'
-            : view === 'agents'
-              ? 'Six agents. One clear view of your capacity.'
-              : view === 'calendar'
-                ? 'A little room for what comes next.'
-                : view === 'weather'
-                  ? 'The outlook for the day and the week ahead.'
-                  : 'What is moving across your interests.'}
-        </p>
-      </div>
-      <span class="badge badge-subtle theme-secondary" data-bs-component="badge"
-        >{settings.scenario === 'steady'
-          ? 'Demo workspace'
-          : settings.scenario.replaceAll('-', ' ')}</span
-      >
+      <h1 class="text-2xl fw-semibold m-0">{heading}</h1>
+      {#if settings.scenario !== 'steady'}<span
+          class="badge badge-subtle theme-warning"
+          data-bs-component="badge"
+          ><Icon name={scenarioIcons[settings.scenario]} />
+          {settings.scenario.charAt(0).toUpperCase() +
+            settings.scenario.slice(1).replaceAll('-', ' ')} scenario</span
+        >{/if}
     </div>
     {#if notice}<div
         class="alert theme-info d-flex gap-3 align-items-center"
@@ -604,236 +814,329 @@
           ? 'Offline scenario: showing saved or simulated data. Your settings are available in this browser.'
           : 'Stale scenario: sources need a refresh. The dashboard keeps the last available data visible.'}
       </div>{/if}
-    {#if view === 'summary'}
-      <div class="grid dashboard-grid">
-        <Panel
-          title={reminder
-            ? 'Starting soon'
-            : attentionAgent
-              ? 'Needs attention'
-              : heroEvent && Date.parse(heroEvent.start) <= now.getTime()
-                ? 'Happening now'
-                : 'Next on your calendar'}
-          class="hero-panel summary-hero"
-        >
-          {#if attentionAgent && !reminder}<p class="small mb-3">
-              <Icon name="exclamation-circle" />
-              {attentionAgent.status === 'reconnect'
-                ? 'Connection needs attention'
-                : 'Agent capacity'}
-            </p>
-            <h2 class="hero-title mb-3">
-              {attentionAgent.status === 'reconnect'
-                ? `${attentionAgent.name} needs reconnecting`
-                : `${attentionAgent.name} is running low`}
-            </h2>
-            <p class="hero-context mb-4">
-              {attentionAgent.status === 'reconnect'
-                ? 'This simulated account has lost its connection. Other agents remain available.'
-                : `${attentionAllowance?.remainingPercent}% remains in ${attentionAgent.name}'s ${attentionAllowance?.label.toLowerCase()} allowance. Plan the next task around available capacity.`}
-            </p>
-            <button
-              class="btn btn-solid theme-primary"
-              onclick={() => navigate('agents')}
-              >Review agent capacity <Icon name="arrow-right" /></button
-            >
-          {:else if heroEvent}<p class="small mb-3">
-              <Icon name="calendar-event" />
-              {formatRelative(heroEvent.start, now, settings.locale)}
-            </p>
-            <h2 class="hero-title mb-3">{heroEvent.title}</h2>
-            <p class="hero-context mb-4">
-              {formatTime(heroEvent.start, settings)}–{formatTime(
-                heroEvent.end,
-                settings,
-              )} · {heroEvent.location}<br />{heroEvent.description}
-            </p>
-            <button
-              class="btn btn-solid theme-primary"
-              onclick={() => navigate('calendar')}
-              >View your calendar <Icon name="arrow-right" /></button
-            >
-          {:else}<h2 class="hero-title mb-3">A clear stretch ahead</h2>
-            <p class="hero-context">
-              No upcoming timed events. Your agent capacity is ready for the
-              next task.
-            </p>
-            <button
-              class="btn btn-solid theme-primary"
-              onclick={() => navigate('agents')}>View agent capacity</button
-            >{/if}
-        </Panel>
-        <Panel title="Outside now" class="summary-weather"
-          ><WeatherPanel
-            {weather}
-            status={sourceState}
-            units={settings.units}
-            locale={settings.locale}
-            live={!replay && weatherLive}
-            dense={compactDesktop}
-            previewDays={compactDesktop ? 0 : 2}
-          />{#snippet action()}<button
-              class="btn btn-text theme-secondary btn-sm"
-              onclick={() => navigate('weather')}
-              aria-label="View full weather"
-              ><Icon name="arrow-up-right" /></button
-            >{/snippet}</Panel
-        >
-        <Panel title="Agent capacity" class="summary-agents"
-          ><div class="grid" style="--gap: 0 1.5rem">
-            {#each simulation.agents.slice(0, summaryAgentCount) as agent}<div
-                class={summaryAgentCount === 1
-                  ? 'g-col-12'
-                  : viewportWidth >= 1100
-                    ? 'g-col-6'
-                    : 'g-col-12 sm:g-col-6'}
-              >
-                <AgentCard {agent} {now} compact locale={settings.locale} />
-              </div>{/each}
-          </div>
-          {#if summaryAgentCount < simulation.agents.length}<button
-              class="btn btn-link p-0 mt-2"
-              onclick={() => navigate('agents')}
-              >+{simulation.agents.length - summaryAgentCount} more agents</button
-            >{/if}
-          {#snippet action()}<button
-              class="btn btn-text theme-secondary btn-sm"
-              onclick={() => navigate('agents')}>View all</button
-            >{/snippet}</Panel
-        >
-        <Panel title="Coming up" class="summary-calendar"
-          >{#if todaysEvents.length}<Agenda
-              events={todaysEvents}
-              locale={settings.locale}
-              hourCycle={settings.hourCycle}
-              max={compactDesktop ? 1 : 2}
-              compact
-              onmore={() => navigate('calendar')}
-            />{:else}<p class="fg-2 mb-0">No more events today.</p>{/if}</Panel
-        >
-        <Panel title="Across your feeds" class="summary-feeds"
-          ><ul
-            class="list-group list-group-flush"
-            data-bs-component="list-group"
-          >
-            {#each stories
-              .filter((story) => settings.categories.includes(story.category))
-              .slice(0, compactDesktop ? 1 : 3) as story}<li
-                class="list-group-item px-0"
-              >
-                <div class="small fg-2 mb-1">
-                  {story.publication} · {story.live ? 'Live' : 'Demo'}
-                </div>
-                <h3 class="agent-name mb-0">
-                  {#if story.live && story.url}<a
-                      href={story.url}
-                      target="_blank"
-                      rel="noreferrer">{story.title}</a
-                    >{:else}{story.title}{/if}
-                </h3>
-              </li>{:else}<li class="list-group-item px-0">
-                No categories selected. Enable feeds in Settings.
-              </li>{/each}
-          </ul>
-          {#snippet action()}<button
-              class="btn btn-text theme-secondary btn-sm"
-              onclick={() => navigate('feeds')}>All stories</button
-            >{/snippet}</Panel
-        >
-      </div>
-    {:else if view === 'agents'}<div
-        class="grid agents-grid gap-3 align-items-start"
+    <div class="tab-content">
+      <section
+        class="tab-pane"
+        class:active={startView === 'summary'}
+        class:show={startView === 'summary'}
+        id="view-summary"
+        aria-labelledby="tab-summary"
       >
-        {#each simulation.agents as agent}<AgentCard
-            {agent}
+        {#if view === 'summary'}
+          <div class="grid dashboard-grid">
+            <Panel
+              title={reminder
+                ? 'Starting soon'
+                : attentionAgent
+                  ? 'Needs attention'
+                  : heroEvent && Date.parse(heroEvent.start) <= now.getTime()
+                    ? 'Happening now'
+                    : 'Next on your calendar'}
+              kind="hero"
+              class="hero-panel summary-hero"
+            >
+              <div
+                class="grid align-items-start mt-2"
+                style="--gap: var(--spacer-7)"
+              >
+                <div class="g-col-12 md:g-col-7 vstack gap-3 align-items-start">
+                  {#if attentionAgent && !reminder}<p class="small m-0">
+                      <Icon name="exclamation-circle" />
+                      {attentionAgent.status === 'reconnect'
+                        ? 'Connection needs attention'
+                        : 'Agent capacity'}
+                    </p>
+                    <h2 class="hero-title text-3xl fw-semibold m-0">
+                      {attentionAgent.status === 'reconnect'
+                        ? `${attentionAgent.name} needs reconnecting`
+                        : attentionAllowance?.remainingPercent === 0
+                          ? `${attentionAgent.name}'s ${attentionAllowance.label.toLowerCase()} allowance is used up`
+                          : `${attentionAgent.name} is running low`}
+                    </h2>
+                    <p class="hero-context m-0">
+                      {#if attentionAgent.status === 'reconnect'}
+                        This simulated account has lost its connection. Other
+                        agents remain available.
+                      {:else if attentionAllowance}
+                        {attentionAllowance.remainingPercent === 0
+                          ? `It resets in ${formatCountdown(attentionAllowance.resetsAt, now, settings.locale)}.`
+                          : `${attentionAllowance.remainingPercent}% of the ${attentionAllowance.label.toLowerCase()} allowance remains, and it resets in ${formatCountdown(attentionAllowance.resetsAt, now, settings.locale)}.`}
+                        {#if attentionPrimary && attentionPrimary.id !== attentionAllowance.id}
+                          The {attentionPrimary.label.toLowerCase()} allowance still
+                          has {attentionPrimary.remainingPercent}% left.
+                        {/if}
+                      {/if}
+                    </p>
+                    <button
+                      class="btn btn-solid theme-primary mt-2"
+                      onclick={() => navigate('agents')}
+                      >Review agent capacity</button
+                    >
+                  {:else if heroEvent}<p class="small m-0">
+                      <Icon name="calendar-event" />
+                      {formatRelative(heroEvent.start, now, settings.locale)}
+                    </p>
+                    <h2 class="hero-title text-3xl fw-semibold m-0">
+                      {heroEvent.title}
+                    </h2>
+                    <p class="hero-context m-0">
+                      <span class="tabular-nums"
+                        >{formatTime(heroEvent.start, settings)}–{formatTime(
+                          heroEvent.end,
+                          settings,
+                        )}</span
+                      >
+                      <br />{heroEvent.description}
+                    </p>
+                    <button
+                      class="btn btn-solid theme-primary mt-2"
+                      onclick={() => navigate('calendar')}
+                      >View your calendar</button
+                    >
+                  {:else}<h2 class="hero-title text-3xl fw-semibold m-0">
+                      A clear stretch ahead
+                    </h2>
+                    <p class="hero-context m-0">
+                      No upcoming timed events. Your agent capacity is ready for
+                      the next task.
+                    </p>
+                    <button
+                      class="btn btn-solid theme-primary mt-2"
+                      onclick={() => navigate('agents')}
+                      >View agent capacity</button
+                    >{/if}
+                </div>
+                <div class="g-col-12 md:g-col-5 vstack gap-3">
+                  {#if attentionAgent && attentionAllowance && !reminder}
+                    <div>
+                      <div
+                        class="d-flex justify-content-between gap-2 small mb-1"
+                      >
+                        <span class="fw-semibold"
+                          >{attentionAgent.name} · {attentionAllowance.label}</span
+                        ><span class="tabular-nums"
+                          >{attentionAllowance.remainingPercent}% left</span
+                        >
+                      </div>
+                      <div
+                        class="progress"
+                        role="progressbar"
+                        aria-label={`${attentionAgent.name} ${attentionAllowance.label} remaining`}
+                        aria-valuenow={attentionAllowance.remainingPercent}
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        data-bs-component="progress"
+                      >
+                        <div
+                          class={`progress-bar theme-${attentionAgent.status === 'reconnect' ? 'secondary' : attentionAllowance.remainingPercent <= 10 ? 'danger' : 'warning'}`}
+                          style:width={`${attentionAllowance.remainingPercent}%`}
+                        ></div>
+                      </div>
+                      <time
+                        class="small fg-2 d-block mt-1"
+                        datetime={attentionAllowance.resetsAt}
+                        >Resets in {formatCountdown(
+                          attentionAllowance.resetsAt,
+                          now,
+                          settings.locale,
+                        )}</time
+                      >
+                    </div>
+                  {:else if heroEvent}
+                    {#if heroEvent.attendees.length}
+                      <div class="d-flex align-items-center gap-3">
+                        <div
+                          class="avatar-stack avatar-stack-sm"
+                          data-bs-component="avatar"
+                          aria-hidden="true"
+                        >
+                          {#each heroEvent.attendees as name (name)}<span
+                              class="avatar">{initials(name)}</span
+                            >{/each}
+                        </div>
+                        <span class="small"
+                          >{heroEvent.attendees.join(', ')}</span
+                        >
+                      </div>
+                    {/if}
+                    <div class="d-flex flex-wrap gap-2">
+                      <span
+                        class={`badge badge-subtle theme-${calendarRole(heroEvent.calendar)}`}
+                        data-bs-component="badge">{heroEvent.calendar}</span
+                      ><span class="badge badge-outline theme-secondary"
+                        ><Icon name="geo-alt" /> {heroEvent.location}</span
+                      >
+                    </div>
+                    {#if followingEvent}<p class="small fg-2 m-0">
+                        Then <span class="tabular-nums"
+                          >{formatTime(followingEvent.start, settings)}</span
+                        >
+                        {followingEvent.title}
+                      </p>{/if}
+                  {/if}
+                  {#if readyAgents.length && (!heroEvent || (attentionAgent && !reminder))}
+                    <div>
+                      <p class="small fw-semibold mb-1">Ready to use</p>
+                      <ul
+                        class="list-group list-group-flush"
+                        data-bs-component="list-group"
+                      >
+                        {#each readyAgents as agent (agent.id)}<li
+                            class="list-group-item px-0 py-1 d-flex align-items-center gap-2"
+                          >
+                            <span
+                              class={`avatar avatar-xs theme-${agent.id}`}
+                              aria-hidden="true">{agent.initials}</span
+                            ><span class="flex-grow-1">{agent.name}</span><span
+                              class="badge badge-subtle theme-success tabular-nums"
+                              >{limitingAllowance(agent).remainingPercent}% {limitingAllowance(
+                                agent,
+                              ).label.toLowerCase()}</span
+                            >
+                          </li>{/each}
+                      </ul>
+                    </div>
+                  {/if}
+                </div>
+              </div>
+            </Panel>
+            <Panel title="Outside now" class="summary-weather"
+              ><WeatherPanel
+                {weather}
+                status={sourceState}
+                units={settings.units}
+                locale={settings.locale}
+                live={!replay && weatherLive}
+                dense={compactDesktop}
+                previewDays={compactDesktop ? 0 : 2}
+              />{#snippet action()}<button
+                  class="btn btn-text theme-secondary btn-sm"
+                  onclick={() => navigate('weather')}
+                  aria-label="View full weather"
+                  ><Icon name="arrow-up-right" /></button
+                >{/snippet}</Panel
+            >
+            <Panel title="Agent capacity" class="summary-agents"
+              ><div class="grid" style="--gap: 0 1.5rem">
+                {#each simulation.agents.slice(0, summaryAgentCount) as agent (agent.id)}<div
+                    class={agentColumns}
+                  >
+                    <AgentCard {agent} {now} compact locale={settings.locale} />
+                  </div>{/each}
+              </div>
+              {#if summaryAgentCount < simulation.agents.length}<button
+                  class="btn btn-link p-0 mt-2"
+                  onclick={() => navigate('agents')}
+                  >+{simulation.agents.length - summaryAgentCount} more agents</button
+                >{/if}
+              {#snippet action()}<button
+                  class="btn btn-text theme-secondary btn-sm"
+                  onclick={() => navigate('agents')}>View all</button
+                >{/snippet}</Panel
+            >
+            <Panel title="Coming up" kind="quiet" class="summary-calendar"
+              >{#if todaysEvents.length}<Agenda
+                  events={todaysEvents}
+                  locale={settings.locale}
+                  hourCycle={settings.hourCycle}
+                  max={compactDesktop ? 1 : 2}
+                  compact
+                  onmore={() => navigate('calendar')}
+                />{:else}<p class="fg-2 mb-0">
+                  No more events today.
+                </p>{/if}</Panel
+            >
+            <Panel title="Across your feeds" kind="quiet" class="summary-feeds"
+              >{#if summaryStories.length}<ul
+                  class="list-group list-group-flush"
+                  data-bs-component="list-group"
+                >
+                  {#each summaryStories as story (story.id)}<StoryRow
+                      {story}
+                      {now}
+                      locale={settings.locale}
+                      compact
+                    />{/each}
+                </ul>{:else}<p class="fg-2 mb-0">
+                  No categories selected. Enable feeds in Settings.
+                </p>{/if}
+              {#snippet action()}<button
+                  class="btn btn-text theme-secondary btn-sm"
+                  onclick={() => navigate('feeds')}>All stories</button
+                >{/snippet}</Panel
+            >
+          </div>
+        {/if}
+      </section>
+      <section
+        class="tab-pane"
+        class:active={startView === 'agents'}
+        class:show={startView === 'agents'}
+        id="view-agents"
+        aria-labelledby="tab-agents"
+      >
+        {#if view === 'agents'}
+          <AgentsView
+            agents={simulation.agents}
             {now}
             dense={compactDesktop}
             locale={settings.locale}
-          />{/each}
-      </div>
-    {:else if view === 'calendar'}<Calendar
-        events={simulation.events}
-        {now}
-        {settings}
-        compact={compactDesktop}
-      />
-    {:else if view === 'weather'}<div class="grid">
-        <Panel
-          title="Seven-day forecast"
-          class={`g-col-12 lg:g-col-7 ${compactDesktop ? 'compact-weather' : ''}`}
-          ><WeatherPanel
+          />
+        {/if}
+      </section>
+      <section
+        class="tab-pane"
+        class:active={startView === 'calendar'}
+        class:show={startView === 'calendar'}
+        id="view-calendar"
+        aria-labelledby="tab-calendar"
+      >
+        {#if view === 'calendar'}
+          <Calendar
+            events={simulation.events}
+            {now}
+            {settings}
+            compact={compactDesktop}
+          />
+        {/if}
+      </section>
+      <section
+        class="tab-pane"
+        class:active={startView === 'weather'}
+        class:show={startView === 'weather'}
+        id="view-weather"
+        aria-labelledby="tab-weather"
+      >
+        {#if view === 'weather'}
+          <WeatherView
             {weather}
             status={sourceState}
-            units={settings.units}
-            locale={settings.locale}
+            {settings}
             live={!replay && weatherLive}
-            dense={compactDesktop}
-            full
-          />{#snippet action()}<button
-              class="btn btn-text theme-secondary btn-sm"
-              onclick={openSettings}
-              ><Icon name="geo-alt" /> Location and units</button
-            >{/snippet}</Panel
-        ><Panel title="Hourly outlook" class="g-col-12 lg:g-col-5"
-          ><div class="table-responsive">
-            <table
-              class="table table-sm align-middle"
-              data-bs-component="table"
-            >
-              <caption class="visually-hidden"
-                >Hourly temperatures and precipitation</caption
-              ><thead
-                ><tr
-                  ><th scope="col">Time</th><th scope="col">Temperature</th><th
-                    scope="col">Rain</th
-                  ></tr
-                ></thead
-              ><tbody
-                >{#each weather.hours.slice(hourPage * hourRows, (hourPage + 1) * hourRows) as hour}<tr
-                    ><th scope="row">{formatTime(hour.time, settings)}</th><td
-                      >{Math.round(hour.temperature)}°</td
-                    ><td>{hour.precipitation}%</td></tr
-                  >{/each}</tbody
-              >
-            </table>
-          </div>
-          <nav aria-label="Hourly forecast pages">
-            <ul class="pagination pagination-sm mb-0">
-              <li class="page-item">
-                <button
-                  class="page-link"
-                  disabled={hourPage === 0}
-                  onclick={() => hourPage--}>Previous hours</button
-                >
-              </li>
-              <li class="page-item">
-                <span class="page-link">{hourPage + 1} / {hourPages}</span>
-              </li>
-              <li class="page-item">
-                <button
-                  class="page-link"
-                  disabled={hourPage + 1 >= hourPages}
-                  onclick={() => hourPage++}>Next hours</button
-                >
-              </li>
-            </ul>
-          </nav>
-        </Panel>
-      </div>
-    {:else}<Feeds
-        {stories}
-        {settings}
-        {now}
-        compact={compactDesktop}
-        status={settings.scenario === 'offline'
-          ? 'offline'
-          : settings.scenario === 'stale'
-            ? 'stale'
-            : replay
-              ? 'fresh'
-              : feedStatus}
-        onchange={changeSettings}
-      />{/if}
+            compact={compactDesktop}
+            onsettings={openSettings}
+          />
+        {/if}
+      </section>
+      <section
+        class="tab-pane"
+        class:active={startView === 'feeds'}
+        class:show={startView === 'feeds'}
+        id="view-feeds"
+        aria-labelledby="tab-feeds"
+      >
+        {#if view === 'feeds'}
+          <Feeds
+            {stories}
+            {settings}
+            {now}
+            compact={compactDesktop}
+            status={feedState}
+            onchange={changeSettings}
+          />
+        {/if}
+      </section>
+    </div>
   </main>
   <footer
     class="dashboard-footer border-top mt-2 pt-2 d-flex flex-wrap align-items-start justify-content-between gap-3"
@@ -848,7 +1151,7 @@
       </p>
     </div>
     <div class="d-flex align-items-center gap-3">
-      <button class="btn btn-link btn-sm p-0" onclick={openAbout}
+      <button class="btn btn-link btn-sm p-0" onclick={() => (aboutOpen = true)}
         >About Bootstrap</button
       ><button
         class="btn btn-text theme-secondary btn-sm"
@@ -870,79 +1173,16 @@
     onreset={reset}
     onrefresh={() => void refresh()}
   />{/if}
-{#if aboutOpen}<dialog
-    use:settingsDialog
+{#if aboutOpen}<About
+    {stories}
+    {stack}
+    appCssBytes={new TextEncoder().encode(appCss).length}
+    theme={settings.theme}
+    locale={settings.locale}
+    lens={settings.lens}
     onclose={() => (aboutOpen = false)}
-    aria-labelledby="about-title"
-    style="--dialog-width: 46rem"
-  >
-    <div class={aboutSmall ? 'drawer-header' : 'dialog-header'}>
-      <h2 class="h4 m-0" id="about-title">Bootstrap, at work</h2>
-      <button
-        class="btn btn-text theme-secondary"
-        data-bs-dismiss={aboutSmall ? 'drawer' : 'dialog'}
-        aria-label="Close about"><Icon name="x-lg" /></button
-      >
-    </div>
-    <div class={aboutSmall ? 'drawer-body prose' : 'dialog-body prose'}>
-      <p class="fs-lg">
-        Built with Bootstrap <strong>{stack.bootstrap}</strong>, Svelte {stack.svelte}
-        and Vite {stack.vite}.
-      </p>
-      <p>
-        Cards, nav overflow, progress, badges, avatars, lists, tables, menus,
-        datepicker, popovers, tooltips, dialogs, drawers, tabs, combobox, range
-        and toasts all use Bootstrap’s components and JavaScript.
-      </p>
-      <p>
-        Themes recolour Bootstrap’s tokens and roles. Custom app CSS covers
-        dashboard composition, calendar geometry, small charts and the
-        inspection lens.
-      </p>
-      <p>
-        <strong>App-layer SCSS source:</strong>
-        {new TextEncoder()
-          .encode(appCss)
-          .length.toLocaleString(settings.locale)} bytes before compression. Every
-        build records the raw and gzip footprint.
-      </p>
-      <p>
-        <strong>Current theme:</strong>
-        {getTheme(settings.theme).name}. {themes.length} themes discovered automatically.
-      </p>
-      <button
-        class="btn btn-outline theme-primary mb-3"
-        data-bs-dismiss={aboutSmall ? 'drawer' : 'dialog'}
-        onclick={() => changeSettings({ lens: !settings.lens })}
-        >{settings.lens ? 'Turn off' : 'Turn on'} Bootstrap lens</button
-      >
-      <h3 class="h5">Recent Bootstrap headlines</h3>
-      <ul>
-        {#each stories
-          .filter((story) => story.category === 'bootstrap')
-          .slice(0, 4) as story}<li>
-            {#if story.live && story.url}<a
-                href={story.url}
-                target="_blank"
-                rel="noreferrer">{story.title}</a
-              >{:else}{story.title} <span class="small">(demo)</span>{/if}
-          </li>{/each}
-      </ul>
-      <p class="small">
-        <a
-          href="https://getbootstrap.com/docs/6.0/"
-          target="_blank"
-          rel="noreferrer">Bootstrap documentation</a
-        >
-        ·
-        <a
-          href={`${import.meta.env.BASE_URL}third-party-notices.txt`}
-          target="_blank"
-          rel="noreferrer">Third-party notices</a
-        >
-      </p>
-    </div>
-  </dialog>{/if}
+    onlens={() => changeSettings({ lens: !settings.lens })}
+  />{/if}
 {#if reminder}<div class="toast-container" aria-live="polite">
     <div class="toast" use:toast data-bs-component="toast" role="status">
       <div class="toast-header">

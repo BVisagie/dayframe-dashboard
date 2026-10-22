@@ -63,42 +63,43 @@ component that Bootstrap ships.
 This table shows how the dashboard uses Bootstrap `6.0.0-alpha.1`. It is
 reviewed with every Bootstrap release.
 
-| Dashboard need                               | Bootstrap 6                                                                                              |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Page shell and view layouts                  | CSS grid (`.grid`), `g-col-*` and responsive column utilities, gap utilities                             |
-| Agent readings that adapt to panel size      | Container-query breakpoint mixins                                                                        |
-| Panels and agent cards                       | `card`                                                                                                   |
-| View navigation                              | `nav` with `nav-overflow`; delegated clicks reach cloned menu items, and active state stays synchronized |
-| Header controls                              | `btn-group`, `vr`, flex utilities, `tooltip`; tooltip titles follow shortcut settings                    |
-| Remaining allowance meters                   | `progress`, filled by percentage left and coloured by theme roles                                         |
-| Status and simulation labels                 | `badge`                                                                                                  |
-| Agent marks                                  | `avatar`, showing initials instead of logos                                                              |
-| Agenda, headlines and story lists            | `list-group`, `icon-link`                                                                                |
-| Story excerpts and About content             | `prose`                                                                                                  |
-| Seven-day forecast and hourly details        | `table`                                                                                                  |
-| Event details on the calendar                | `popover`                                                                                                |
-| Jumping to a date                            | `datepicker` with automatic viewport placement; the action synchronizes selection, locale and first weekday |
-| Feed and hourly forecast paging              | `pagination`; feed pages are windowed with ellipses, and compact desktop views reduce rows per page      |
-| Initial source loading and refresh           | `spinner-border` with `spinner-sm`                                                                       |
-| Reminders                                    | `toast`                                                                                                  |
-| "Demo data" notice, offline and stale states | `alert`                                                                                                  |
-| Settings, About and the full agenda          | `dialog dialog-scrollable`, or `drawer` on narrow screens; Settings uses `tab` between sections          |
-| Theme and navigation overflow menus          | `menu`                                                                                                   |
-| City search                                  | `combobox`; known alpha.1 instance warnings and listener accumulation are tracked in the Bootstrap log   |
-| Display scale                                | `form-range` and `form-range-input`, with the Range plugin; programmatic resets update its fill          |
-| Toggles, choices and numbers                 | `switch`, `check`, `form-field`, `form-control`                                                          |
-| Feed categories                              | `chip` buttons (the editable `Chips` plugin is for input)                                                |
-| Colour schemes                               | `data-bs-theme`, `color-scheme` and `light-dark()`                                                       |
-| Theme colours                                | Bootstrap's theme roles and `.theme-*` classes. See [Token tiers](#token-tiers)                          |
-| Focus and motion                             | Focus-ring tokens, component `:focus-visible` styles and reduced-motion support                          |
-| Icons, including weather                     | Bootstrap Icons                                                                                          |
+| Dashboard need                               | Bootstrap 6                                                                                                                                                                                                                      |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Page shell and view layouts                  | CSS grid (`.grid`), `g-col-*` and responsive column utilities (container queries against the nearest `.grid`), gap utilities                                                                                                     |
+| Agent readings that adapt to panel size      | Container-query breakpoint mixins                                                                                                                                                                                                |
+| Panels and agent cards                       | `card` in three grades: the hero, instrument panels with `card-header`, and outlined quiet panels; agent cards take `card-subtle theme-danger/warning/secondary` from their status, with `card-header` and `card-footer`         |
+| Header                                       | `navbar` with `navbar-brand`; the brand mark is an inline SVG filled with theme tokens                                                                                                                                           |
+| View navigation                              | `nav` with `nav-overflow` inside the navbar; views are `tab` panes shown by the Tab plugin, which also handles arrow keys and the fade; delegated clicks reach cloned menu items, and clones drop their tab semantics            |
+| Header controls                              | `btn-group`, `vr`, flex utilities, `tooltip`; tooltip titles follow shortcut settings                                                                                                                                            |
+| Remaining allowance meters                   | `progress`, filled by percentage left and coloured by theme roles                                                                                                                                                                |
+| Status and simulation labels                 | `badge`: outline for Live and Demo, subtle for the release in use and the scenario; the lens labels are badges too                                                                                                               |
+| Agent marks                                  | `avatar theme-<agent>` with initials instead of logos, plus `avatar-status` for the connection state                                                                                                                             |
+| Agenda, headlines and story lists            | `list-group`, `list-group-item-action`, `icon-link`; story rows carry a `border-start border-3 border-<series>` rule                                                                                                             |
+| About content                                | `prose`                                                                                                                                                                                                                          |
+| Seven-day forecast and hourly details        | `table table-borderless` rows with `progress-stacked` temperature ranges on the week's scale; the hourly strip is a table laid out as `list-group list-group-horizontal` with a `progress` rain bar per hour; `hstack`/`vstack`  |
+| Event details on the calendar                | `popover`; month cells show event titles as `badge badge-subtle theme-<series>` at desktop heights and series-coloured dots elsewhere; agenda items carry a `border-start` rule in their calendar's series colour                |
+| Jumping to a date                            | `datepicker` on a `form-control-sm` field with a `form-adorn` calendar icon in the month panel's header; automatic viewport placement; the action synchronizes selection, locale and first weekday                               |
+| Feed and hourly forecast paging              | `pagination`; feed pages are windowed with ellipses, and compact desktop views reduce rows per page                                                                                                                              |
+| Initial source loading and refresh           | `placeholder placeholder-glow` skeletons for weather and the Bootstrap rail; `spinner-border spinner-sm` for refresh                                                                                                             |
+| Reminders                                    | `toast`                                                                                                                                                                                                                          |
+| "Demo data" notice, offline and stale states | `alert`                                                                                                                                                                                                                          |
+| Settings, About and the full agenda          | `dialog dialog-scrollable`, or `drawer` on narrow screens; Settings uses `tab` with `nav-pills-vertical`, `form-field`, `form-text`, `input-group` and `card card-subtle` theme choices; About lists components as `badge` links |
+| Theme and navigation overflow menus          | `menu` with headers, dividers, swatch icons, descriptions and check marks; the header menu switches theme and colour scheme                                                                                                      |
+| Hero aside                                   | `progress`, `avatar-stack`, `badge` (subtle and outline) and `list-group` for what to use instead or who is attending                                                                                                            |
+| Surface mapping                              | Sass module options re-point the list group, table, nav, pills, navbar, dialog, menu, popover, toast and datepicker token maps, because Dayframe's canvas is `--bg-body` and its raised surface `--bg-1`                         |
+| City search                                  | `combobox`; known alpha.1 instance warnings and listener accumulation are tracked in the Bootstrap log                                                                                                                           |
+| Display scale                                | `form-range` and `form-range-input`, with the Range plugin; programmatic resets update its fill                                                                                                                                  |
+| Toggles, choices and numbers                 | `switch`, `check`, `form-field`, `form-control`                                                                                                                                                                                  |
+| Feed categories                              | `chip` buttons with `chip-icon` and the `focus-ring` helper, for filters and the Sources toggles (the editable `Chips` plugin is for input)                                                                                      |
+| Colour schemes                               | `data-bs-theme`, `color-scheme` and `light-dark()`                                                                                                                                                                               |
+| Theme colours                                | Bootstrap's theme roles and `.theme-*` classes. See [Token tiers](#token-tiers)                                                                                                                                                  |
+| Focus and motion                             | Focus-ring tokens, component `:focus-visible` styles and reduced-motion support                                                                                                                                                  |
+| Icons, including weather                     | Bootstrap Icons                                                                                                                                                                                                                  |
 
 Available but unused, and reconsidered with each release: `accordion`,
 `breadcrumb`, `carousel`, `otp-input`, `strength`, `stepper`, `stretched-link`,
-text-truncation helpers, `placeholder`, `radio`, `form-floating`, `form-adorn`,
-`input-group`, validation states, `hover-lift` and the `focus-ring` helper class.
-Rotation switches whole views, so it isn't a carousel. `stepper` could suit a
-first-visit tour.
+`form-floating`, validation states and `hover-lift`. Rotation switches whole
+views, so it isn't a carousel. `stepper` could suit a first-visit tour.
 
 ### Showing Bootstrap at work
 
@@ -198,8 +199,8 @@ Source and location requests have a default ten-second deadline, covering both
 the request and response-body reading. Expiry settles pending state, retains
 validated cached data or labelled simulated fallbacks, and respects backoff.
 Cancellation and late responses cannot overwrite a disposed source.
-Live Bootstrap stories sort before simulated stories in Summary and Feeds;
-each group then sorts newest first.
+Live Bootstrap stories sort first in Summary; Feeds lists every story newest
+first and leads its rail with the live Bootstrap posts and releases.
 
 ### Weather location
 
@@ -637,13 +638,13 @@ dark Summary at 1280×720 DPR 1 for reviewed rounded-edge rasterization. The
 The pull request records current three-job CI results under the reduced
 policy.
 
-| Area                   | Implemented                                                                                                                                                  | Pending proof or external setup                                                                                                               |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Views and state        | All five views, Settings, navigation, rotation and deterministic scenarios; independent persisted date format; full three-browser checks passed at `8c58cba` | Routine CI on later changes                                                                                                                   |
-| Bootstrap integration  | Real plugins through Svelte actions; Datepicker updates and NavOverflow clone navigation/active-state synchronization; historical full browser checks passed | Three-job CI and targeted manual upgrade review                                                                                               |
-| Layout and themes      | Default, Nebuchadnezzar and Tideline; historical reviewed 400-image set passed at `8c58cba`; all six desktop dimensions fit without lowering the root floor  | Three-job CI and targeted manual review of affected themes and viewports                                                                      |
-| Sources                | Allowed live adapters, caching, fallbacks, backoff and default ten-second deadlines; hosted adapter checks passed                                            | No real account connections are needed                                                                                                        |
-| Bootstrap tracking     | Exact `6.0.0-alpha.1` pin, lens, About panel, gap log and measured app CSS footprint                                                                         | Hosted maintenance workflow verification                                                                                                      |
+| Area                   | Implemented                                                                                                                                                         | Pending proof or external setup                                                                                                                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Views and state        | All five views, Settings, navigation, rotation and deterministic scenarios; independent persisted date format; full three-browser checks passed at `8c58cba`        | Routine CI on later changes                                                                                                                            |
+| Bootstrap integration  | Real plugins through Svelte actions; Datepicker updates and NavOverflow clone navigation/active-state synchronization; historical full browser checks passed        | Three-job CI and targeted manual upgrade review                                                                                                        |
+| Layout and themes      | Default, Nebuchadnezzar and Tideline; historical reviewed 400-image set passed at `8c58cba`; all six desktop dimensions fit without lowering the root floor         | Three-job CI and targeted manual review of affected themes and viewports                                                                               |
+| Sources                | Allowed live adapters, caching, fallbacks, backoff and default ten-second deadlines; hosted adapter checks passed                                                   | No real account connections are needed                                                                                                                 |
+| Bootstrap tracking     | Exact `6.0.0-alpha.1` pin, lens, About panel, gap log and measured app CSS footprint                                                                                | Hosted maintenance workflow verification                                                                                                               |
 | Privacy and deployment | Prelaunch Pages deployment at `3d66994`, trusted full-history scan and exact-SHA status on `main`, HTTPS and indexing checks, and solo-maintainer branch protection | Record independent trusted pre-merge scan evidence and verify the trusted status on a fork or Dependabot PR; public launch remains separately approved |
 
 Milestone completion requires the proof in each definition below. Implemented

@@ -2,6 +2,7 @@
   import type { Agent } from '../lib/types';
   import {
     capacityRole,
+    conditionCue,
     limitingAllowance,
     primaryAllowance,
   } from '../lib/agents';
@@ -20,135 +21,149 @@
     dense?: boolean;
     locale?: string;
   } = $props();
+  // The headline must agree with the status badge, so it reads the tightest
+  // shared window rather than the plan's named main allowance.
   const limiting = $derived(limitingAllowance(agent));
-  const reading = $derived(compact ? limiting : primaryAllowance(agent));
-  const role = $derived(capacityRole(limiting.remainingPercent, agent.status));
-  const status = $derived(
-    agent.status === 'reconnect'
-      ? 'Reconnect needed'
-      : agent.status === 'offline'
-        ? 'Offline'
-        : agent.status === 'stale'
-          ? 'Last known usage'
-          : limiting.remainingPercent <= 10
-            ? 'Nearly exhausted'
-            : limiting.remainingPercent <= 25
-              ? 'Running low'
-              : 'Available',
+  const primary = $derived(primaryAllowance(agent));
+  const cue = $derived(conditionCue(agent));
+  // A graded card already carries the role's tint, so its badge turns solid to stay distinct.
+  const badgeClass = $derived(
+    `badge ${cue.graded ? '' : 'badge-subtle'} theme-${cue.role} flex-shrink-0`,
   );
 </script>
 
-<article
-  class:card={!compact}
-  class:agent-dense={dense}
-  class={`agent-panel theme-${agent.id} ${compact ? 'agent-row' : 'g-col-12 md:g-col-6 lg:g-col-4'}`}
-  data-bs-component={compact ? 'list-group' : 'card'}
-  aria-label={`${agent.name} capacity`}
->
-  <div class:card-body={!compact} class:py-2={dense} class="d-flex flex-column">
-    <div class={`d-flex gap-2 align-items-center ${dense ? 'mb-1' : 'mb-2'}`}>
-      <span
-        class="avatar avatar-sm"
-        data-bs-component="avatar"
-        aria-hidden="true">{agent.initials}</span
-      >
-      <div class="flex-grow-1">
-        <h3 class="agent-name m-0">{agent.name}</h3>
-        {#if !compact}<span class="small fg-2">{agent.plan}</span>{/if}
-      </div>
-      <span class={`badge badge-subtle theme-${role}`} data-bs-component="badge"
-        ><Icon name={agent.status === 'reconnect' ? 'plug' : 'circle-fill'} />
-        {status}</span
-      >
+{#snippet avatar(size: string)}<span
+    class={`avatar ${size} theme-${agent.id} flex-shrink-0`}
+    data-bs-component="avatar"
+    aria-hidden="true"
+    >{agent.initials}<span class={`avatar-status status-${cue.presence}`}
+    ></span></span
+  >{/snippet}
+
+{#snippet badge()}<span class={badgeClass} data-bs-component="badge"
+    ><Icon name={cue.icon} />{cue.label}</span
+  >{/snippet}
+
+{#snippet reading(size: string)}<span
+    class={`quota-value fw-semibold lh-1 tabular-nums ${size}`}
+    ><span class="font-monospace"
+      >{formatNumber(limiting.remainingPercent, locale)}%</span
+    ><span class={compact || dense ? 'small fw-normal' : 'fs-md fw-normal'}
+      >{' left'}</span
+    ></span
+  >{/snippet}
+
+{#snippet resets()}{limiting.label} resets in
+  <time datetime={limiting.resetsAt}
+    >{formatCountdown(limiting.resetsAt, now, locale)}</time
+  >{/snippet}
+
+{#if compact}
+  <article class="py-2" aria-label={`${agent.name} capacity`}>
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+      {@render avatar('avatar-sm')}
+      <h3 class="fs-md fw-semibold m-0 me-auto">{agent.name}</h3>
+      {@render badge()}
     </div>
     <div
-      class={`d-flex justify-content-between align-items-baseline gap-2 ${dense ? 'mb-1' : 'mb-2'}`}
+      class="d-flex flex-wrap align-items-baseline justify-content-between column-gap-3 mb-2"
     >
-      <span class="quota-value"
-        >{formatNumber(reading.remainingPercent, locale)}<span
-          class="small fw-normal">% left</span
-        ></span
-      >
-      <span class="small fg-2">{reading.label}</span>
+      {@render reading('fs-md')}
+      <span class="small fg-2">{@render resets()}</span>
     </div>
-    {#if compact}
+    <div
+      class="progress"
+      style="--progress-height: 0.375rem"
+      role="progressbar"
+      aria-label={`${agent.name} ${limiting.label} remaining`}
+      aria-valuenow={limiting.remainingPercent}
+      aria-valuemin="0"
+      aria-valuemax="100"
+      data-bs-component="progress"
+    >
       <div
-        class="progress"
-        role="progressbar"
-        aria-label={`${agent.name} ${reading.label} remaining`}
-        aria-valuenow={reading.remainingPercent}
-        aria-valuemin="0"
-        aria-valuemax="100"
-        data-bs-component="progress"
+        class={`progress-bar theme-${cue.role}`}
+        style:width={`${limiting.remainingPercent}%`}
+      ></div>
+    </div>
+  </article>
+{:else}
+  <article
+    class={`card ${cue.graded ? `card-subtle theme-${cue.role}` : ''} g-col-12 md:g-col-6 lg:g-col-4`}
+    data-bs-component="card"
+    aria-label={`${agent.name} capacity`}
+    style:--card-spacer-y={dense ? '0.75rem' : null}
+    style:--card-cap-padding-y={dense ? '0.375rem' : null}
+    style:--card-body-gap={dense ? '0.375rem' : null}
+  >
+    <div class="card-header flex-row align-items-center gap-3">
+      {@render avatar(dense ? 'avatar-sm' : '')}
+      <div
+        class={`flex-grow-1 min-w-0 ${dense ? 'd-flex flex-wrap align-items-baseline column-gap-2' : ''}`}
       >
-        <div
-          class={`progress-bar theme-${role}`}
-          style:width={`${reading.remainingPercent}%`}
-        ></div>
+        <h3 class="fs-md fw-semibold lh-sm m-0">{agent.name}</h3>
+        <p class="small fg-2 m-0">{agent.plan}</p>
       </div>
-    {:else}
+      {@render badge()}
+    </div>
+    <div class="card-body">
       <div
-        class={dense ? 'd-flex flex-column gap-1' : 'd-flex flex-column gap-3'}
+        class={dense
+          ? 'd-flex flex-wrap align-items-baseline justify-content-between column-gap-3'
+          : ''}
       >
-        {#each agent.allowances as allowance (allowance.id)}
-          {@const allowanceRole = capacityRole(
-            allowance.remainingPercent,
-            agent.status,
-          )}
-          <div>
-            <div class="d-flex flex-wrap align-items-baseline gap-2 mb-1">
-              <span class="small">{allowance.label}</span>
-              {#if dense}<time
-                  class="small fg-2 ms-auto"
-                  datetime={allowance.resetsAt}
-                  >Resets in {formatCountdown(
-                    allowance.resetsAt,
-                    now,
-                    locale,
-                  )}</time
-                >{/if}
-              <span class={`small fw-semibold ${dense ? '' : 'ms-auto'}`}
-                >{formatNumber(allowance.remainingPercent, locale)}%</span
-              >
-            </div>
-            <div
-              class="progress"
-              role="progressbar"
-              aria-label={`${agent.name} ${allowance.label} remaining`}
-              aria-valuenow={allowance.remainingPercent}
-              aria-valuemin="0"
-              aria-valuemax="100"
-              data-bs-component="progress"
+        {@render reading(dense ? 'text-xl' : 'text-3xl')}
+        <!-- Dense cards drop the main-allowance line; its bar sits just below. -->
+        <p class={`small fg-2 m-0 ${dense ? 'text-end' : 'mt-2'}`}>
+          {@render resets()}{#if !dense && primary.id !== limiting.id}<span
+              class="d-block"
+              >{primary.label} has {formatNumber(
+                primary.remainingPercent,
+                locale,
+              )}% left</span
+            >{/if}
+        </p>
+      </div>
+      {#each agent.allowances as allowance (allowance.id)}
+        <div>
+          <div class="d-flex flex-wrap align-items-baseline column-gap-2 small mb-1">
+            <span class="me-auto">{allowance.label}</span>
+            <time class="fg-2" datetime={allowance.resetsAt}
+              >Resets in {formatCountdown(allowance.resetsAt, now, locale)}</time
             >
-              <div
-                class={`progress-bar theme-${allowanceRole}`}
-                style:width={`${allowance.remainingPercent}%`}
-              ></div>
-            </div>
-            {#if !dense}<time
-                class="d-block small fg-2 mt-1"
-                datetime={allowance.resetsAt}
-                >Resets in {formatCountdown(
-                  allowance.resetsAt,
-                  now,
-                  locale,
-                )}</time
-              >{/if}
+            <span class="fw-semibold tabular-nums"
+              >{formatNumber(allowance.remainingPercent, locale)}%</span
+            >
           </div>
-        {/each}
-      </div>
-      <div
-        class={`d-flex flex-wrap justify-content-between gap-2 small fg-2 ${dense ? 'pt-1' : 'pt-2'}`}
+          <div
+            class="progress"
+            style="--progress-height: 0.5rem"
+            role="progressbar"
+            aria-label={`${agent.name} ${allowance.label} remaining`}
+            aria-valuenow={allowance.remainingPercent}
+            aria-valuemin="0"
+            aria-valuemax="100"
+            data-bs-component="progress"
+          >
+            <div
+              class={`progress-bar theme-${capacityRole(allowance.remainingPercent, agent.status)}`}
+              style:width={`${allowance.remainingPercent}%`}
+            ></div>
+          </div>
+        </div>
+      {/each}
+    </div>
+    <div
+      class="card-footer fg-2 small d-flex flex-wrap justify-content-between column-gap-3"
+    >
+      <time datetime={agent.updatedAt}
+        >Updated {formatRelative(agent.updatedAt, now, locale)}</time
       >
-        <time datetime={agent.updatedAt}
-          >Updated {formatRelative(agent.updatedAt, now, locale)}</time
-        >
-        {#if agent.resetCredits !== undefined}<span
-            >Reset credits <strong
-              >{formatNumber(agent.resetCredits, locale)}</strong
-            ></span
-          >{/if}
-      </div>
-    {/if}
-  </div>
-</article>
+      {#if agent.resetCredits !== undefined}<span
+          >Reset credits <strong class="tabular-nums"
+            >{formatNumber(agent.resetCredits, locale)}</strong
+          ></span
+        >{/if}
+    </div>
+  </article>
+{/if}

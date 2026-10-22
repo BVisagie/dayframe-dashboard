@@ -45,9 +45,29 @@ export const navOverflow: Action<HTMLElement> = (node) => {
       attributeFilter: ['class', 'aria-current', 'aria-keyshortcuts'],
     }),
   );
+  // The originals are Tab triggers. Their clones live in a menu, so the tab
+  // semantics and the roving tabindex must not come along.
+  const sanitize = () => {
+    for (const clone of node.querySelectorAll<HTMLElement>(
+      '.nav-overflow-menu .menu-item[data-view]',
+    )) {
+      for (const name of [
+        'role',
+        'aria-selected',
+        'aria-controls',
+        'tabindex',
+        'data-bs-target',
+      ])
+        clone.removeAttribute(name);
+    }
+  };
+  const clones = new MutationObserver(sanitize);
+  clones.observe(node, { childList: true, subtree: true });
+  sanitize();
   return {
     destroy() {
       observer.disconnect();
+      clones.disconnect();
       cancelAnimationFrame(frame);
       plugin.dispose();
     },
@@ -134,6 +154,10 @@ export const range: Action<HTMLElement, number> = (node) => {
 };
 export const chips = attach(Chips as Factory);
 export const tab = attach(Tab as Factory);
+/** Bootstrap owns view switching; application state asks the plugin to show a tab. */
+export function showTab(node: HTMLElement): Promise<void> {
+  return Tab.getOrCreateInstance(node).show();
+}
 export const toast: Action<HTMLElement> = (node) => {
   const plugin = new Toast(node, { autohide: false });
   void plugin.show();
@@ -159,6 +183,28 @@ export const settingsDialog: Action<HTMLDialogElement> = (node) => {
   };
 };
 
+// Bootstrap's documentation files most components under components/, but form
+// controls, tables and layout live in their own sections.
+const docsSections: Record<string, string> = {
+  grid: 'layout/grid',
+  containers: 'layout/containers',
+  table: 'content/tables',
+  toast: 'components/toasts',
+  check: 'forms/checkbox',
+  chip: 'forms/chips',
+  combobox: 'forms/combobox',
+  datepicker: 'forms/datepicker',
+  'form-field': 'forms/field',
+  'input-group': 'forms/input-group',
+  radio: 'forms/radio',
+  range: 'forms/range',
+  switch: 'forms/switch',
+};
+/** Documentation page for a `data-bs-component` name. */
+export function bootstrapDocs(name: string): string {
+  return `https://getbootstrap.com/docs/6.0/${docsSections[name] ?? `components/${name}`}/`;
+}
+
 // Bootstrap has no component-inspection overlay; labels link each marked component to its documentation.
 export const lens: Action<HTMLElement, boolean> = (node, enabled) => {
   const labels = new Map<HTMLElement, HTMLAnchorElement>();
@@ -180,9 +226,11 @@ export const lens: Action<HTMLElement, boolean> = (node, enabled) => {
         if (labels.has(target)) return;
         const label = document.createElement('a');
         const name = target.dataset.bsComponent!;
-        label.className = 'lens-label';
+        // Labels are Bootstrap badges. Over a compact button group the label
+        // sits above it, so the controls stay available to the pointer.
+        label.className = `lens-label badge badge-subtle theme-info text-lowercase position-absolute end-0 z-2 ${target.classList.contains('btn-group') ? 'bottom-100' : 'top-0'}`;
         label.textContent = name;
-        label.href = `https://getbootstrap.com/docs/6.0/${['grid', 'containers'].includes(name) ? 'layout' : 'components'}/${name}/`;
+        label.href = bootstrapDocs(name);
         label.target = '_blank';
         label.rel = 'noopener noreferrer';
         label.ariaLabel = `Bootstrap ${name} documentation`;

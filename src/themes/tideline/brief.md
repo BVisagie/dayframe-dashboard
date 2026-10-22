@@ -82,3 +82,11 @@ clipping, overlap, unintended desktop overflow or disclosure issue was found.
 Phone and tablet scrolling preserves the intended reading order. These are
 initial images rather than replacements. Independent token, contrast and
 functional browser checks remain required for each candidate.
+
+The October 2026 once-over was reviewed at 1920×1080 and 1280×720 in both
+schemes. Teal keeps the navbar brand tile and the selected pill; coral stays
+on the accent rule of the brand mark and on signal states only. Weather's
+range bars take teal for mild days and the info blue for cold ones, which
+suits the chartroom; coral, blue and teal story rules read as chart colours,
+not decoration, and the rail's teal header appears only with live data, so a
+replay stays a plain panel. Status-graded agent cards keep coral for the limiting readings only, and the calendar's series badges sit on salt white without competing with the teal selection.
