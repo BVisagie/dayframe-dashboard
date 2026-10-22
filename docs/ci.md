@@ -154,6 +154,19 @@ overflow and desktop vertical fitting, with visual review of the affected
 layouts. Comparison settings and the 34-case CI selection are unchanged; the
 pull request records the fresh comparison run after these baseline updates.
 
+The October 2026 UI once-over at `9a07f64` replaces all sixteen required
+baselines with the exact actuals from pinned Resolute
+[run `39750157322`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39750157322):
+the five Default views and the Nebuchadnezzar and Tideline summaries in both
+`screenshots-1280x720-dpr1` and `screenshots-390x844-dpr1`. Every capture
+changes because the header is now a single navbar row with a theme-coloured
+brand mark, and each view was rebuilt. All eight desktop captures remain
+1280×720 with no vertical overflow; phone captures change height with their
+content (Summary 2039, Agents 2003, Calendar 1104, Weather 1425, Feeds 1371,
+and 1959 to 2024 for the other themes' summaries). Each accepted PNG's SHA-256
+matches its CI actual. The same run passed all 18 functional cases.
+Comparison settings and the 34-case selection are unchanged.
+
 The Vite configuration fixes the Pages base at `/dayframe-dashboard/`.
 `DAYFRAME_PUBLIC_LAUNCH` is the single repository variable passed to the build:
 only the literal value `true` enables indexing. An unset variable, `false` or
