@@ -52,6 +52,7 @@
   import About from './components/About.svelte';
   import Calendar from './components/Calendar.svelte';
   import Feeds from './components/Feeds.svelte';
+  import StoryRow from './components/StoryRow.svelte';
 
   const stack = __STACK_VERSIONS__;
   const views: { id: View; name: string; icon: string; key: string }[] = [
@@ -285,6 +286,11 @@
         : replay
           ? 'fresh'
           : feedStatus,
+  );
+  const summaryStories = $derived(
+    stories
+      .filter((story) => settings.categories.includes(story.category))
+      .slice(0, compactDesktop ? 1 : 3),
   );
   const heading = $derived(
     view === 'summary'
@@ -958,29 +964,19 @@
                 </p>{/if}</Panel
             >
             <Panel title="Across your feeds" kind="quiet" class="summary-feeds"
-              ><ul
-                class="list-group list-group-flush"
-                data-bs-component="list-group"
-              >
-                {#each stories
-                  .filter( (story) => settings.categories.includes(story.category) )
-                  .slice(0, compactDesktop ? 1 : 3) as story (story.id)}<li
-                    class="list-group-item px-0"
-                  >
-                    <div class="small fg-2 mb-1">
-                      {story.publication} · {story.live ? 'Live' : 'Demo'}
-                    </div>
-                    <h3 class="agent-name mb-0">
-                      {#if story.live && story.url}<a
-                          href={story.url}
-                          target="_blank"
-                          rel="noreferrer">{story.title}</a
-                        >{:else}{story.title}{/if}
-                    </h3>
-                  </li>{:else}<li class="list-group-item px-0">
-                    No categories selected. Enable feeds in Settings.
-                  </li>{/each}
-              </ul>
+              >{#if summaryStories.length}<ul
+                  class="list-group list-group-flush"
+                  data-bs-component="list-group"
+                >
+                  {#each summaryStories as story (story.id)}<StoryRow
+                      {story}
+                      {now}
+                      locale={settings.locale}
+                      compact
+                    />{/each}
+                </ul>{:else}<p class="fg-2 mb-0">
+                  No categories selected. Enable feeds in Settings.
+                </p>{/if}
               {#snippet action()}<button
                   class="btn btn-text theme-secondary btn-sm"
                   onclick={() => navigate('feeds')}>All stories</button

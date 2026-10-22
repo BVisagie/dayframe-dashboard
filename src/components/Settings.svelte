@@ -4,6 +4,7 @@
   import { themes, getTheme, themeSchema } from '../themes/registry';
   import { settingsDialog, tab, range, combobox } from '../lib/bootstrap';
   import { searchCities } from '../lib/sources';
+  import { FEED_CATEGORIES } from '../lib/feeds';
   import Icon from './Icon.svelte';
   let {
     settings,
@@ -26,7 +27,6 @@
     { name: 'Feeds', icon: 'rss' },
     { name: 'Demo', icon: 'easel' },
   ];
-  const categories = ['bootstrap', 'technology', 'design', 'science'];
   const small = matchMedia('(max-width: 43rem)').matches;
   const current = $derived(getTheme(settings.theme));
   function cityLabel(city: Location) {
@@ -614,7 +614,7 @@
             for this demo.
           </p>
           <div class="vstack gap-4" role="group" aria-labelledby="feeds-title">
-            {#each categories as category}<div class="form-field">
+            {#each FEED_CATEGORIES as category}<div class="form-field">
                 <input
                   class="check"
                   id={`feed-${category}`}

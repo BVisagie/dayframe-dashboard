@@ -201,8 +201,8 @@ Source and location requests have a default ten-second deadline, covering both
 the request and response-body reading. Expiry settles pending state, retains
 validated cached data or labelled simulated fallbacks, and respects backoff.
 Cancellation and late responses cannot overwrite a disposed source.
-Live Bootstrap stories sort before simulated stories in Summary and Feeds;
-each group then sorts newest first.
+Live Bootstrap stories sort first in Summary; Feeds lists every story newest
+first and leads its rail with the live Bootstrap posts and releases.
 
 ### Weather location
 
