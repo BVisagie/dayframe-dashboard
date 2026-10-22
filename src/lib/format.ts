@@ -84,7 +84,15 @@ export function formatRelative(value: DateInput, now: Date, locale = 'en-GB'): s
   }
 }
 
-/** A bounded percentage shared by text labels and Bootstrap progress values. */
-export function quotaPercent(used: number, limit: number): number {
-  return Number.isFinite(used) && Number.isFinite(limit) && limit > 0 ? Math.min(100, Math.max(0, Math.round(100 * used / limit))) : 0;
+/** Two-unit reset countdowns stay tied to the supplied simulation clock. */
+export function formatCountdown(value: DateInput, now: Date, locale = 'en-GB'): string {
+  const date = dateValue(value);
+  if (!date || !Number.isFinite(now.getTime())) return '—';
+  const minutes = Math.max(0, Math.ceil((date.getTime() - now.getTime()) / 60_000));
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor(minutes % 1440 / 60);
+  const part = (amount: number, unit: string) => formatNumber(amount, locale, { style: 'unit', unit, unitDisplay: 'narrow' });
+  if (days) return `${part(days, 'day')} ${part(hours, 'hour')}`;
+  if (hours) return `${part(hours, 'hour')} ${part(minutes % 60, 'minute')}`;
+  return part(minutes, 'minute');
 }

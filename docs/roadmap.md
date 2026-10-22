@@ -70,14 +70,14 @@ reviewed with every Bootstrap release.
 | Panels and agent cards                       | `card`                                                                                                   |
 | View navigation                              | `nav` with `nav-overflow`; delegated clicks reach cloned menu items, and active state stays synchronized |
 | Header controls                              | `btn-group`, `vr`, flex utilities, `tooltip`; tooltip titles follow shortcut settings                    |
-| Quota meters                                 | `progress`, coloured by theme roles                                                                      |
+| Remaining allowance meters                   | `progress`, filled by percentage left and coloured by theme roles                                         |
 | Status and simulation labels                 | `badge`                                                                                                  |
 | Agent marks                                  | `avatar`, showing initials instead of logos                                                              |
 | Agenda, headlines and story lists            | `list-group`, `icon-link`                                                                                |
 | Story excerpts and About content             | `prose`                                                                                                  |
 | Seven-day forecast and hourly details        | `table`                                                                                                  |
 | Event details on the calendar                | `popover`                                                                                                |
-| Jumping to a date                            | `datepicker`; the Svelte action synchronizes selection and applies locale and first-weekday changes      |
+| Jumping to a date                            | `datepicker` with automatic viewport placement; the action synchronizes selection, locale and first weekday |
 | Feed and hourly forecast paging              | `pagination`; feed pages are windowed with ellipses, and compact desktop views reduce rows per page      |
 | Initial source loading and refresh           | `spinner-border` with `spinner-sm`                                                                       |
 | Reminders                                    | `toast`                                                                                                  |
@@ -224,11 +224,19 @@ each group then sorts newest first.
 
 ### Simulated data
 
-- **Agents:** Codex, Claude, Cursor, Grok, OpenCode and Antigravity. Each
-  follows the general shape of its real plan, such as short session windows,
-  weekly windows, monthly allowances or per-model quotas. All numbers are
-  invented. Usage rises through each window and resets on schedule.
-  Occasionally an account goes stale or needs reconnecting.
+- **Agents:** Codex, Claude, Cursor, Grok, OpenCode and Antigravity all show
+  percentage remaining, named allowances and a reset countdown for each
+  window. Codex has session and weekly windows plus reset credits; Claude
+  adds a weekly model pool; Cursor has monthly and model pools; Grok has a
+  shared weekly pool; OpenCode has session, weekly and monthly windows; and
+  Antigravity has independent model quotas. These are illustrative shapes,
+  not contractual plan limits. Fable is an invented model label. All numbers
+  are invented; there are no message, request or token counts. Each allowance
+  decreases independently and replenishes on its own schedule. Primary
+  readings stay on the named main allowance, while Summary and status cues
+  use the tightest shared window or the selected independent model. An
+  exhausted optional model pool does not exhaust unrelated models. Last
+  update times and occasional stale/reconnect states remain simulated.
 - **Calendar:** several calendars with invented people, places and
   organisations. Includes repeating meetings, all-day and multi-day events,
   overlapping events, and an event inside the reminder window. Events are
@@ -256,7 +264,7 @@ each group then sorts newest first.
 - **Scenarios:** Settings → Demo, or `?scenario=`, switches between `steady`,
   `running-low`, `reconnect`, `reminder-due`, `stale` and `offline`. Each
   scenario shows UI states a visitor would rarely see otherwise.
-- **Disclaimer:** a visible "Demo data" note explains that agent, account and
+- **Disclaimer:** the footer's visible "Demo data" note explains that agent, account and
   calendar data is simulated. It also states that product names belong to their
   owners and Dayframe is not affiliated with them.
 

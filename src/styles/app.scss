@@ -77,10 +77,15 @@
     font-size: 1rem;
     font-weight: 650;
   }
+  /* Bootstrap has no dashboard reading scale; short cards retain the compact quota size. */
   .quota-value {
-    font-size: 1.65rem;
+    font-size: 2.5rem;
+    line-height: 1.2;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+  }
+  .agent-dense .quota-value {
+    font-size: 1.65rem;
   }
   .agent-panel .progress {
     --progress-height: 0.5rem;
@@ -94,12 +99,6 @@
   }
   .agent-row .quota-value {
     font-size: 1.125rem;
-  }
-  /* Bootstrap has no chart primitive. This small SVG exposes the same data as its accessible label. */
-  .sparkline {
-    width: 7rem;
-    height: 2.25rem;
-    color: var(--theme-fg, var(--primary-fg));
   }
   .weather-temperature {
     font-size: 4rem;

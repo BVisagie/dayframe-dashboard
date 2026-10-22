@@ -2,18 +2,23 @@ export type View = 'summary' | 'agents' | 'calendar' | 'weather' | 'feeds';
 export type Scenario =
   'steady' | 'running-low' | 'reconnect' | 'reminder-due' | 'stale' | 'offline';
 export type SourceStatus = 'loading' | 'fresh' | 'stale' | 'offline' | 'reconnect';
+export interface AgentAllowance {
+  id: string;
+  label: string;
+  scope: 'shared' | 'model';
+  remainingPercent: number;
+  resetsAt: string;
+}
 export interface Agent {
   id: string;
   name: string;
   plan: string;
   initials: string;
-  used: number;
-  limit: number;
-  unit: string;
-  window: string;
-  resetsAt: string;
+  primaryAllowanceId: string;
+  allowances: [AgentAllowance, ...AgentAllowance[]];
+  resetCredits?: number;
+  updatedAt: string;
   status: SourceStatus;
-  history: number[];
 }
 export interface CalendarEvent {
   id: string;

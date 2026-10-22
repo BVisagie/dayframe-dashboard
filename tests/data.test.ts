@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { simulate, simulateWeather } from '../src/lib/data.ts';
-import { formatDate, formatNumber, formatRelative, formatTemperature, formatTime, quotaPercent } from '../src/lib/format.ts';
+import { formatCountdown, formatDate, formatNumber, formatRelative, formatTemperature, formatTime } from '../src/lib/format.ts';
+import { limitingAllowance } from '../src/lib/agents.ts';
 import type { Settings } from '../src/lib/types.ts';
 import type { Scenario } from '../src/lib/types.ts';
 import { resolveScheme } from '../src/themes/apply.ts';
@@ -17,7 +18,7 @@ test('the same explicit clock, seed and scenario reproduce all simulated data', 
   assert.deepEqual(simulate(new Date(NOW), SEED, 'steady'), first);
   assert.equal(input.toISOString(), NOW.toISOString());
   assert.notDeepEqual(simulate(NOW, 'another-garden', 'steady'), first);
-  first.agents[0].history[0] = -1;
+  first.agents[0].allowances[0].remainingPercent = -1;
   first.events[0].attendees.push('Altered fixture');
   first.weather.days[0].high = 999;
   assert.notDeepEqual(simulate(NOW, SEED, 'steady'), first);
@@ -42,57 +43,64 @@ test('the engine does not depend on random values or the runtime clock', () => {
   }
 });
 
-test('all six agents expose bounded quotas, history and future resets', () => {
+test('all six agents expose percentage allowances, primary readings and future resets', () => {
   const { agents } = simulate(NOW, SEED, 'steady');
   assert.deepEqual(agents.map(({ name }) => name), ['Codex', 'Claude', 'Cursor', 'Grok', 'OpenCode', 'Antigravity']);
   assert.equal(new Set(agents.map(({ id }) => id)).size, 6);
   for (const agent of agents) {
-    assert.ok(agent.limit > 0);
-    assert.ok(Number.isInteger(agent.used) && agent.used >= 0 && agent.used <= agent.limit);
-    assert.ok(Date.parse(agent.resetsAt) > NOW.getTime());
-    assert.equal(agent.history.length, 12);
-    assert.ok(agent.history.every((value) => Number.isFinite(value) && value >= 0 && value <= 100));
-    assert.equal(agent.history.at(-1), quotaPercent(agent.used, agent.limit));
+    assert.ok(agent.allowances.some(({ id }) => id === agent.primaryAllowanceId));
+    assert.equal(new Set(agent.allowances.map(({ id }) => id)).size, agent.allowances.length);
+    assert.ok(Date.parse(agent.updatedAt) <= NOW.getTime());
+    for (const allowance of agent.allowances) {
+      assert.ok(Number.isInteger(allowance.remainingPercent) && allowance.remainingPercent >= 0 && allowance.remainingPercent <= 100);
+      assert.ok(Date.parse(allowance.resetsAt) > NOW.getTime());
+    }
+    for (const field of ['used', 'limit', 'unit', 'history']) assert.equal(field in agent, false);
   }
-  assert.ok(agents.some(({ window }) => window.includes('session')));
-  assert.ok(agents.some(({ window }) => window.includes('Weekly')));
-  assert.ok(agents.some(({ window }) => window.includes('Monthly')));
-  assert.ok(agents.some(({ window }) => window.includes('model')));
+  assert.deepEqual(agents.find(({ id }) => id === 'claude')!.allowances.map(({ id }) => id), ['session', 'weekly', 'fable']);
+  assert.deepEqual(agents.find(({ id }) => id === 'cursor')!.allowances.map(({ id }) => id), ['monthly', 'other', 'cursor']);
+  assert.deepEqual(agents.find(({ id }) => id === 'opencode')!.allowances.map(({ id }) => id), ['session', 'weekly', 'monthly']);
+  assert.ok(agents.find(({ id }) => id === 'antigravity')!.allowances.every(({ scope }) => scope === 'model'));
+  assert.ok(Number.isInteger(agents.find(({ id }) => id === 'codex')!.resetCredits));
 });
 
-test('every quota rises within its window and resets at the advertised instant', () => {
+test('every allowance decreases within its window and fully replenishes at its own reset', () => {
   for (const agent of simulate(NOW, SEED, 'steady').agents) {
-    const reset = Date.parse(agent.resetsAt);
-    const before = simulate(new Date(reset - 60_000), SEED, 'steady').agents.find(({ id }) => id === agent.id)!;
-    const after = simulate(new Date(reset), SEED, 'steady').agents.find(({ id }) => id === agent.id)!;
-    const later = simulate(new Date(reset + 60_000), SEED, 'steady').agents.find(({ id }) => id === agent.id)!;
-    assert.ok(before.used > 0, agent.id);
-    assert.equal(before.resetsAt, agent.resetsAt, agent.id);
-    assert.equal(after.used, 0, agent.id);
-    assert.ok(after.used <= later.used, agent.id);
-    assert.ok(Date.parse(after.resetsAt) > reset, agent.id);
+    for (const allowance of agent.allowances) {
+      const reset = Date.parse(allowance.resetsAt);
+      const at = (time: number) => simulate(new Date(time), SEED, 'steady').agents.find(({ id }) => id === agent.id)!.allowances.find(({ id }) => id === allowance.id)!;
+      const before = at(reset - 60_000);
+      const after = at(reset);
+      const later = at(reset + 60_000);
+      assert.ok(before.remainingPercent < 100, `${agent.id}:${allowance.id}`);
+      assert.equal(before.resetsAt, allowance.resetsAt);
+      assert.equal(after.remainingPercent, 100);
+      assert.ok(after.remainingPercent >= later.remainingPercent);
+      assert.ok(Date.parse(after.resetsAt) > reset);
+    }
   }
 });
 
 test('monthly usage stays monotonic across ISO week changes and handles leap years', () => {
-  const monthly = (date: string) => simulate(new Date(date), SEED, 'steady').agents.find(({ id }) => id === 'cursor')!;
+  const monthly = (date: string) => simulate(new Date(date), SEED, 'steady').agents.find(({ id }) => id === 'cursor')!.allowances.find(({ id }) => id === 'monthly')!;
   const sunday = monthly('2026-11-08T23:59:00Z');
   const monday = monthly('2026-11-09T00:01:00Z');
-  assert.ok(monday.used >= sunday.used);
+  assert.ok(monday.remainingPercent <= sunday.remainingPercent);
   assert.equal(monday.resetsAt, '2026-12-01T00:00:00.000Z');
   const february = monthly('2028-02-28T23:59:00Z');
   const leapDay = monthly('2028-02-29T23:59:00Z');
-  assert.ok(leapDay.used >= february.used);
+  assert.ok(leapDay.remainingPercent <= february.remainingPercent);
   assert.equal(leapDay.resetsAt, '2028-03-01T00:00:00.000Z');
-  assert.equal(monthly('2028-03-01T00:00:00Z').used, 0);
+  assert.equal(monthly('2028-03-01T00:00:00Z').remainingPercent, 100);
 });
 
 test('weekly quotas use Monday resets across an ISO week-year boundary', () => {
   const before = simulate(new Date('2027-01-03T23:59:00Z'), SEED, 'steady').agents;
   const after = simulate(new Date('2027-01-04T00:00:00Z'), SEED, 'steady').agents;
-  for (const id of ['claude', 'antigravity']) {
-    assert.equal(before.find((agent) => agent.id === id)!.resetsAt, '2027-01-04T00:00:00.000Z');
-    assert.equal(after.find((agent) => agent.id === id)!.used, 0);
+  for (const [agentId, allowanceId] of [['codex', 'weekly'], ['claude', 'weekly'], ['claude', 'fable'], ['grok', 'weekly'], ['opencode', 'weekly'], ['antigravity', 'reasoning']]) {
+    const allowance = (agents: typeof before) => agents.find(({ id }) => id === agentId)!.allowances.find(({ id }) => id === allowanceId)!;
+    assert.equal(allowance(before).resetsAt, '2027-01-04T00:00:00.000Z');
+    assert.equal(allowance(after).remainingPercent, 100);
   }
 });
 
@@ -106,7 +114,7 @@ test('all six scenarios produce their intended attention state', () => {
     assert.ok(result.stories.length >= 8);
     assert.deepEqual(simulate(NOW, SEED, scenario), result);
   }
-  assert.ok(simulate(NOW, SEED, 'running-low').agents.every(({ used, limit }) => used / limit >= 0.89));
+  assert.ok(simulate(NOW, SEED, 'running-low').agents.every((agent) => limitingAllowance(agent).remainingPercent <= 10));
   assert.equal(simulate(NOW, SEED, 'reconnect').agents.filter(({ status }) => status === 'reconnect').length, 2);
   for (const scenario of ['stale', 'offline'] as const) {
     assert.ok(simulate(NOW, SEED, scenario).agents.every(({ status }) => status === scenario));
@@ -287,10 +295,12 @@ test('formatters respect explicit locales, units and clocks and handle missing v
   assert.equal(formatNumber(Number.NaN), '—');
   assert.doesNotThrow(() => formatDate(NOW, 'invalid_locale'));
   assert.doesNotThrow(() => formatNumber(10, 'invalid_locale'));
-  assert.equal(quotaPercent(110, 100), 100);
-  assert.equal(quotaPercent(-10, 100), 0);
-  assert.equal(quotaPercent(10, 0), 0);
-  assert.equal(quotaPercent(Number.NaN, 100), 0);
+  assert.equal(formatCountdown('2026-11-05T20:30:00Z', NOW), '2d 11h');
+  assert.equal(formatCountdown('2026-11-03T13:21:00Z', NOW), '3h 51m');
+  assert.equal(formatCountdown('2026-11-03T09:30:01Z', NOW), '1m');
+  assert.equal(formatCountdown('2026-11-03T09:29:00Z', NOW), '0m');
+  assert.equal(formatCountdown('invalid', NOW), '—');
+  assert.equal(formatCountdown(NOW, new Date('invalid')), '—');
 });
 
 test('date overrides choose an explicit numeric order independently of locale', () => {

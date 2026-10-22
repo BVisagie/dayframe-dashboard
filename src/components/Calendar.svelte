@@ -120,6 +120,7 @@
         id="jump-date"
         class="form-control"
         use:datepicker={{
+          placement: 'auto',
           selectedDates: [selected],
           locale: settings.locale,
           firstWeekday: settings.firstDay,
