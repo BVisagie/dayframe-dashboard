@@ -117,6 +117,13 @@ states. These capture results are historical evidence; each candidate needs
 the three CI jobs and 34 selected browser cases, with current results recorded
 in the pull request.
 
+The header-spacing follow-up replaces eight 1280×720 DPR 1 baselines with exact
+actuals from pinned Resolute [run `39757442503`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39757442503):
+all five Default light views, Nebuchadnezzar dark Summary, and Tideline light
+and dark Summary. Every changed pixel lies within the header's existing height;
+the wider horizontal gaps do not move the page content. All eight phone
+comparisons passed unchanged. Screenshot assertions and tolerances are unchanged.
+
 The optional matrix covers eight viewports × two device pixel ratios × five views ×
 five supported theme/scheme combinations = 400 images. Default and Tideline
 each contribute 160; Nebuchadnezzar contributes 80. Comparisons store CSS-pixel

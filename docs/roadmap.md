@@ -70,7 +70,7 @@ reviewed with every Bootstrap release.
 | Panels and agent cards                       | `card` in three grades: the hero, instrument panels with `card-header`, and outlined quiet panels; agent cards take `card-subtle theme-danger/warning/secondary` from their status, with `card-header` and `card-footer`         |
 | Header                                       | `navbar` with `navbar-brand`; the brand mark is an inline SVG filled with theme tokens                                                                                                                                           |
 | View navigation                              | `nav` with `nav-overflow` inside the navbar; views are `tab` panes shown by the Tab plugin, which also handles arrow keys and the fade; delegated clicks reach cloned menu items, and clones drop their tab semantics            |
-| Header controls                              | `btn-group`, `vr`, flex utilities, `tooltip`; tooltip titles follow shortcut settings                                                                                                                                            |
+| Header controls                              | `btn-group`, `vr`, responsive gap and flex utilities, `tooltip`; `md:column-gap-6` separates brand, nav and controls; `sm:gap-5` spaces the clock divider; tooltip titles follow shortcut settings                                |
 | Remaining allowance meters                   | `progress`, filled by percentage left and coloured by theme roles                                                                                                                                                                |
 | Status and simulation labels                 | `badge`: outline for Live and Demo, subtle for the release in use and the scenario; the lens labels are badges too                                                                                                               |
 | Agent marks                                  | `avatar theme-<agent>` with initials instead of logos, plus `avatar-status` for the connection state                                                                                                                             |
@@ -195,6 +195,8 @@ GitHub release data is refreshed at most hourly, which stays well within the
 unauthenticated limit of 60 requests per hour per originating IP. Shared networks
 can exhaust that allowance, so rate limits trigger backoff and cached fallbacks.
 The blog feed provides headlines, dates and links, without article excerpts.
+The Bootstrap feed rail shows day, month and year in the visitor's locale,
+including for cached items, so its history stays clear across years.
 Source and location requests have a default ten-second deadline, covering both
 the request and response-body reading. Expiry settles pending state, retains
 validated cached data or labelled simulated fallbacks, and respects backoff.

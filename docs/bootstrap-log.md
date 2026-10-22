@@ -73,6 +73,10 @@ in how Dayframe uses Bootstrap.
   filled with theme tokens, the view `nav` inside `nav-overflow`, the clock
   and the control `btn-group`. Below `md` a `w-100 order-last md:d-contents`
   wrapper moves the nav to its own row without custom CSS.
+  Header spacing uses `md:column-gap-6` between the brand, nav and controls,
+  and `sm:gap-5` around the clock divider; the compact phone gaps stay intact.
+  The Bootstrap feed rail includes a numeric year on every locale-formatted
+  date so posts and releases from different years remain distinguishable.
 - **Views as tabs.** The five views are `tab-pane`s shown by the Tab plugin.
   Application state follows `shown.bs.tab` and asks the plugin to show a view
   for shortcuts, rotation and the URL. NavOverflow clones the triggers into

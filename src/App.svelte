@@ -649,7 +649,7 @@
 
 <div class="dashboard-shell d-flex flex-column" use:lens={settings.lens}>
   <a href="#main" class="visually-hidden-focusable">Skip to dashboard</a>
-  <header class="navbar gap-3 mb-4" data-bs-component="navbar">
+  <header class="navbar gap-3 md:column-gap-6 mb-4" data-bs-component="navbar">
     <a
       href="?view=summary"
       onclick={(e) => {
@@ -689,7 +689,7 @@
         </ul>
       </nav>
     </div>
-    <div class="d-flex align-items-center gap-3 ms-auto">
+    <div class="d-flex align-items-center gap-3 sm:gap-5 ms-auto">
       <div class="text-end">
         <div
           class="dashboard-clock font-monospace fs-xl fw-semibold lh-1 tabular-nums"

@@ -118,6 +118,10 @@ shadows through `--shadow-color` rather than redefining the scales.
 
 ## Layout integration
 
+The shared navbar gives the brand, view navigation and controls a wider column
+gap from `md`, and the clock divider wider gaps from `sm`. Phone spacing and
+the navigation's separate row below `md` stay compact across all themes.
+
 Use Bootstrap layout and spacing utilities inside and around these classes:
 
 | Class                                                        | Responsibility                                                  |
