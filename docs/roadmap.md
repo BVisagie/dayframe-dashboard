@@ -582,7 +582,7 @@ single build flag controls both. Pages setup/deployment, repository settings,
 enabling indexing, making the repository public and public announcements each
 require separate maintainer approval.
 
-The prelaunch site is live at
+The site is live at
 [Dayframe](https://bvisagie.github.io/dayframe-dashboard/). At `3d66994`, all
 three CI jobs passed, and the trusted listener passed its full-history secret
 scan, published `Privacy / private history` on that exact commit and deployed
@@ -598,16 +598,18 @@ of the most recent push are disabled so the maintainer can merge their own PRs
 after checking the diff and passing CI. Force pushes and branch deletion are
 disabled. Revisit mandatory approvals when another reviewer joins.
 
-The trusted `workflow_run` listener is installed on `main`. Its successful
-post-merge scan does not establish the independent trusted scan required before
-its first installation merged. Retain that pre-merge evidence separately, and
-verify exact-SHA status publication on a real fork or Dependabot PR; those
-proofs remain outstanding in this record.
+On 2026-10-22, the maintainer approved enabling indexing, deploying the launch
+build and completing the release record. The maintainer will publish the
+announcement and upstream feedback. Maintenance draft permission changes,
+fork/Dependabot verification and recovery of historical scan evidence were
+removed from this launch's scope. Existing CI, privacy and deployment gates
+remain required. See the [launch record](ci.md#public-launch).
 
 ### Launch checklist
 
-Verified on 2026-10-22 against `989c971`. This records observed state;
-unchecked release operations still need separate maintainer approval.
+The first three items were verified on 2026-10-22 against `989c971`.
+Indexing and launch deployment are approved; publication belongs to the
+maintainer and remains pending.
 
 - [x] README has dedicated showcase screenshots, a live link and a short tour
   of all three themes and five views.
@@ -619,24 +621,23 @@ unchecked release operations still need separate maintainer approval.
   passed all three jobs; trusted
   [run `39765335024`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39765335024)
   repeated the scan, published `Privacy / private history` on the exact SHA
-  and deployed the tested artifact. This does not close the historical
-  pre-installation evidence or fork/Dependabot verification gaps above.
+  and deployed the tested artifact.
 - [ ] Enable indexing with `DAYFRAME_PUBLIC_LAUNCH=true` and deploy a fresh
-  tested main build. The variable is currently unset; the live HTML still says
-  `noindex, nofollow` and `robots.txt` disallows crawling.
+  tested main build. Approval is recorded; check this item only after the
+  live HTML and `robots.txt` have been verified.
 - [x] Repository is public. Protection of `main` still requires PRs, all four
   checks, an up-to-date branch and resolved conversations, with administrator
   enforcement and no force pushes or deletion. Pages still deploys only from
   `main` over HTTPS.
 - [ ] Publish the prepared
   [Show & Tell announcement](plans/upstream-feedback.md#show--tell-launch-draft)
-  and approved upstream findings. The three feedback drafts remain unposted;
-  recheck duplicates and their reproductions before submitting them.
+  and upstream findings. The maintainer owns publication and will supply the
+  resulting links. The drafts remain available for that work.
 
 Hosted [weekly maintenance run `39766411779`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39766411779)
 passed both jobs: the skill bytes match upstream and the Bootstrap pin is
-current. Neither job needed an update PR, so draft creation and its repository
-permission remain unverified. See [remaining operational evidence](ci.md#launch-readiness-evidence).
+current. Neither job needed an update PR. Maintenance draft creation is outside
+the approved launch work; its permission setting is unchanged.
 
 Open-Meteo's [current terms](https://open-meteo.com/en/terms) were reviewed on
 2026-10-22. The free API is for non-commercial use with attribution and rate
@@ -646,12 +647,10 @@ Reassess the terms if the project's purpose or usage changes.
 
 ### Launch procedure
 
-Use this procedure after the maintainer separately approves indexing and
-deployment:
+Indexing and deployment were approved on 2026-10-22. The release procedure is:
 
 1. Prepare the launch documentation PR: replace the README's prelaunch notice
-   with the released state and record the approved operation here. Keep the
-   unresolved evidence gaps explicit.
+   with the released state and record the approved operation here.
 2. Set the repository variable `DAYFRAME_PUBLIC_LAUNCH` to the literal `true`.
    Merge the launch PR only after its required checks pass. Its push to `main`
    builds a new artifact with indexing enabled. A manual `CI` dispatch alone
@@ -660,9 +659,9 @@ deployment:
    publication and Pages deployment. Verify the live HTML says `index, follow`
    and `robots.txt` says `User-agent: *` and `Allow: /`, with HTTP 200 over HTTPS.
    Record the commit and run URLs and check off indexing only after that proof.
-4. After separate approval of the announcement and feedback text, post it to
-   the reviewed Bootstrap categories and record the resulting links. M5 stays
-   open until both remaining checklist items have their evidence.
+4. Hand publication to the maintainer, who will post the announcement and
+   feedback and supply the resulting links. M5 stays open until the remaining
+   checklist item has its evidence.
 
 To restore the prelaunch crawl policy, set the variable to `false` and deliver
 another checked main push through the same deployment gate. Changing the
@@ -700,8 +699,8 @@ policy.
 | Bootstrap integration  | Real plugins through Svelte actions; Datepicker updates and NavOverflow clone navigation/active-state synchronization; historical full browser checks passed        | Three-job CI and targeted manual upgrade review                                                                                                        |
 | Layout and themes      | Default, Nebuchadnezzar and Tideline; historical reviewed 400-image set passed at `8c58cba`; all six desktop dimensions fit without lowering the root floor         | Three-job CI and targeted manual review of affected themes and viewports                                                                               |
 | Sources                | Allowed live adapters, caching, fallbacks, backoff and default ten-second deadlines; hosted adapter checks passed                                                   | No real account connections are needed                                                                                                                 |
-| Bootstrap tracking     | Exact `6.0.0-alpha.1` pin, lens, About panel, gap log, measured app CSS footprint and hosted maintenance checks at `989c971`                                         | Verify maintenance draft creation when an upstream update exists                                                                                        |
-| Privacy and deployment | Public repository; Pages deployment, full-history scans and exact-SHA status at `989c971`; HTTPS, prelaunch indexing policy and branch protection verified             | Record independent trusted pre-merge scan evidence and verify the trusted status on a fork or Dependabot PR; indexing and announcements await separate approval |
+| Bootstrap tracking     | Exact `6.0.0-alpha.1` pin, lens, About panel, gap log, measured app CSS footprint and hosted maintenance checks at `989c971`                                         | Maintenance draft creation is outside the approved launch scope                                                                                         |
+| Privacy and deployment | Public repository; Pages deployment, full-history scans and exact-SHA status at `989c971`; HTTPS and branch protection verified                                        | Approved indexing deployment and live verification; publication belongs to the maintainer                                                               |
 
 Milestone completion requires the proof in each definition below. Implemented
 code and local fitting checks do not complete pending CI, privacy or launch work.
