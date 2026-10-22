@@ -28,7 +28,7 @@ application.
 | Topic         | Decision                                                                                                                                                                                          |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Name          | Dayframe                                                                                                                                                                                          |
-| Repository    | `dayframe-dashboard`, private while building, then public                                                                                                                                         |
+| Repository    | `dayframe-dashboard`, public; visibility verified on 2026-10-22                                                                                                                                   |
 | Licence       | MIT                                                                                                                                                                                               |
 | Hosting       | GitHub Pages, deployed from `main` by GitHub Actions                                                                                                                                              |
 | Stack         | Svelte 5, Vite, Bootstrap 6 (exact version pinned). See [Stack](#stack)                                                                                                                           |
@@ -604,15 +604,69 @@ its first installation merged. Retain that pre-merge evidence separately, and
 verify exact-SHA status publication on a real fork or Dependabot PR; those
 proofs remain outstanding in this record.
 
-Launch checklist:
+### Launch checklist
 
-1. README with screenshots, a live link and a short tour of the themes.
-2. `docs/themes.md` and `docs/bootstrap-log.md` are up to date.
-3. The privacy checks pass on the full history, not only the latest commit.
-4. Turn off the `noindex` build flag and redeploy.
-5. Make the repository public; retain the configured protection of `main`.
-6. Share the project in Bootstrap's GitHub Discussions (Show & Tell) and
-   contribute findings to the v6 Feedback threads.
+Verified on 2026-10-22 against `989c971`. This records observed state;
+unchecked release operations still need separate maintainer approval.
+
+- [x] README has dedicated showcase screenshots, a live link and a short tour
+  of all three themes and five views.
+- [x] `docs/themes.md` and `docs/bootstrap-log.md` describe the current theme
+  contract, Bootstrap pin, component use and known gaps. The feature map above
+  still describes `6.0.0-alpha.1`; no Bootstrap upgrade is part of launch.
+- [x] Full-history privacy checks pass. Main
+  [CI run `39765176659`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39765176659)
+  passed all three jobs; trusted
+  [run `39765335024`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39765335024)
+  repeated the scan, published `Privacy / private history` on the exact SHA
+  and deployed the tested artifact. This does not close the historical
+  pre-installation evidence or fork/Dependabot verification gaps above.
+- [ ] Enable indexing with `DAYFRAME_PUBLIC_LAUNCH=true` and deploy a fresh
+  tested main build. The variable is currently unset; the live HTML still says
+  `noindex, nofollow` and `robots.txt` disallows crawling.
+- [x] Repository is public. Protection of `main` still requires PRs, all four
+  checks, an up-to-date branch and resolved conversations, with administrator
+  enforcement and no force pushes or deletion. Pages still deploys only from
+  `main` over HTTPS.
+- [ ] Publish the prepared
+  [Show & Tell announcement](plans/upstream-feedback.md#show--tell-launch-draft)
+  and approved upstream findings. The three feedback drafts remain unposted;
+  recheck duplicates and their reproductions before submitting them.
+
+Hosted [weekly maintenance run `39766411779`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39766411779)
+passed both jobs: the skill bytes match upstream and the Bootstrap pin is
+current. Neither job needed an update PR, so draft creation and its repository
+permission remain unverified. See [remaining operational evidence](ci.md#launch-readiness-evidence).
+
+Open-Meteo's [current terms](https://open-meteo.com/en/terms) were reviewed on
+2026-10-22. The free API is for non-commercial use with attribution and rate
+limits. Dayframe is a free demo without subscriptions or advertising; live
+weather already links Open-Meteo and CC BY 4.0 and identifies rounded values.
+Reassess the terms if the project's purpose or usage changes.
+
+### Launch procedure
+
+Use this procedure after the maintainer separately approves indexing and
+deployment:
+
+1. Prepare the launch documentation PR: replace the README's prelaunch notice
+   with the released state and record the approved operation here. Keep the
+   unresolved evidence gaps explicit.
+2. Set the repository variable `DAYFRAME_PUBLIC_LAUNCH` to the literal `true`.
+   Merge the launch PR only after its required checks pass. Its push to `main`
+   builds a new artifact with indexing enabled. A manual `CI` dispatch alone
+   does not deploy: the gate requires a push to the current `main` commit.
+3. Require successful main CI, the trusted full-history scan, exact-SHA status
+   publication and Pages deployment. Verify the live HTML says `index, follow`
+   and `robots.txt` says `User-agent: *` and `Allow: /`, with HTTP 200 over HTTPS.
+   Record the commit and run URLs and check off indexing only after that proof.
+4. After separate approval of the announcement and feedback text, post it to
+   the reviewed Bootstrap categories and record the resulting links. M5 stays
+   open until both remaining checklist items have their evidence.
+
+To restore the prelaunch crawl policy, set the variable to `false` and deliver
+another checked main push through the same deployment gate. Changing the
+variable alone does not change the deployed site.
 
 ## Milestones
 
@@ -646,8 +700,8 @@ policy.
 | Bootstrap integration  | Real plugins through Svelte actions; Datepicker updates and NavOverflow clone navigation/active-state synchronization; historical full browser checks passed        | Three-job CI and targeted manual upgrade review                                                                                                        |
 | Layout and themes      | Default, Nebuchadnezzar and Tideline; historical reviewed 400-image set passed at `8c58cba`; all six desktop dimensions fit without lowering the root floor         | Three-job CI and targeted manual review of affected themes and viewports                                                                               |
 | Sources                | Allowed live adapters, caching, fallbacks, backoff and default ten-second deadlines; hosted adapter checks passed                                                   | No real account connections are needed                                                                                                                 |
-| Bootstrap tracking     | Exact `6.0.0-alpha.1` pin, lens, About panel, gap log and measured app CSS footprint                                                                                | Hosted maintenance workflow verification                                                                                                               |
-| Privacy and deployment | Prelaunch Pages deployment at `3d66994`, trusted full-history scan and exact-SHA status on `main`, HTTPS and indexing checks, and solo-maintainer branch protection | Record independent trusted pre-merge scan evidence and verify the trusted status on a fork or Dependabot PR; public launch remains separately approved |
+| Bootstrap tracking     | Exact `6.0.0-alpha.1` pin, lens, About panel, gap log, measured app CSS footprint and hosted maintenance checks at `989c971`                                         | Verify maintenance draft creation when an upstream update exists                                                                                        |
+| Privacy and deployment | Public repository; Pages deployment, full-history scans and exact-SHA status at `989c971`; HTTPS, prelaunch indexing policy and branch protection verified             | Record independent trusted pre-merge scan evidence and verify the trusted status on a fork or Dependabot PR; indexing and announcements await separate approval |
 
 Milestone completion requires the proof in each definition below. Implemented
 code and local fitting checks do not complete pending CI, privacy or launch work.
