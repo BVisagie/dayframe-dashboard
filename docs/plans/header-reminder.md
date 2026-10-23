@@ -28,6 +28,9 @@ Remember dismissed event IDs only during the current visit, so reloading can
 show an eligible reminder again. Preserve the Summary's event priority and
 calendar content when a popup disappears. Key the popup by event ID so a new
 event gets its own timer.
+The reminder call site sets the delay. When its focused dismiss button is
+activated, move focus to `main` without scrolling before the fade removes the
+button. Automatic expiry leaves focus on the user's current control.
 
 ## Plan review
 

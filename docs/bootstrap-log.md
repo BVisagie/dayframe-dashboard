@@ -167,6 +167,9 @@ closed issues, pull requests and the v6 Feedback discussions on 2026-10-22.
 - Toast uses its native 12-second autohide, fade, hover/focus pause and
   `data-bs-dismiss` trigger. The Svelte action listens for `hidden.bs.toast`
   before recording dismissal and unmounting; event IDs key plugin lifetimes.
+  The reminder call site supplies its delay and autohide policy.
+- On `hide.bs.toast`, a reminder that still contains focus moves it to `main`
+  without scrolling. Automatic expiry leaves focus elsewhere undisturbed.
 - Dismissed IDs stay in visit-local state and reset on reload. Popup visibility
   no longer controls the Summary hero’s event priority. The polite announcement
   container stays mounted and each reminder is atomic.
@@ -196,6 +199,9 @@ Bootstrap does not provide these dashboard-specific capabilities:
 - Svelte state integration for NavOverflow's cloned menu items and changing
   Datepicker options. Bootstrap owns both controls; the actions bridge their
   lifecycle and updates to application state.
+- Focus handoff from a dismissed reminder to `main`. Bootstrap Toast supplies
+  the dismissal event but does not choose a focus destination for a button
+  that disappears with its toast.
 - Tooltip titles and Range fills follow Svelte updates through the plugins'
   own APIs, including shortcut changes and programmatic settings resets.
 - Shell dimensions, the hero's optional display face, tabular figures for

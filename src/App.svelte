@@ -429,6 +429,15 @@
       },
     };
   }
+  function restoreReminderFocus(event: Event) {
+    // Bootstrap dismisses toasts without choosing a focus destination.
+    if (
+      event.currentTarget instanceof HTMLElement &&
+      event.currentTarget.contains(document.activeElement)
+    ) {
+      document.getElementById('main')?.focus({ preventScroll: true });
+    }
+  }
   function openSettings() {
     settingsOpen = true;
     lastInteraction = Date.now();
@@ -1190,8 +1199,13 @@
   {#if toastReminder}{#key toastReminder.id}{@const event = toastReminder}
       <div
         class="toast"
-        use:toast={() =>
-          (dismissedReminders = [...dismissedReminders, event.id])}
+        use:toast={{
+          autohide: true,
+          delay: 12000,
+          onhide: restoreReminderFocus,
+          onhidden: () =>
+            (dismissedReminders = [...dismissedReminders, event.id]),
+        }}
         data-bs-component="toast"
         role="status"
         aria-atomic="true"

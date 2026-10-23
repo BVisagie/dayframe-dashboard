@@ -314,15 +314,30 @@ for (const reducedMotion of ['reduce', 'no-preference'] as const) {
       if (reload) await page.reload();
       await page.clock.runFor(200);
       await expect(toast).toBeVisible();
+      const calendar = page.getByRole('button', { name: 'View your calendar', exact: true });
+      await calendar.focus();
       await page.clock.runFor(11_000);
       await expect(toast).toBeVisible();
       await page.clock.runFor(1500);
       await expect(toast).toHaveCount(0);
+      await expect(calendar).toBeFocused();
       await expect(hero).toContainText('Starting soon');
       await expect(hero).toContainText('Release readiness check');
       await page.clock.runFor(30_000);
       await expect(toast).toHaveCount(0);
     }
+  });
+
+  test(`keyboard reminder dismissal restores main focus with ${reducedMotion} motion`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion });
+    await visit(page, { scenario: 'reminder-due' });
+    const toast = page.locator('.toast');
+    await toast.getByRole('button', { name: 'Dismiss reminder' }).focus();
+    await page.keyboard.press('Enter');
+    await expect(toast).toHaveCount(0);
+    await expect(page.locator('main')).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('button', { name: 'View your calendar', exact: true })).toBeFocused();
   });
 }
 
