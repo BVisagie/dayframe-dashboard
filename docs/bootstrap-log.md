@@ -71,8 +71,9 @@ in how Dayframe uses Bootstrap.
 
 - **Shell.** The header is a `navbar`: `navbar-brand` with an inline SVG mark
   filled with theme tokens, the view `nav` inside `nav-overflow`, the clock
-  and the control `btn-group`. Below `md` a `w-100 order-last md:d-contents`
-  wrapper moves the nav to its own row without custom CSS.
+  and separate Theme and Settings buttons in a `d-flex gap-3` group. Below `md`
+  a `w-100 order-last md:d-contents` wrapper moves the nav to its own row
+  without custom CSS.
   Header spacing uses `md:column-gap-6` between the brand, nav and controls,
   and `sm:gap-5` around the clock divider; the compact phone gaps stay intact.
   The Bootstrap feed rail includes a numeric year on every locale-formatted
@@ -159,6 +160,22 @@ The three upstream drafts (nav-overflow growth, surface token, prose
 centring) are in `docs/plans/upstream-feedback.md`, checked against open and
 closed issues, pull requests and the v6 Feedback discussions on 2026-10-22.
 
+### Header and reminder follow-up (October 2026)
+
+- Theme and Settings use separate outlined buttons with Bootstrap `gap-3`,
+  retaining their own radii and a clear space between independent actions.
+- Toast uses its native 12-second autohide, fade, hover/focus pause and
+  `data-bs-dismiss` trigger. The Svelte action listens for `hidden.bs.toast`
+  before recording dismissal and unmounting; event IDs key plugin lifetimes.
+  The reminder call site supplies its delay and autohide policy.
+- On `hide.bs.toast`, a reminder that still contains focus moves it to `main`
+  without scrolling. Automatic expiry leaves focus elsewhere undisturbed.
+- Dismissed IDs stay in visit-local state and reset on reload. Popup visibility
+  no longer controls the Summary hero’s event priority. The polite announcement
+  container stays mounted and each reminder is atomic.
+- No custom CSS or timer was added. The design plan and visual review are in
+  `docs/plans/header-reminder.md`.
+
 ### Custom code inventory
 
 Bootstrap does not provide these dashboard-specific capabilities:
@@ -182,6 +199,9 @@ Bootstrap does not provide these dashboard-specific capabilities:
 - Svelte state integration for NavOverflow's cloned menu items and changing
   Datepicker options. Bootstrap owns both controls; the actions bridge their
   lifecycle and updates to application state.
+- Focus handoff from a dismissed reminder to `main`. Bootstrap Toast supplies
+  the dismissal event but does not choose a focus destination for a button
+  that disappears with its toast.
 - Tooltip titles and Range fills follow Svelte updates through the plugins'
   own APIs, including shortcut changes and programmatic settings resets.
 - Shell dimensions, the hero's optional display face, tabular figures for

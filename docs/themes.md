@@ -124,6 +124,12 @@ tokens, as Nebuchadnezzar and Tideline do, or adjust `--shadow-color` and
 The shared navbar gives the brand, view navigation and controls a wider column
 gap from `md`, and the clock divider wider gaps from `sm`. Phone spacing and
 the navigation's separate row below `md` stay compact across all themes.
+Theme and Settings are independent outlined buttons separated by Bootstrap
+`gap-3`; each retains the active theme's button radius. Reminders use Bootstrap
+Toast's fade after 12 seconds and hover/focus pause in every theme, including
+its reduced-motion handling, without new theme tokens.
+Dismissal moves focus to `main` only when the reminder contains focus,
+preserving keyboard continuity without scrolling or interrupting another control.
 
 Use Bootstrap layout and spacing utilities inside and around these classes:
 

@@ -158,11 +158,22 @@ export const tab = attach(Tab as Factory);
 export function showTab(node: HTMLElement): Promise<void> {
   return Tab.getOrCreateInstance(node).show();
 }
-export const toast: Action<HTMLElement> = (node) => {
-  const plugin = new Toast(node, { autohide: false });
+type ToastOptions = NonNullable<ConstructorParameters<typeof Toast>[1]> & {
+  onhide?: (event: Event) => void;
+  onhidden: () => void;
+};
+export const toast: Action<HTMLElement, ToastOptions> = (
+  node,
+  { onhide, onhidden, ...config },
+) => {
+  const plugin = new Toast(node, config);
+  if (onhide) node.addEventListener('hide.bs.toast', onhide);
+  node.addEventListener('hidden.bs.toast', onhidden);
   void plugin.show();
   return {
     destroy() {
+      if (onhide) node.removeEventListener('hide.bs.toast', onhide);
+      node.removeEventListener('hidden.bs.toast', onhidden);
       plugin.dispose();
     },
   };

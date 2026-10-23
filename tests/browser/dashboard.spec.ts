@@ -293,10 +293,102 @@ test('reminder toast can be dismissed and reminders can be disabled', async ({ p
   await expect(toast).toContainText('Release readiness check');
   await toast.getByRole('button', { name: 'Dismiss reminder' }).click();
   await expect(toast).toHaveCount(0);
+  await expect(page.locator('.summary-hero')).toContainText('Starting soon');
+  await expect(page.locator('.summary-hero')).toContainText('Release readiness check');
   await visit(page, { scenario: 'reminder-due' });
   const dialog = await settings(page, 'Calendar');
   await dialog.getByRole('switch', { name: 'Show event reminders', exact: true }).uncheck();
   await closeSettings(page);
+  await expect(toast).toHaveCount(0);
+});
+
+for (const reducedMotion of ['reduce', 'no-preference'] as const) {
+  test(`reminder expires after 12 seconds and returns on reload with ${reducedMotion} motion`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion });
+    await page.clock.install({ time: new Date(referenceClock) });
+    await page.clock.pauseAt(new Date(referenceClock));
+    await visit(page, { scenario: 'reminder-due' });
+    const toast = page.locator('.toast');
+    const hero = page.locator('.summary-hero');
+    for (const reload of [false, true]) {
+      if (reload) await page.reload();
+      await page.clock.runFor(200);
+      await expect(toast).toBeVisible();
+      const calendar = page.getByRole('button', { name: 'View your calendar', exact: true });
+      await calendar.focus();
+      await page.clock.runFor(11_000);
+      await expect(toast).toBeVisible();
+      await page.clock.runFor(1500);
+      await expect(toast).toHaveCount(0);
+      await expect(calendar).toBeFocused();
+      await expect(hero).toContainText('Starting soon');
+      await expect(hero).toContainText('Release readiness check');
+      await page.clock.runFor(30_000);
+      await expect(toast).toHaveCount(0);
+    }
+  });
+
+  test(`keyboard reminder dismissal restores main focus with ${reducedMotion} motion`, async ({ page }) => {
+    await page.emulateMedia({ reducedMotion });
+    await visit(page, { scenario: 'reminder-due' });
+    const toast = page.locator('.toast');
+    await toast.getByRole('button', { name: 'Dismiss reminder' }).focus();
+    await page.keyboard.press('Enter');
+    await expect(toast).toHaveCount(0);
+    await expect(page.locator('main')).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('button', { name: 'View your calendar', exact: true })).toBeFocused();
+  });
+}
+
+test('reminder pauses for hover and keyboard focus, then gives a fresh reading interval', async ({ page }) => {
+  await page.clock.install({ time: new Date(referenceClock) });
+  await page.clock.pauseAt(new Date(referenceClock));
+  await visit(page, { scenario: 'reminder-due' });
+  const toast = page.locator('.toast');
+  await page.clock.runFor(200);
+  await toast.hover();
+  await page.clock.runFor(20_000);
+  await expect(toast).toBeVisible();
+  const dismiss = toast.getByRole('button', { name: 'Dismiss reminder' });
+  await dismiss.focus();
+  await page.mouse.move(0, 0);
+  await page.clock.runFor(20_000);
+  await expect(dismiss).toBeFocused();
+  await expect(toast).toBeVisible();
+  await page.locator('main').focus();
+  await page.clock.runFor(11_000);
+  await expect(toast).toBeVisible();
+  await page.clock.runFor(1500);
+  await expect(toast).toHaveCount(0);
+  await expect(page.locator('main')).toBeFocused();
+});
+
+test('changing reminder events starts a new timer and disabling reminders disposes it', async ({ page }) => {
+  await page.clock.install({ time: new Date(referenceClock) });
+  await page.clock.pauseAt(new Date(referenceClock));
+  await visit(page, { clock: '', scenario: 'reminder-due' });
+  const toast = page.locator('.toast');
+  await toast.evaluate(node => { node.dataset.previousEvent = 'true'; });
+  await page.clock.runFor(10_000);
+  // Advance the simulation date without firing the previous event's timeout.
+  await page.clock.setSystemTime(new Date('2026-11-04T09:30:00Z'));
+  await page.clock.runFor(1000);
+  await expect(toast).not.toHaveAttribute('data-previous-event');
+  await expect(toast).toContainText('Release readiness check');
+  await page.clock.runFor(3000);
+  await expect(toast).toBeVisible();
+  let dialog = await settings(page, 'Calendar');
+  await dialog.getByRole('switch', { name: 'Show event reminders', exact: true }).uncheck();
+  await closeSettings(page);
+  await page.clock.runFor(15_000);
+  await expect(toast).toHaveCount(0);
+  dialog = await settings(page, 'Calendar');
+  await dialog.getByRole('switch', { name: 'Show event reminders', exact: true }).check();
+  await closeSettings(page);
+  await page.clock.runFor(200);
+  await expect(toast).toContainText('Release readiness check');
+  await page.clock.runFor(12_500);
   await expect(toast).toHaveCount(0);
 });
 

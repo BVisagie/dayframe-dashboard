@@ -138,7 +138,7 @@
   let aboutOpen = $state(false);
   let notice = $state('');
   let refreshing = $state(false);
-  let dismissedReminder = $state('');
+  let dismissedReminders = $state<string[]>([]);
   let lastInteraction = Date.now();
   let settingsTrigger: HTMLButtonElement;
   let weatherSource: Source<Weather> | undefined;
@@ -223,17 +223,20 @@
   const attentionPrimary = $derived(
     attentionAgent ? primaryAllowance(attentionAgent) : null,
   );
-  const reminder = $derived(
+  const dueReminders = $derived(
     settings.reminders
-      ? nextEvents.find(
+      ? nextEvents.filter(
           (event) =>
             !event.allDay &&
             Date.parse(event.start) >= now.getTime() &&
             Date.parse(event.start) - now.getTime() <=
-              settings.reminderMinutes * 60000 &&
-            event.id !== dismissedReminder,
+              settings.reminderMinutes * 60000,
         )
-      : undefined,
+      : [],
+  );
+  const reminder = $derived(dueReminders[0]);
+  const toastReminder = $derived(
+    dueReminders.find((event) => !dismissedReminders.includes(event.id)),
   );
   const heroEvent = $derived(reminder ?? nextEvent);
   // The hero aside answers "what can I use instead" or "who is in this".
@@ -426,6 +429,15 @@
       },
     };
   }
+  function restoreReminderFocus(event: Event) {
+    // Bootstrap dismisses toasts without choosing a focus destination.
+    if (
+      event.currentTarget instanceof HTMLElement &&
+      event.currentTarget.contains(document.activeElement)
+    ) {
+      document.getElementById('main')?.focus({ preventScroll: true });
+    }
+  }
   function openSettings() {
     settingsOpen = true;
     lastInteraction = Date.now();
@@ -444,7 +456,7 @@
       url.searchParams.delete(key),
     );
     history.replaceState(null, '', url);
-    dismissedReminder = '';
+    dismissedReminders = [];
     notice = 'Settings restored to this browser’s defaults.';
   }
   async function refresh() {
@@ -712,8 +724,8 @@
       </div>
       <div class="vr d-none sm:d-block"></div>
       <div
-        class="btn-group"
-        data-bs-component="button-group"
+        class="d-flex align-items-center gap-3"
+        role="group"
         aria-label="Dashboard controls"
       >
         <div class="position-relative">
@@ -1183,25 +1195,38 @@
     onclose={() => (aboutOpen = false)}
     onlens={() => changeSettings({ lens: !settings.lens })}
   />{/if}
-{#if reminder}<div class="toast-container" aria-live="polite">
-    <div class="toast" use:toast data-bs-component="toast" role="status">
-      <div class="toast-header">
-        <Icon name="calendar-event" /><strong class="me-auto ms-2"
-          >Coming up {formatRelative(
-            reminder.start,
-            now,
-            settings.locale,
-          )}</strong
-        ><button
-          class="btn btn-text theme-secondary btn-sm"
-          aria-label="Dismiss reminder"
-          onclick={() => (dismissedReminder = reminder.id)}
-          ><Icon name="x-lg" /></button
-        >
+<div class="toast-container" aria-live="polite">
+  {#if toastReminder}{#key toastReminder.id}{@const event = toastReminder}
+      <div
+        class="toast"
+        use:toast={{
+          autohide: true,
+          delay: 12000,
+          onhide: restoreReminderFocus,
+          onhidden: () =>
+            (dismissedReminders = [...dismissedReminders, event.id]),
+        }}
+        data-bs-component="toast"
+        role="status"
+        aria-atomic="true"
+      >
+        <div class="toast-header">
+          <Icon name="calendar-event" /><strong class="me-auto ms-2"
+            >Coming up {formatRelative(
+              event.start,
+              now,
+              settings.locale,
+            )}</strong
+          ><button
+            class="btn btn-text theme-secondary btn-sm"
+            aria-label="Dismiss reminder"
+            data-bs-dismiss="toast"><Icon name="x-lg" /></button
+          >
+        </div>
+        <div class="toast-body">
+          <strong>{event.title}</strong>
+          <p class="mb-0">{event.location} · Simulated calendar</p>
+        </div>
       </div>
-      <div class="toast-body">
-        <strong>{reminder.title}</strong>
-        <p class="mb-0">{reminder.location} · Simulated calendar</p>
-      </div>
-    </div>
-  </div>{/if}
+    {/key}{/if}
+</div>
