@@ -45,3 +45,15 @@ controls without competing with the clock; both icon buttons still fit on
 the phone's first header row. The reminder remains readable in both schemes
 and clears the content it temporarily covers. No new ornament or motion is
 needed. The nine README captures were refreshed for the header change.
+
+The 16 routine baselines come from the pinned-container actuals in
+[CI run 39938907092](https://github.com/BVisagie/dayframe-dashboard/actions/runs/39938907092)
+at `73e896c`. Review covered all five Default light views and Summary in
+Nebuchadnezzar dark and Tideline light/dark at 1280×720 and 390×844. Every
+image keeps its original dimensions. The phone captures received an
+independent review: all pixels outside the affected header area are unchanged.
+Desktop changes are also confined to header layout, with minor raster noise
+on unchanged curved edges (including one counted Calendar corner pixel).
+The exact reviewed PNGs were copied and their hashes verified; assertions,
+tags and comparison settings were not changed. Other optional baselines keep
+their historical captures, as described in `docs/ci.md`.
