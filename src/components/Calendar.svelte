@@ -25,6 +25,10 @@
   let fullAgenda = $state(false);
   // Rows the day panel's fitted region shows, selected day first.
   let fittedDay = $state(100);
+  function openAgenda() {
+    small = matchMedia('(max-width: 43rem)').matches;
+    fullAgenda = true;
+  }
   let small = $state(false);
   function dateKey(date: Date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -51,6 +55,10 @@
   function eventsOn(date: string) {
     return eventsForDate(events, date);
   }
+  // Selected-day events the fitted region could not show.
+  const hiddenDay = $derived(
+    Math.max(0, eventsOn(selected).length - fittedDay),
+  );
   // The six days after the selected one, so the day panel also answers
   // "what is coming" without leaving the month. A multi-day event appears
   // once, on its first day that the agenda above does not already show.
@@ -243,9 +251,10 @@
       settings.dateFormat,
     )}
     class="g-col-12 lg:g-col-4"
-    ><!-- One fitted region: the selected day's events come first and keep
-         their "+N more" control, and "Later this week" takes what is left.
-         The heading sits in the first later row so it never stands alone. -->
+    ><!-- One fitted region: the selected day's events come first, and "Later
+         this week" takes what is left. The heading sits in the first later
+         row so it never stands alone. The day's "+N more" control follows the
+         region, so the region shrinks to make room for it. -->
     <div
       class="vstack"
       class:fit-rows={fill}
@@ -261,10 +270,7 @@
         hourCycle={settings.hourCycle}
         max={compact ? 3 : 6}
         visible={fill ? fittedDay : undefined}
-        onmore={() => {
-          small = matchMedia('(max-width: 43rem)').matches;
-          fullAgenda = true;
-        }}
+        onmore={openAgenda}
       />
       {#if later.length}<ul
           class="list-group list-group-flush later-list mt-3"
@@ -290,6 +296,11 @@
             </li>{/each}
         </ul>{/if}
     </div>
+    {#if fill && hiddenDay}<button
+        class="btn btn-link px-0"
+        onclick={openAgenda}
+        >+{hiddenDay} more {hiddenDay === 1 ? 'event' : 'events'}</button
+      >{/if}
     <p class="small fg-2 mt-3 mb-0">
       All calendars and attendees are invented. Select an event for details.
     </p></Panel

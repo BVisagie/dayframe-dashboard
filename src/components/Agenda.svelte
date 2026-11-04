@@ -21,7 +21,10 @@
     compact?: boolean;
     /** Show as many events as the panel fits instead of `max`. */
     fit?: boolean;
-    /** How many events an enclosing fitRows shows; every event is rendered. */
+    /**
+     * How many events an enclosing fitRows shows; every event is rendered and
+     * the enclosing view places the "+N more" control outside its region.
+     */
     visible?: number;
     onmore?: () => void;
   } = $props();
@@ -91,7 +94,9 @@
       No events on this date. Choose another day to see its agenda.
     </li>{/each}
 </ul>
-{#if events.length > shown}<button class="btn btn-link px-0" onclick={onmore}
+{#if visible === undefined && events.length > shown}<button
+    class="btn btn-link px-0"
+    onclick={onmore}
     >+{events.length - shown} more {events.length - shown === 1
       ? 'event'
       : 'events'}</button

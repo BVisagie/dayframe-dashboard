@@ -640,6 +640,20 @@ for (const { density, viewport, pageSize, secondPage } of [
   });
 }
 
+test('the fitted day agenda leaves room for its more-events control', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await visit(page, { view: 'calendar', theme: 'nebuchadnezzar', scale: '145', clock: '2026-11-04T09:30:00Z' });
+  const more = page.locator('#view-calendar').getByRole('button', { name: /^\+\d+ more events?$/ });
+  await expect(more).toBeVisible();
+  const [moreBox, lastRow, note] = await Promise.all([
+    more.boundingBox(),
+    page.locator('#view-calendar .agenda-list > li:visible').last().boundingBox(),
+    page.locator('#view-calendar').getByText('All calendars and attendees are invented.', { exact: false }).boundingBox(),
+  ]);
+  expect(lastRow!.y + lastRow!.height).toBeLessThanOrEqual(moreBox!.y + 0.5);
+  expect(moreBox!.y + moreBox!.height).toBeLessThanOrEqual(note!.y + 0.5);
+});
+
 test('fitted feed pages reach every story exactly once with rows of different heights', async ({ page }) => {
   // Excerpts and titles wrap differently in the console's wide mono face.
   for (const [width, height, theme] of [[1280, 720, 'nebuchadnezzar'], [1920, 1080, 'nebuchadnezzar'], [1366, 768, 'default']] as const) {
