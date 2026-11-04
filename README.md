@@ -19,7 +19,7 @@ The public demo runs on GitHub Pages with search indexing enabled. See the
 
 ## Run locally
 
-Use Node 26.12.1 and npm:
+Use Node 26.13.0 and npm:
 
 ```sh
 npm ci
