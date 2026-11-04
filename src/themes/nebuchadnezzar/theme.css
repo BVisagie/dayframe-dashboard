@@ -1,12 +1,16 @@
+/* Martian Mono (SIL OFL 1.1) ships with the site, including its width axis;
+   the browser downloads it only while this theme is active. */
+@import '@fontsource-variable/martian-mono/standard.css';
+
 @layer theme {
   :where([data-theme='nebuchadnezzar']) {
     color-scheme: dark;
     --bg-body: #010301;
     --bg-1: #141b0c;
     --fg-body: #d6edc9;
-    --body-font-family: ui-monospace, monospace;
-    --font-mono: ui-monospace, monospace;
-    --display-font-family: ui-monospace, monospace;
+    --body-font-family: 'Martian Mono Variable', ui-monospace, monospace;
+    --font-mono: 'Martian Mono Variable', ui-monospace, monospace;
+    --display-font-family: 'Martian Mono Variable', ui-monospace, monospace;
     --body-line-height: 1.55;
     --radius-1: .0625rem;
     --radius-2: .125rem;
@@ -46,6 +50,17 @@
   :where([data-theme='nebuchadnezzar']) .summary-hero {
     --card-spacer-x: var(--spacer-6);
     --card-spacer-y: var(--spacer-6);
+  }
+
+  /* Bootstrap has no font-width token. Panel titles take the face's wide
+     cut and the hero headline its narrow one, so one mono family carries
+     both the console's labels and its command. */
+  :where([data-theme='nebuchadnezzar']) .card-header h2 {
+    font-stretch: 112.5%;
+  }
+
+  :where([data-theme='nebuchadnezzar']) .hero-title {
+    font-stretch: 87.5%;
   }
 
   :where([data-theme='nebuchadnezzar']) .summary-agents {

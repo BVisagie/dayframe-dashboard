@@ -165,6 +165,10 @@
     ),
   );
   const replay = $derived(frozen || settings.scenario !== 'steady');
+  const scenarioName = $derived(
+    settings.scenario.charAt(0).toUpperCase() +
+      settings.scenario.slice(1).replaceAll('-', ' '),
+  );
   const convertedWeather = $derived.by(() => {
     const weather = simulation.weather;
     if (settings.units !== 'fahrenheit') return weather;
@@ -736,7 +740,7 @@
                 bind:this={triggers[item.id]}
                 ><Icon name={item.icon} /><span>{item.name}</span
                 >{#if settings.keyboardShortcuts}<kbd
-                    class="d-none xl:d-inline-block"
+                    class="d-none 2xl:d-inline-block"
                     aria-hidden="true">{i + 1}</kbd
                   >{/if}</button
               >
@@ -745,13 +749,6 @@
       </nav>
     </div>
     <div class="d-flex align-items-center gap-3 sm:gap-5 ms-auto">
-      {#if settings.scenario !== 'steady'}<span
-          class="badge badge-subtle theme-warning d-none lg:d-inline-flex"
-          data-bs-component="badge"
-          ><Icon name={scenarioIcons[settings.scenario]} />
-          {settings.scenario.charAt(0).toUpperCase() +
-            settings.scenario.slice(1).replaceAll('-', ' ')} scenario</span
-        >{/if}
       <div class="text-end">
         <div
           class="dashboard-clock font-monospace fs-xl fw-semibold lh-1 tabular-nums"
@@ -769,8 +766,17 @@
               day: 'numeric',
             },
             settings.dateFormat,
-          )}{#if frozen}<span class="badge badge-outline theme-secondary ms-2"
-              >Replay</span
+          )}<!-- A scenario is a kind of replay, so its badge takes the replay
+               marker's place beside the date instead of widening the navbar. -->{#if settings.scenario !== 'steady'}<span
+              class="badge badge-subtle theme-warning ms-2"
+              data-bs-component="badge"
+              ><Icon name={scenarioIcons[settings.scenario]} /><span
+                class="d-none 2xl:d-inline"
+                aria-hidden="true">{scenarioName}</span
+              ><span class="visually-hidden">{scenarioName} scenario</span
+              ></span
+            >{:else if frozen}<span
+              class="badge badge-outline theme-secondary ms-2">Replay</span
             >{/if}
         </div>
       </div>
@@ -847,13 +853,6 @@
   </header>
   <main id="main" class="flex-grow-1 d-flex flex-column" tabindex="-1">
     <h1 class="visually-hidden">{heading}</h1>
-    {#if settings.scenario !== 'steady'}<p class="lg:d-none mb-3">
-        <span class="badge badge-subtle theme-warning" data-bs-component="badge"
-          ><Icon name={scenarioIcons[settings.scenario]} />
-          {settings.scenario.charAt(0).toUpperCase() +
-            settings.scenario.slice(1).replaceAll('-', ' ')} scenario</span
-        >
-      </p>{/if}
     {#if notice}<div
         class="alert theme-info d-flex gap-3 align-items-center"
         role="status"
@@ -865,7 +864,7 @@
         >
       </div>{/if}
     {#if settings.scenario === 'offline' || settings.scenario === 'stale'}<div
-        class="alert theme-warning"
+        class="alert theme-warning py-2 small"
         role="status"
         data-bs-component="alert"
       >
@@ -1249,10 +1248,10 @@
     </div>
   </main>
   <footer
-    class="dashboard-footer border-top mt-5 pt-2 d-flex flex-wrap align-items-center justify-content-between gap-3"
+    class="dashboard-footer border-top mt-5 pt-2 d-flex flex-wrap lg:flex-nowrap align-items-center justify-content-between gap-3"
   >
     <!-- Three short statements wrap as units, so wide screens keep one line. -->
-    <div class="d-flex flex-wrap column-gap-5 row-gap-1 min-w-0">
+    <div class="d-flex flex-wrap flex-fill column-gap-5 row-gap-1 min-w-0">
       <p class="m-0">
         <strong>Demo data.</strong> Agent usage, accounts, calendars and non-Bootstrap
         feeds are simulated.
