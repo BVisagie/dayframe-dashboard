@@ -182,6 +182,20 @@ and 1959 to 2024 for the other themes' summaries). Each accepted PNG's SHA-256
 matches its CI actual. The same run passed all 18 functional cases.
 Comparison settings and the 34-case selection are unchanged.
 
+The November 2026 UI redesign at `51eb07c` replaces all sixteen required
+baselines with the exact actuals from pinned Resolute
+[run `41785591470`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/41785591470):
+the five Default views and the Nebuchadnezzar and Tideline summaries in both
+projects. Every capture changes: the view heading is visually hidden, rows
+fill the viewport with fitted lists, the hero takes its situation's role
+tint, agent sessions are staggered, and Tideline and Nebuchadnezzar bundle
+their own faces. All eight desktop captures remain 1280×720 with no vertical
+overflow; phone captures change height with their content (Summary 2149,
+Agents 2050, Calendar 1277, Weather 1489, Feeds 1140, Nebuchadnezzar Summary
+2173, Tideline Summaries 2149). Each accepted PNG's SHA-256 matches its CI
+actual. The same run passed all 18 functional cases. Comparison settings and
+the 34-case selection are unchanged.
+
 The Vite configuration fixes the Pages base at `/dayframe-dashboard/`.
 `DAYFRAME_PUBLIC_LAUNCH` is the single repository variable passed to the build:
 only the literal value `true` enables indexing. An unset variable, `false` or
