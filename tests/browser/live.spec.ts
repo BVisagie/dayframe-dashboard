@@ -39,6 +39,15 @@ function forecast(fahrenheit = false) {
   };
 }
 
+// Current conditions are label and value pairs; each value must match its label.
+async function expectMeasures(page: Page, measures: Record<string, string>) {
+  const list = page.locator('.weather-measures');
+  for (const [label, value] of Object.entries(measures)) {
+    const pair = list.locator('div').filter({ has: page.getByText(label, { exact: true }) });
+    await expect(pair.locator('dd')).toHaveText(value);
+  }
+}
+
 async function mockSources(page: Page, failing = false) {
   const state = { failing, forecasts: [] as URL[], geocoding: [] as URL[] };
   const timezone = await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
@@ -104,11 +113,11 @@ test('live weather maps mocked current, daily and hourly fields; units and city 
   await page.goto('?view=weather&seed=reference');
   await expect(page.getByText('Weather by', { exact: false })).toBeVisible();
   await expect(page.locator('.weather-temperature')).toHaveText('25°C');
-  await expect(
-    page.getByText('Feels like 26° · Wind 16 km/h · 63% humidity', {
-      exact: true,
-    }),
-  ).toBeVisible();
+  await expectMeasures(page, {
+    'Feels like': '26°',
+    Wind: '16 km/h',
+    Humidity: '63%',
+  });
   await expect(
     page
       .locator('.weather-temperature')
@@ -147,11 +156,11 @@ test('live weather maps mocked current, daily and hourly fields; units and city 
   await dialog.getByLabel('Units', { exact: true }).selectOption('fahrenheit');
   await closeSettings(page);
   await expect(page.locator('.weather-temperature')).toHaveText('77°F');
-  await expect(
-    page.getByText('Feels like 79° · Wind 10 mph · 63% humidity', {
-      exact: true,
-    }),
-  ).toBeVisible();
+  await expectMeasures(page, {
+    'Feels like': '79°',
+    Wind: '10 mph',
+    Humidity: '63%',
+  });
   expect(state.forecasts.at(-1)?.searchParams.get('wind_speed_unit')).toBe(
     'mph',
   );
@@ -281,7 +290,7 @@ test('failed live forecast falls back and reconnect refresh recovers after backo
     page.getByRole('status').filter({ hasText: 'Weather is offline.' }),
   ).toBeVisible();
   await expect(
-    page.getByText('Simulated forecast · no live location selected.', {
+    page.getByText('Simulated forecast, no live location selected', {
       exact: true,
     }),
   ).toBeVisible();

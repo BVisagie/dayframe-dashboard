@@ -65,7 +65,8 @@
           >
         </div>{/if}
       {#if !enabled}<p class="fg-2 mb-0">
-          Turn on Bootstrap in Sources to follow its blog and releases.
+          Turn on Bootstrap under Manage sources to follow its blog and
+          releases.
         </p>
       {:else if status === 'loading'}<p class="visually-hidden" role="status">
           Loading Bootstrap posts and releases…
@@ -76,10 +77,28 @@
               <span class="placeholder placeholder-sm d-block col-4"></span>
             </div>{/each}
         </div>
+      {:else if !showing && !failed && replay}<!-- A replay never requests
+             live data, so the rail shows what this build runs instead. -->
+        <div class="vstack gap-2">
+          <p class="m-0 d-flex flex-wrap align-items-center gap-3">
+            <span class="fs-lg fw-medium">Bootstrap {bundled}</span><span
+              class="badge badge-subtle theme-primary">In use</span
+            >
+          </p>
+          <p class="fg-2 m-0">
+            Replays use demo stories, so live posts and releases load only on
+            the live dashboard.
+          </p>
+          <a
+            class="icon-link"
+            href="https://github.com/twbs/bootstrap/releases"
+            target="_blank"
+            rel="noreferrer"
+            >Bootstrap releases on GitHub<Icon name="box-arrow-up-right" /></a
+          >
+        </div>
       {:else if !showing && !failed}<p class="fg-2 mb-0">
-          {replay
-            ? 'This replay uses demo stories, so live posts and releases are not loaded.'
-            : 'The Bootstrap blog and GitHub returned no posts or releases.'}
+          The Bootstrap blog and GitHub returned no posts or releases.
         </p>{/if}
     </div>{/if}
   {#if showing}<div

@@ -474,7 +474,9 @@
       document.getElementById('main')?.focus({ preventScroll: true });
     }
   }
-  function openSettings() {
+  let settingsSection = $state(0);
+  function openSettings(section = 0) {
+    settingsSection = section;
     settingsOpen = true;
     lastInteraction = Date.now();
   }
@@ -831,7 +833,7 @@
           use:tooltip={{
             title: settings.keyboardShortcuts ? 'Settings (,)' : 'Settings',
           }}
-          onclick={openSettings}
+          onclick={() => openSettings()}
           bind:this={settingsTrigger}
           aria-label="Open settings"><Icon name="sliders" /></button
         >
@@ -1201,7 +1203,8 @@
             {settings}
             live={!replay && weatherLive}
             compact={compactDesktop}
-            onsettings={openSettings}
+            fill={fitting}
+            onsettings={() => openSettings()}
           />
         {/if}
       </section>
@@ -1218,8 +1221,10 @@
             {settings}
             {now}
             compact={compactDesktop}
+            fill={fitting}
             status={feedState}
             onchange={changeSettings}
+            onsources={() => openSettings(4)}
           />
         {/if}
       </section>
@@ -1263,6 +1268,7 @@
     onclose={() => void closeSettings()}
     onreset={reset}
     onrefresh={() => void refresh()}
+    section={settingsSection}
   />{/if}
 {#if aboutOpen}<About
     {stories}

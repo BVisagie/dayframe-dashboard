@@ -11,6 +11,7 @@
     settings,
     live = false,
     compact = false,
+    fill = false,
     onsettings,
   }: {
     weather: Weather;
@@ -18,6 +19,8 @@
     settings: Settings;
     live?: boolean;
     compact?: boolean;
+    /** On desktop the forecast grows to the view's height above the hours. */
+    fill?: boolean;
     onsettings: () => void;
   } = $props();
   let hourPage = $state(0);
@@ -41,8 +44,8 @@
   });
 </script>
 
-<div class="grid">
-  <Panel title="Seven-day forecast" class="g-col-12"
+<div class="vstack gap-5" class:h-100={fill}>
+  <Panel title="Seven-day forecast" class="flex-grow-1"
     ><WeatherPanel
       {weather}
       {status}
@@ -56,7 +59,7 @@
         class="btn btn-text theme-secondary btn-sm"
         onclick={onsettings}><Icon name="geo-alt" /> Location and units</button
       >{/snippet}</Panel
-  ><Panel title="Hourly outlook" class="g-col-12"
+  ><Panel title="Hourly outlook"
     >{#if status === 'loading'}<div
         class="placeholder-glow hstack gap-3"
         aria-hidden="true"

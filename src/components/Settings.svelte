@@ -2,7 +2,13 @@
   import { onMount } from 'svelte';
   import type { Settings, Location } from '../lib/types';
   import { themes, getTheme, themeSchema } from '../themes/registry';
-  import { settingsDialog, tab, range, combobox } from '../lib/bootstrap';
+  import {
+    settingsDialog,
+    tab,
+    range,
+    combobox,
+    showTab,
+  } from '../lib/bootstrap';
   import { searchCities } from '../lib/sources';
   import { FEED_CATEGORIES } from '../lib/feeds';
   import Icon from './Icon.svelte';
@@ -12,12 +18,15 @@
     onclose,
     onreset,
     onrefresh,
+    section = 0,
   }: {
     settings: Settings;
     onchange: (patch: Partial<Settings>) => void;
     onclose: () => void;
     onreset: () => void;
     onrefresh: () => void;
+    /** The section to open on, such as Feeds from the Feeds view. */
+    section?: number;
   } = $props();
   const sections = [
     { name: 'Appearance', icon: 'palette' },
@@ -41,9 +50,13 @@
   let locationPending = $state(false);
   let searchVersion = 0;
   let disposed = false;
-  onMount(() => () => {
-    disposed = true;
-    searchVersion++;
+  onMount(() => {
+    const trigger = document.getElementById(`settings-tab-${section}`);
+    if (section && trigger) void showTab(trigger);
+    return () => {
+      disposed = true;
+      searchVersion++;
+    };
   });
   async function search() {
     const version = ++searchVersion;
