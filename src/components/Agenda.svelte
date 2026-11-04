@@ -55,7 +55,7 @@
         </p>
         <div class="flex-grow-1 min-w-0">
           <button
-            class="btn btn-link p-0 text-start fw-semibold"
+            class="btn btn-link p-0 text-start fw-medium"
             use:popover={{
               title: event.title,
               content: `${event.description} ${event.location}. ${event.attendees.join(', ')}`,

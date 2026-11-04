@@ -59,8 +59,9 @@ export async function expectView(page: Page, view: string) {
   const name = view.charAt(0).toUpperCase() + view.slice(1);
   await expect(page.locator('main h1')).toHaveText(name);
   // NavOverflow keeps the original stateful button when its visible copy moves into More.
+  // The label span is matched exactly; the button also holds a decorative shortcut keycap.
   await expect(page.getByRole('navigation', { name: 'Dashboard views' })
-    .locator('.nav-link').filter({ hasText: new RegExp(`^${name}$`) })).toHaveAttribute('aria-current', 'page');
+    .locator('.nav-link').filter({ has: page.locator('span', { hasText: new RegExp(`^${name}$`) }) })).toHaveAttribute('aria-current', 'page');
 }
 
 export async function noHorizontalOverflow(page: Page) {

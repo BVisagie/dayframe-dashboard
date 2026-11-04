@@ -46,7 +46,7 @@
   <div
     class={`card-header flex-row align-items-center justify-content-between gap-3 ${showing ? 'theme-primary' : ''}`}
   >
-    <h2 class="fs-lg fw-semibold m-0">{title}</h2>
+    <h2 class="fs-lg fw-medium m-0">{title}</h2>
     {#if showing && status === 'fresh'}<span
         class="badge badge-outline theme-success">Live</span
       >{/if}
@@ -112,7 +112,7 @@
           rel="noreferrer"
           ><span class="vstack min-w-0 gap-1">
             <span class="d-flex flex-wrap align-items-center gap-3">
-              <span class="fw-semibold fg-primary">{story.title}</span>
+              <span class="fw-medium fg-primary">{story.title}</span>
               {#if inUse(story)}<span class="badge badge-subtle theme-primary"
                   >In use</span
                 >{/if}

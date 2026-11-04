@@ -193,7 +193,7 @@
         ><span class="fs-xl fg-2">°{unit}</span>
       </p>
       <div class="min-w-0">
-        <p class="fw-semibold m-0">{weatherLabel(weather.code)}</p>
+        <p class="fw-medium m-0">{weatherLabel(weather.code)}</p>
         <p class="small fg-2 m-0">{weather.city}</p>
       </div>
     </div>

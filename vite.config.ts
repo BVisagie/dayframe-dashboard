@@ -75,7 +75,8 @@ export default defineConfig(({ command }) => ({
             $menu-tokens: (--menu-bg: var(--bg-1), --menu-item-hover-bg: var(--bg-2)),
             $popover-tokens: (--popover-bg: var(--bg-1), --popover-header-bg: var(--bg-2)),
             $toast-tokens: (--toast-bg: var(--bg-1), --toast-header-bg: var(--bg-2)),
-            $datepicker-tokens: (--datepicker-bg: var(--bg-1), --datepicker-day-hover-bg: var(--bg-2))
+            $datepicker-tokens: (--datepicker-bg: var(--bg-1), --datepicker-day-hover-bg: var(--bg-2)),
+            $reboot-kbd-tokens: (--kbd-bg: var(--bg-3), --kbd-color: var(--fg-1))
           );`,
           { loadPaths: ['node_modules'], style: 'expanded' },
         ).css;

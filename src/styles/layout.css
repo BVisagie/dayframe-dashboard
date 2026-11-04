@@ -10,6 +10,9 @@
   .dashboard-shell {
     min-block-size: 100dvh;
     min-inline-size: 0;
+    /* A definite height lets each view's 100% height resolve through the
+       flex and grid chain, so desktop views fill the frame exactly. */
+    block-size: 100dvh;
   }
 
   /* Pair these layouts with Bootstrap's .grid. Its tokens handle gaps; named
@@ -69,6 +72,7 @@
     /* Scrolling keeps content readable below the desktop fitting threshold. */
     .dashboard-shell {
       min-block-size: 100dvh;
+      block-size: auto;
     }
 
     .dashboard-grid,

@@ -261,7 +261,8 @@
           limitingAllowance(b).remainingPercent -
           limitingAllowance(a).remainingPercent,
       )
-      .slice(0, 3),
+      // Short desktops keep the hero's aside to two alternatives.
+      .slice(0, compactDesktop ? 2 : 3),
   );
   const followingEvent = $derived(
     heroEvent
@@ -733,7 +734,11 @@
                   : undefined}
                 use:tab
                 bind:this={triggers[item.id]}
-                ><Icon name={item.icon} /><span>{item.name}</span></button
+                ><Icon name={item.icon} /><span>{item.name}</span
+                >{#if settings.keyboardShortcuts}<kbd
+                    class="d-none xl:d-inline-block"
+                    aria-hidden="true">{i + 1}</kbd
+                  >{/if}</button
               >
             </li>{/each}
         </ul>
@@ -899,14 +904,16 @@
                 class="grid align-items-center my-auto"
                 style="--gap: var(--spacer-7)"
               >
-                <div class="g-col-12 md:g-col-7 vstack gap-4 align-items-start">
+                <div
+                  class={`g-col-12 md:g-col-7 vstack ${compactDesktop ? 'gap-3' : 'gap-4'} align-items-start`}
+                >
                   <span
                     class={`badge theme-${heroRole}`}
                     data-bs-component="badge"
                     ><Icon name={heroCue.icon} />{heroCue.label}</span
                   >
                   {#if attentionAgent && !reminder}<h2
-                      class="hero-title text-5xl fw-semibold text-balance m-0"
+                      class={`hero-title ${compactDesktop ? (consoleLayout ? 'text-3xl' : 'text-4xl') : 'text-5xl'} fw-semibold text-balance m-0`}
                     >
                       {attentionAgent.status === 'reconnect'
                         ? `${attentionAgent.name} needs reconnecting`
@@ -914,7 +921,9 @@
                           ? `${attentionAgent.name}'s ${attentionAllowance.label.toLowerCase()} allowance is used up`
                           : `${attentionAgent.name} is running low`}
                     </h2>
-                    <p class="hero-context fs-lg fg-2 m-0">
+                    <p
+                      class={`hero-context ${compactDesktop ? '' : 'fs-lg'} fg-2 m-0`}
+                    >
                       {#if attentionAgent.status === 'reconnect'}
                         This simulated account has lost its connection. Other
                         agents remain available.
@@ -929,16 +938,18 @@
                       {/if}
                     </p>
                     <button
-                      class="btn btn-solid theme-primary btn-lg"
+                      class={`btn btn-solid theme-primary ${compactDesktop ? '' : 'btn-lg'}`}
                       onclick={() => navigate('agents')}
                       >Review agent capacity</button
                     >
                   {:else if heroEvent}<h2
-                      class="hero-title text-5xl fw-semibold text-balance m-0"
+                      class={`hero-title ${compactDesktop ? (consoleLayout ? 'text-3xl' : 'text-4xl') : 'text-5xl'} fw-semibold text-balance m-0`}
                     >
                       {heroEvent.title}
                     </h2>
-                    <p class="hero-context fs-lg fg-2 m-0">
+                    <p
+                      class={`hero-context ${compactDesktop ? '' : 'fs-lg'} fg-2 m-0`}
+                    >
                       <span class="tabular-nums"
                         >{formatTime(heroEvent.start, settings)}–{formatTime(
                           heroEvent.end,
@@ -948,30 +959,34 @@
                       <br />{heroEvent.description}
                     </p>
                     <button
-                      class="btn btn-solid theme-primary btn-lg"
+                      class={`btn btn-solid theme-primary ${compactDesktop ? '' : 'btn-lg'}`}
                       onclick={() => navigate('calendar')}
                       >View your calendar</button
                     >
                   {:else}<h2
-                      class="hero-title text-5xl fw-semibold text-balance m-0"
+                      class={`hero-title ${compactDesktop ? (consoleLayout ? 'text-3xl' : 'text-4xl') : 'text-5xl'} fw-semibold text-balance m-0`}
                     >
                       A clear stretch ahead
                     </h2>
-                    <p class="hero-context fs-lg fg-2 m-0">
+                    <p
+                      class={`hero-context ${compactDesktop ? '' : 'fs-lg'} fg-2 m-0`}
+                    >
                       No upcoming timed events. Your agent capacity is ready for
                       the next task.
                     </p>
                     <button
-                      class="btn btn-solid theme-primary btn-lg"
+                      class={`btn btn-solid theme-primary ${compactDesktop ? '' : 'btn-lg'}`}
                       onclick={() => navigate('agents')}
                       >View agent capacity</button
                     >{/if}
                 </div>
-                <div class="g-col-12 md:g-col-5 vstack gap-4">
+                <div
+                  class={`g-col-12 md:g-col-5 vstack ${compactDesktop ? 'gap-3' : 'gap-4'}`}
+                >
                   {#if heroCountdown}<div>
                       <p class="fg-2 m-0">{heroCountdown.label}</p>
                       <p
-                        class="hero-countdown text-6xl font-monospace fw-medium lh-1 tabular-nums m-0"
+                        class={`hero-countdown ${compactDesktop ? 'text-4xl' : 'text-6xl'} font-monospace fw-medium lh-1 tabular-nums m-0`}
                       >
                         <time datetime={heroCountdown.at}
                           >{formatCountdown(
@@ -1031,7 +1046,7 @@
                         >{heroEvent.calendar}</span
                       ><span><Icon name="geo-alt" /> {heroEvent.location}</span>
                     </div>
-                    {#if followingEvent}<p class="fg-2 m-0">
+                    {#if followingEvent && !compactDesktop}<p class="fg-2 m-0">
                         Then <span class="tabular-nums fg-1"
                           >{formatTime(followingEvent.start, settings)}</span
                         >
@@ -1126,7 +1141,10 @@
                   onmore={() => navigate('calendar')}
                 />{:else}<p class="fg-2 mb-0">
                   No more events today.
-                </p>{/if}</Panel
+                </p>{/if}{#snippet action()}<button
+                  class="btn btn-text theme-secondary btn-sm"
+                  onclick={() => navigate('calendar')}>Calendar</button
+                >{/snippet}</Panel
             >
             <Panel title="Across your feeds" kind="quiet" class="summary-feeds"
               >{#if summaryStories.length}<ul
