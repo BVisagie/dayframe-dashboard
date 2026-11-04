@@ -4,7 +4,7 @@
   import Icon from './Icon.svelte';
   import StoryRow from './StoryRow.svelte';
   import BootstrapReleases from './feeds/BootstrapReleases.svelte';
-  import FeedSources from './feeds/FeedSources.svelte';
+  import { fitRows } from '../lib/fit';
   import { FEED_CATEGORIES, categoryLabel } from '../lib/feeds';
   let {
     stories,
@@ -12,14 +12,20 @@
     now,
     status,
     onchange,
+    onsources,
     compact = false,
+    fill = false,
   }: {
     stories: Story[];
     settings: Settings;
     now: Date;
     status: SourceStatus;
     onchange: (patch: Partial<Settings>) => void;
+    /** Opens Settings at Feeds, where sources are chosen. */
+    onsources: () => void;
     compact?: boolean;
+    /** On desktop the story list shows as many rows as the panel fits. */
+    fill?: boolean;
   } = $props();
   let category = $state('all');
   let page = $state(0);
@@ -37,7 +43,13 @@
       )
       .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)),
   );
-  const pageSize = $derived(compact ? 2 : 4);
+  // A fitted list renders every story and shows one page of them; each page
+  // holds as many of the tallest row as fit, so boundaries never shift.
+  let fitted = $state(4);
+  const pageSize = $derived(fill ? fitted : compact ? 2 : 4);
+  const shown = $derived(
+    fill ? filtered : filtered.slice(page * pageSize, (page + 1) * pageSize),
+  );
   const pageCount = $derived(
     Math.max(1, Math.ceil(filtered.length / pageSize)),
   );
@@ -68,9 +80,16 @@
   }
 </script>
 
-<div class="grid">
-  <!-- Each column keeps its own height so neither panel grows an empty foot. -->
-  <Panel title="Latest stories" class="g-col-12 lg:g-col-8 align-self-start">
+<div class="grid" class:h-100={fill}>
+  <!-- The story list fills its column on desktop; the rail keeps its own height. -->
+  <Panel
+    title="Latest stories"
+    class={`g-col-12 lg:g-col-8 ${fill ? '' : 'align-self-start'}`}
+  >
+    {#snippet action()}<button
+        class="btn btn-text theme-secondary btn-sm"
+        onclick={onsources}><Icon name="sliders" /> Manage sources</button
+      >{/snippet}
     {#if enabled.length}<div
         class="d-flex flex-wrap gap-2 feed-categories mb-2"
         role="group"
@@ -87,8 +106,18 @@
               >{/if}{categoryLabel(item)}</button
           >{/each}
       </div>{/if}
-    <ul class="list-group list-group-flush" data-bs-component="list-group">
-      {#each filtered.slice(page * pageSize, (page + 1) * pageSize) as story (story.id)}<StoryRow
+    <ul
+      class="list-group list-group-flush"
+      class:fit-rows={fill && filtered.length > 0}
+      data-bs-component="list-group"
+      use:fitRows={{
+        enabled: fill && filtered.length > 0,
+        uniform: true,
+        offset: page * pageSize,
+        onfit: (count) => (fitted = count),
+      }}
+    >
+      {#each shown as story (story.id)}<StoryRow
           {story}
           {now}
           locale={settings.locale}
@@ -111,7 +140,6 @@
     </ul>
     {#if filtered.length}<nav
         aria-label="Feed pages"
-        class="mt-4"
         data-bs-component="pagination"
       >
         <ul class="pagination pagination-sm m-0">
@@ -158,6 +186,5 @@
       enabled={settings.categories.includes('bootstrap')}
       limit={compact ? 3 : 5}
     />
-    <FeedSources categories={settings.categories} {onchange} />
   </div>
 </div>

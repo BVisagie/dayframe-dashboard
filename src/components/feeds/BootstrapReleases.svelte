@@ -46,7 +46,7 @@
   <div
     class={`card-header flex-row align-items-center justify-content-between gap-3 ${showing ? 'theme-primary' : ''}`}
   >
-    <h2 class="fs-lg fw-semibold m-0">{title}</h2>
+    <h2 class="fs-lg fw-medium m-0">{title}</h2>
     {#if showing && status === 'fresh'}<span
         class="badge badge-outline theme-success">Live</span
       >{/if}
@@ -65,7 +65,8 @@
           >
         </div>{/if}
       {#if !enabled}<p class="fg-2 mb-0">
-          Turn on Bootstrap in Sources to follow its blog and releases.
+          Turn on Bootstrap under Manage sources to follow its blog and
+          releases.
         </p>
       {:else if status === 'loading'}<p class="visually-hidden" role="status">
           Loading Bootstrap posts and releases…
@@ -76,10 +77,28 @@
               <span class="placeholder placeholder-sm d-block col-4"></span>
             </div>{/each}
         </div>
+      {:else if !showing && !failed && replay}<!-- A replay never requests
+             live data, so the rail shows what this build runs instead. -->
+        <div class="vstack gap-2">
+          <p class="m-0 d-flex flex-wrap align-items-center gap-3">
+            <span class="fs-lg fw-medium">Bootstrap {bundled}</span><span
+              class="badge badge-subtle theme-primary">In use</span
+            >
+          </p>
+          <p class="fg-2 m-0">
+            Replays use demo stories, so live posts and releases load only on
+            the live dashboard.
+          </p>
+          <a
+            class="icon-link"
+            href="https://github.com/twbs/bootstrap/releases"
+            target="_blank"
+            rel="noreferrer"
+            >Bootstrap releases on GitHub<Icon name="box-arrow-up-right" /></a
+          >
+        </div>
       {:else if !showing && !failed}<p class="fg-2 mb-0">
-          {replay
-            ? 'This replay uses demo stories, so live posts and releases are not loaded.'
-            : 'The Bootstrap blog and GitHub returned no posts or releases.'}
+          The Bootstrap blog and GitHub returned no posts or releases.
         </p>{/if}
     </div>{/if}
   {#if showing}<div
@@ -93,7 +112,7 @@
           rel="noreferrer"
           ><span class="vstack min-w-0 gap-1">
             <span class="d-flex flex-wrap align-items-center gap-3">
-              <span class="fw-semibold fg-primary">{story.title}</span>
+              <span class="fw-medium fg-primary">{story.title}</span>
               {#if inUse(story)}<span class="badge badge-subtle theme-primary"
                   >In use</span
                 >{/if}

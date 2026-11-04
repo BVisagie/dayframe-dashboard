@@ -50,12 +50,13 @@ test('remaining capacity thresholds include empty and full allowances and mute s
 });
 
 test('a session reset does not replenish the weekly, monthly or independent model pools', () => {
-  const before = simulate(new Date('2026-11-03T09:59:59Z'), 'allowances', 'reminder-due').agents;
-  const after = simulate(new Date('2026-11-03T10:00:00Z'), 'allowances', 'reminder-due').agents;
-  assert.ok([...before, ...after].every(({ status }) => status === 'fresh'));
+  // Session windows are staggered per agent, so each agent is checked across its own reset.
+  const start = simulate(new Date('2026-11-03T09:30:00Z'), 'allowances', 'reminder-due').agents;
   for (const id of ['codex', 'claude', 'opencode']) {
-    const prior = before.find(agent => agent.id === id)!;
-    const current = after.find(agent => agent.id === id)!;
+    const reset = Date.parse(start.find(agent => agent.id === id)!.allowances.find(allowance => allowance.id === 'session')!.resetsAt);
+    const prior = simulate(new Date(reset - 1000), 'allowances', 'reminder-due').agents.find(agent => agent.id === id)!;
+    const current = simulate(new Date(reset), 'allowances', 'reminder-due').agents.find(agent => agent.id === id)!;
+    assert.ok(prior.status === 'fresh' && current.status === 'fresh');
     assert.equal(current.allowances.find(allowance => allowance.id === 'session')!.remainingPercent, 100);
     for (const allowance of prior.allowances.filter(allowance => allowance.id !== 'session')) {
       const next = current.allowances.find(candidate => candidate.id === allowance.id)!;

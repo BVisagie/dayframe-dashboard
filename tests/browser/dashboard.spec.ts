@@ -410,7 +410,12 @@ test('calendar changes months, keeps the datepicker input in sync and opens even
   await page.getByRole('button', { name: 'Today', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Tuesday 3 Nov', exact: true })).toBeVisible();
   await expect(input).toHaveValue('03/11/2026');
-  await page.getByRole('button', { name: /^\+\d+ more events$/ }).click();
+  // A filled desktop fits the whole selected-day agenda, so the dialog step
+  // uses 1024×768, where the agenda keeps its six-event cap and 4 November
+  // overflows, then returns to the reference day and viewport.
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await visit(page, { view: 'calendar', clock: '2026-11-04T09:30:00Z' });
+  await page.getByRole('button', { name: /^\+\d+ more events?$/ }).click();
   const agenda = page.getByRole('dialog', { name: /^All events for / });
   await expect(agenda).toBeVisible();
   const details = agenda.getByRole('button', { name: 'Details for Quiet build time', exact: true });
@@ -424,6 +429,8 @@ test('calendar changes months, keeps the datepicker input in sync and opens even
   await expect(page.locator('.popover')).toHaveCount(0);
   await agenda.getByRole('button', { name: 'Close all events', exact: true }).click();
   await expect(agenda).toHaveCount(0);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await visit(page, { view: 'calendar' });
   await page.getByLabel('Jump to a date', { exact: true }).click();
   const picker = page.locator('.vc');
   await expect(picker).toBeVisible();
@@ -486,7 +493,8 @@ for (const [dateFormat, date] of [
     await dialog.getByLabel('Date format', { exact: true }).selectOption(dateFormat);
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dayframe.settings.v1')!))).toEqual({ ...original, dateFormat });
     await closeSettings(page);
-    await expect(page.locator('header').getByText(`${date} · replay`, { exact: true })).toBeVisible();
+    await expect(page.locator('header').getByText(date, { exact: true })).toBeVisible();
+    await expect(page.locator('header').getByText('Replay', { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: dateFormat === 'locale' ? 'Tuesday, Nov 3' : date, exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'November 2026', exact: true })).toBeVisible();
     await expect(page.getByLabel('Current time', { exact: true })).toHaveText('09:30');
@@ -497,7 +505,8 @@ for (const [dateFormat, date] of [
     await closeSettings(page);
     await page.reload();
     const reloadedDate = dateFormat === 'locale' ? 'mar. 3 nov.' : date;
-    await expect(page.locator('header').getByText(`${reloadedDate} · replay`, { exact: true })).toBeVisible();
+    await expect(page.locator('header').getByText(reloadedDate, { exact: true })).toBeVisible();
+    await expect(page.locator('header').getByText('Replay', { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: dateFormat === 'locale' ? 'mardi 3 nov.' : date, exact: true })).toBeVisible();
     dialog = await settings(page, 'Display');
     await expect(dialog.getByLabel('Date format', { exact: true })).toHaveValue(dateFormat);
@@ -597,20 +606,23 @@ test('the datepicker stays inside the viewport across themes, scale and resizing
   }
 });
 
-for (const { density, viewport, pageSize } of [
-  { density: 'regular', viewport: { width: 1920, height: 1080 }, pageSize: 4 },
-  { density: 'compact', viewport: { width: 1280, height: 720 }, pageSize: 2 },
+for (const { density, viewport, pageSize, secondPage } of [
+  // Desktop pages hold as many stories as the panel fits at each viewport;
+  // the second page holds the rest of the twelve, up to one page.
+  { density: 'regular', viewport: { width: 1920, height: 1080 }, pageSize: 7, secondPage: 5 },
+  { density: 'compact', viewport: { width: 1280, height: 720 }, pageSize: 4, secondPage: 4 },
 ]) {
   test(`${density} feed categories, pagination and empty-state recovery change visible stories`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await visit(page, { view: 'feeds' });
-    const titles = page.locator('.story-title');
+    // Rows beyond the fitted page stay in the DOM as hidden items.
+    const titles = page.locator('.story-title:visible');
     await expect(titles).toHaveCount(pageSize);
     const first = await titles.allTextContents();
     const pages = page.getByRole('navigation', { name: 'Feed pages', exact: true });
     await expect(pages.getByRole('button', { name: 'Previous', exact: true })).toBeDisabled();
     await pages.getByRole('button', { name: 'Next', exact: true }).click();
-    await expect(titles).toHaveCount(pageSize);
+    await expect(titles).toHaveCount(secondPage);
     expect(await titles.allTextContents()).not.toEqual(first);
     expect((await titles.allTextContents()).filter(title => first.includes(title))).toEqual([]);
     await expect(pages.getByRole('button', { name: 'Page 2', exact: true })).toHaveAttribute('aria-current', 'page');
@@ -627,6 +639,38 @@ for (const { density, viewport, pageSize } of [
     await expect(titles).toHaveCount(pageSize);
   });
 }
+
+test('the fitted day agenda leaves room for its more-events control', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await visit(page, { view: 'calendar', theme: 'nebuchadnezzar', scale: '145', clock: '2026-11-04T09:30:00Z' });
+  const more = page.locator('#view-calendar').getByRole('button', { name: /^\+\d+ more events?$/ });
+  await expect(more).toBeVisible();
+  const [moreBox, lastRow, note] = await Promise.all([
+    more.boundingBox(),
+    page.locator('#view-calendar .agenda-list > li:visible').last().boundingBox(),
+    page.locator('#view-calendar').getByText('All calendars and attendees are invented.', { exact: false }).boundingBox(),
+  ]);
+  expect(lastRow!.y + lastRow!.height).toBeLessThanOrEqual(moreBox!.y + 0.5);
+  expect(moreBox!.y + moreBox!.height).toBeLessThanOrEqual(note!.y + 0.5);
+});
+
+test('fitted feed pages reach every story exactly once with rows of different heights', async ({ page }) => {
+  // Excerpts and titles wrap differently in the console's wide mono face.
+  for (const [width, height, theme] of [[1280, 720, 'nebuchadnezzar'], [1920, 1080, 'nebuchadnezzar'], [1366, 768, 'default']] as const) {
+    await page.setViewportSize({ width, height });
+    await visit(page, { view: 'feeds', theme });
+    const total = await page.locator('#view-feeds .story-title').count();
+    const next = page.getByRole('navigation', { name: 'Feed pages', exact: true }).getByRole('button', { name: 'Next', exact: true });
+    const seen: string[] = [];
+    for (;;) {
+      seen.push(...await page.locator('#view-feeds .story-title:visible').allTextContents());
+      if (await next.isDisabled()) break;
+      await next.click();
+    }
+    expect(seen, `${width}×${height} ${theme}`).toHaveLength(total);
+    expect(new Set(seen).size, `${width}×${height} ${theme}`).toBe(total);
+  }
+});
 
 test('demo disclosure, Bootstrap information and inspection lens remain available', async ({ page }) => {
   await visit(page);
@@ -695,13 +739,16 @@ test('rotation advances views and pauses during interaction with Settings', asyn
 
 test('rotation pauses while the full agenda dialog is open and resumes after closing', async ({ page }) => {
   await page.clock.install({ time: new Date(referenceClock) });
-  await visit(page, { view: 'calendar' });
+  // A filled desktop fits the whole selected-day agenda; at 1024×768 the agenda
+  // keeps its six-event cap, so 4 November's "+N more" opens the dialog.
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await visit(page, { view: 'calendar', clock: '2026-11-04T09:30:00Z' });
   const dialog = await settings(page, 'Display');
   await dialog.getByLabel('Seconds per view', { exact: true }).fill('10');
   await dialog.getByLabel('Seconds per view', { exact: true }).press('Tab');
   await dialog.getByRole('switch', { name: 'Rotate views', exact: true }).check();
   await closeSettings(page);
-  await page.getByRole('button', { name: /^\+\d+ more events$/ }).click();
+  await page.getByRole('button', { name: /^\+\d+ more events?$/ }).click();
   const agenda = page.getByRole('dialog', { name: /^All events for / });
   await expect(agenda).toBeVisible();
   await page.clock.runFor(12_000);

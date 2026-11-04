@@ -97,12 +97,13 @@ test.describe('browser time zones outside UTC', () => {
       exact: true,
     });
     const more = comingUp.getByRole('button', { name: /^\+\d+ more events?$/ });
-    const visible = await comingUp.locator('.agenda-list > li').count();
+    // Fitted lists keep their overflow rows as hidden items behind "+N more".
+    const visible = await comingUp.locator('.agenda-list > li:visible').count();
     const remaining = (await more.count())
       ? Number((await more.innerText()).match(/\d+/)![0])
       : 0;
     const summaryTitles = await comingUp
-      .locator('[data-bs-component="popover"]')
+      .locator('[data-bs-component="popover"]:visible')
       .allTextContents();
     await page.keyboard.press('c');
     const selected = page.locator('.month-day[aria-pressed="true"]');

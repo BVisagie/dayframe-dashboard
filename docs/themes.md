@@ -78,8 +78,13 @@ layer derives values with `color-mix(in oklch, …)`; themes use `light-dark()`
 for their supported schemes and can override any derived token in `theme`.
 Utilities remain last. Do not use extra specificity or importance overrides.
 The hero's `--card-bg` and `--card-border-color` defaults are on `.hero-panel`
-in `theme-base`. Override them on the theme's `.summary-hero` in `theme`;
-the shared defaults cannot block the theme's choices.
+in `theme-base`. The hero is a `card-subtle` with the `.theme-*` role of its
+situation (warning when an agent runs low, danger when an allowance is used
+up, primary for an event, success for a clear stretch), and the defaults read
+that role's `--theme-bg-subtle` and `--theme-border`. Every role's subtle
+surface must therefore carry body text at 4.5:1. Override the tokens on the
+theme's `.summary-hero` in `theme`; the shared defaults cannot block the
+theme's choices.
 
 1. Set Bootstrap's `--bg-body`, `--bg-1`, `--fg-body`, `--body-font-family` and
    every role's `--<role>-base`. Shared `theme-base` derivations complete
@@ -109,8 +114,10 @@ A theme may bundle fonts: Default imports `@fontsource-variable/geist` and
 `@fontsource-variable/geist-mono` at the top of its `theme.css`, so the
 `@font-face` rules ship in the single stylesheet while the browser downloads a
 family only when the active theme uses it. Record each font's licence in
-`public/third-party-notices.txt`. Tideline and Nebuchadnezzar keep system
-stacks; monospace is reserved for the clock and readings except in the console.
+`public/third-party-notices.txt`. Tideline bundles Atkinson Hyperlegible Next
+and Mono; Nebuchadnezzar bundles Martian Mono from its `standard.css` entry,
+which includes the width axis. Monospace is reserved for the clock and
+readings except in the console.
 
 The brand mark is an inline SVG filled with `--primary-bg`, `--primary-contrast`
 and `--accent-bg`, so a theme recolours it through its roles with no extra
@@ -151,13 +158,14 @@ Use Bootstrap layout and spacing utilities inside and around these classes:
 
 Only `.dashboard-grid` adds custom column definitions to Bootstrap's `.grid`.
 Agent cards use `g-col-12 md:g-col-6 lg:g-col-4`, preserve every allowance in
-compact desktop layouts, and let content determine each card's height. Primary
+compact desktop layouts, and on desktop share the view's height in two rows. Primary
 readings and progress bars show percentage remaining; each allowance retains
 its own reset countdown. Themes supply the existing typography and semantic
 colours without adding agent-specific units or a separate styling system.
 Both Summary layouts use three columns at ordinary
 desktop widths: the hero spans the first two beside weather, with capacity,
-calendar and feeds beneath. At 21:9 and wider, the standard layout moves the
+calendar and feeds beneath. The two rows share the viewport height, and lists
+show as many rows as their panel fits. At 21:9 and wider, the standard layout moves the
 agenda beside the hero and gives capacity two columns below; console uses four
 columns. Below 68.75rem viewport width, both Summary layouts become one
 scrolling column in hero, agents, calendar, weather, feeds order.

@@ -6,13 +6,14 @@ the next event and weather. Calm instrumentation makes that action clear.
 
 ## Palette
 
-| Name           | Hex       | Role                          |
-| -------------- | --------- | ----------------------------- |
-| Cool porcelain | `#f3f6fa` | Light canvas                  |
-| Midnight navy  | `#13243b` | Light ink and dark surfaces   |
-| Cobalt         | `#224cbb` | Navigation and primary action |
-| Ocean          | `#176776` | Accent and calm information   |
-| Steel          | `#52647c` | Secondary information         |
+| Name           | Hex       | Role                           |
+| -------------- | --------- | ------------------------------ |
+| Cool porcelain | `#f3f6fa` | Light canvas                   |
+| Midnight navy  | `#13243b` | Light ink and dark surfaces    |
+| Cobalt         | `#224cbb` | Navigation and primary action  |
+| Ocean          | `#176776` | Accent and calm information    |
+| Steel          | `#52647c` | Secondary information          |
+| Amber          | `#8a5a00` | Warning, the low-capacity hero |
 
 Dark mode uses deeper navy surfaces, porcelain ink and lighter accessible
 variants of the same role colours. Semantic state colours are derived for
@@ -46,11 +47,11 @@ preserve reading order and scroll.
 +--------------------------------------------------------------+
 ```
 
-Short desktop viewports show two agents, one agenda entry and one headline,
-with controls for the remaining content. Taller viewports show six agents,
-two agenda entries and three headlines. The root floor stays at `0.875rem`
-(14 CSS pixels at the default browser size); density changes through row
-limits rather than smaller root text.
+The two rows share the viewport height, and each lower list shows as many
+rows as its panel fits, with a "+N more" control only when something is
+hidden. Short desktops step the hero's type down a size. The root floor stays
+at `0.875rem` (14 CSS pixels at the default browser size); density changes
+through fitted rows rather than smaller root text.
 
 ## Principles
 
@@ -97,3 +98,12 @@ primary tint and the series rules stay thin beside readable publication
 names; four stories per page leave space below the list at 1080p. Settings'
 theme cards and vertical pills sit on a white dialog surface now that the
 surface tokens are re-pointed. Agents are graded by status so the two low cards stand out from the four plain ones, and the month grid's series badges make the week readable from a distance.
+
+The November 2026 redesign was reviewed at 1280×720, 1920×1080 and
+3440×1440 in light and dark, in every scenario. Summary now fills the frame:
+the amber hero reads first with its headline and the 30-minute countdown,
+and the lower lists gain the rows that used to be empty canvas. With
+staggered sessions one agent is low, so its badge and amber bar are the only
+warning on the page; the other readings are steel. Tan warning surfaces
+became amber. In dark mode the hero's subtle amber is quieter than in light,
+so the badge and border carry the state there.

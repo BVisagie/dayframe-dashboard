@@ -2,6 +2,7 @@
   import type { CalendarEvent } from '../lib/types';
   import { popover } from '../lib/bootstrap';
   import { calendarRole, sortForDay } from '../lib/calendar';
+  import { fitRows } from '../lib/fit';
   import Icon from './Icon.svelte';
   let {
     events,
@@ -9,6 +10,8 @@
     hourCycle = 'locale',
     max = 4,
     compact = false,
+    fit = false,
+    visible,
     onmore,
   }: {
     events: CalendarEvent[];
@@ -16,9 +19,24 @@
     hourCycle?: 'locale' | 'h12' | 'h23';
     max?: number;
     compact?: boolean;
+    /** Show as many events as the panel fits instead of `max`. */
+    fit?: boolean;
+    /**
+     * How many events an enclosing fitRows shows; every event is rendered and
+     * the enclosing view places the "+N more" control outside its region.
+     */
+    visible?: number;
     onmore?: () => void;
   } = $props();
   const ordered = $derived(sortForDay(events));
+  let fitted = $state(0);
+  const shown = $derived(
+    visible !== undefined
+      ? Math.min(visible, events.length)
+      : fit
+        ? fitted
+        : Math.min(max, events.length),
+  );
   function time(value: string) {
     return new Intl.DateTimeFormat(locale, {
       hour: 'numeric',
@@ -30,9 +48,11 @@
 
 <ul
   class="list-group list-group-flush agenda-list"
+  class:fit-rows={fit}
   data-bs-component="list-group"
+  use:fitRows={{ enabled: fit, onfit: (count) => (fitted = count) }}
 >
-  {#each ordered.slice(0, max) as event (event.id)}
+  {#each fit || visible !== undefined ? ordered : ordered.slice(0, max) as event (event.id)}
     <li class="list-group-item px-0">
       <div
         class={`d-flex gap-3 border-start border-3 border-${calendarRole(event.calendar)} ps-3`}
@@ -47,7 +67,7 @@
         </p>
         <div class="flex-grow-1 min-w-0">
           <button
-            class="btn btn-link p-0 text-start fw-semibold"
+            class="btn btn-link p-0 text-start fw-medium"
             use:popover={{
               title: event.title,
               content: `${event.description} ${event.location}. ${event.attendees.join(', ')}`,
@@ -74,8 +94,10 @@
       No events on this date. Choose another day to see its agenda.
     </li>{/each}
 </ul>
-{#if events.length > max}<button class="btn btn-link px-0 mt-2" onclick={onmore}
-    >+{events.length - max} more {events.length - max === 1
+{#if visible === undefined && events.length > shown}<button
+    class="btn btn-link px-0"
+    onclick={onmore}
+    >+{events.length - shown} more {events.length - shown === 1
       ? 'event'
       : 'events'}</button
   >{/if}

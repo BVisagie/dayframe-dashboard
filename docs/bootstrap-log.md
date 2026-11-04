@@ -176,6 +176,44 @@ closed issues, pull requests and the v6 Feedback discussions on 2026-10-22.
 - No custom CSS or timer was added. The design plan and visual review are in
   `docs/plans/header-reminder.md`.
 
+### UI redesign (November 2026)
+
+The plan, its unslop audit and the decisions are in
+`docs/plans/ui-redesign.md`.
+
+- Summary rows share the viewport through Bootstrap's own `.grid` `--rows`
+  token. The old `grid-template-rows: none` override, which switched that
+  sizing off, now applies only to the narrow scrolling column. The active
+  `tab-pane` fills the space between navbar and footer because `tab-content`
+  is a `d-grid` flex item; the desktop shell takes `block-size: 100dvh` so
+  each view's `h-100` resolves.
+- New step-4 gap: Bootstrap has no "as many rows as fit" pattern. The
+  `fitRows` action (`src/lib/fit.ts`) and the `.fit-rows` rule give a list
+  its height from the panel (`contain: size`), then hide, with the `hidden`
+  attribute, the items that would cross its bottom edge. Hidden items leave
+  the accessibility tree and tab order; "+N more" controls reach them. It
+  replaces fixed compact caps on Summary and the Calendar day panel, where
+  the selected day's events come first and "Later this week" takes the rest.
+  Feeds pages use its uniform mode: every page holds as many of the tallest
+  story as fit, so page boundaries never move with row heights.
+- The hero is `card card-subtle theme-<role>` for its situation. The
+  `theme-base` `.hero-panel` defaults now read `--theme-bg-subtle` and
+  `--theme-border`, falling back to primary. Healthy agents drop their
+  badge; bars use `theme-secondary` unless an allowance is low.
+- Quiet panels render a `card-header` with `bg-transparent`, so every grade
+  shares one header geometry.
+- View pills show `<kbd>` shortcut keycaps from `2xl`. Reboot's kbd tokens
+  are re-pointed in Sass (`--kbd-bg: var(--bg-3)`, `--kbd-color: var(--fg-1)`).
+- Settings opens on a given section through the Tab plugin's `show()`; Feeds'
+  "Manage sources" uses it, replacing the duplicate Sources card.
+- Nebuchadnezzar's theme sets `font-stretch` on panel titles and the hero
+  headline. Bootstrap has no font-width token, so this lives in the theme
+  folder with a comment.
+- Considered and not changed: the `--calendar-weekend-bg` and
+  `--calendar-outside-bg` app tokens are no longer painted by the month
+  grid, but they stay in the theme contract so existing themes and the
+  contract checks are unchanged.
+
 ### Custom code inventory
 
 Bootstrap does not provide these dashboard-specific capabilities:
@@ -187,9 +225,10 @@ Bootstrap does not provide these dashboard-specific capabilities:
   minimal theme seeds. Complete role values drive Bootstrap components.
 - Viewport and visitor display-scale composition with a `0.875rem` root floor
   (14 CSS pixels at the default browser size), named dashboard layout areas
-  and height-aware content fitting. Compact desktop views reduce preview
-  rows, expose more-content controls and page hourly forecasts and feeds;
-  they do not lower the root floor to fit. Bootstrap's grid, utilities,
+  and height-aware content fitting. Desktop lists measure how many rows fit
+  their panel (`fitRows`) and expose more-content controls; compact desktop
+  views also step down hero type and page hourly forecasts. Fitting never
+  lowers the root floor. Bootstrap's grid, utilities,
   container queries and Pagination remain the layout primitives. Agent readings
   use Bootstrap’s `set-container` and `container-breakpoint-up` Sass mixins
   to keep wide panels on one line while narrow readings wrap.
@@ -261,7 +300,9 @@ The review candidate measured **6,111 source bytes / 1,903 gzip bytes** with
 Bootstrap **6.0.0-alpha.1**. After the October 2026 once-over the app layer
 measures **3,079 source bytes / 1,209 gzip bytes**: the brand, clock,
 heading, panel-title, agent-row, quota, agenda, theme-swatch, settings-grid
-and lens-label rules all moved to Bootstrap components, tokens and utilities. The report is included in the build artifact;
+and lens-label rules all moved to Bootstrap components, tokens and utilities.
+The November 2026 redesign adds the `.fit-rows` rule: **3,376 source bytes /
+1,344 gzip bytes**. The report is included in the build artifact;
 compare the same metric on future upgrades.
 
 All 400 intended baseline updates for the review fixes were visually reviewed

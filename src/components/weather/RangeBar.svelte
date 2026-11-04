@@ -11,12 +11,15 @@
     bounds,
     units = 'celsius',
     height = '0.5rem',
+    neutral = false,
   }: {
     low: number;
     high: number;
     bounds: Bounds;
     units?: string;
     height?: string;
+    /** Days other than today stay neutral, so the week has one accent. */
+    neutral?: boolean;
   } = $props();
   const span = $derived(rangeSpan(low, high, bounds));
 </script>
@@ -45,6 +48,8 @@
     style:--progress-height={height}
     style:width={`${span.span}%`}
   >
-    <div class={`progress-bar theme-${temperatureRole(high, units)}`}></div>
+    <div
+      class={`progress-bar ${neutral ? 'theme-secondary opacity-50' : `theme-${temperatureRole(high, units)}`}`}
+    ></div>
   </div>
 </div>

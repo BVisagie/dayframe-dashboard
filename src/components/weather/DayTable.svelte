@@ -45,7 +45,9 @@
   </thead>
   <tbody class="divide-y">
     {#each days as day (day.date)}<tr>
-        <th scope="row" class="fw-normal text-nowrap ps-0"
+        <th
+          scope="row"
+          class={`text-nowrap ps-0 ${day.date === today ? 'fw-medium' : 'fw-normal'}`}
           >{dayName(day.date, today, locale)}</th
         >
         <td class="fs-lg lh-1"
@@ -54,7 +56,7 @@
           ></td
         >
         <td class="text-nowrap fg-2 font-monospace tabular-nums"
-          ><Icon name="droplet" class="fg-info" />
+          ><Icon name="droplet" />
           {day.precipitation}%</td
         >
         <td class="text-end fg-2 font-monospace tabular-nums"
@@ -66,6 +68,7 @@
             high={day.high}
             {bounds}
             {units}
+            neutral={day.date !== today}
             height={dense ? '0.375rem' : '0.5rem'}
           /></td
         >

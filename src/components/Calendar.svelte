@@ -2,6 +2,7 @@
   import { untrack } from 'svelte';
   import type { CalendarEvent, Settings } from '../lib/types';
   import { datepicker, settingsDialog } from '../lib/bootstrap';
+  import { fitRows } from '../lib/fit';
   import { calendarRole, eventsForDate, sortForDay } from '../lib/calendar';
   import { formatDate } from '../lib/format';
   import Panel from './Panel.svelte';
@@ -12,13 +13,22 @@
     now,
     settings,
     compact = false,
+    fill = false,
   }: {
     events: CalendarEvent[];
     now: Date;
     settings: Settings;
     compact?: boolean;
+    /** On desktop the month grid and the day panel share the view's height. */
+    fill?: boolean;
   } = $props();
   let fullAgenda = $state(false);
+  // Rows the day panel's fitted region shows, selected day first.
+  let fittedDay = $state(100);
+  function openAgenda() {
+    small = matchMedia('(max-width: 43rem)').matches;
+    fullAgenda = true;
+  }
   let small = $state(false);
   function dateKey(date: Date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -45,6 +55,36 @@
   function eventsOn(date: string) {
     return eventsForDate(events, date);
   }
+  // Selected-day events the fitted region could not show.
+  const hiddenDay = $derived(
+    Math.max(0, eventsOn(selected).length - fittedDay),
+  );
+  // The six days after the selected one, so the day panel also answers
+  // "what is coming" without leaving the month. A multi-day event appears
+  // once, on its first day that the agenda above does not already show.
+  const later = $derived.by(() => {
+    const start = new Date(selected + 'T12:00:00');
+    const seen = new Set(eventsOn(selected).map((event) => event.id));
+    return Array.from({ length: 6 }, (_, i) => {
+      const day = new Date(
+        start.getFullYear(),
+        start.getMonth(),
+        start.getDate() + i + 1,
+      );
+      return sortForDay(eventsOn(dateKey(day)))
+        .filter((event) => !seen.has(event.id) && seen.add(event.id))
+        .map((event) => ({ event, day }));
+    }).flat();
+  });
+  function time(value: string) {
+    return new Intl.DateTimeFormat(settings.locale, {
+      hour: 'numeric',
+      minute: '2-digit',
+      ...(settings.hourCycle === 'locale'
+        ? {}
+        : { hourCycle: settings.hourCycle }),
+    }).format(new Date(value));
+  }
   function moveMonth(delta: number) {
     month = new Date(month.getFullYear(), month.getMonth() + delta, 1);
   }
@@ -66,9 +106,10 @@
       },
     };
   }
-  // Selection is solid, today is outlined, and only in-month weekends carry a
-  // fill, so the days that matter outweigh the ones around them. Outside the
-  // month, days keep dots instead of titles.
+  // Selection is solid and today is outlined. Weekends and days outside the
+  // month recede through quieter numerals rather than fills, so the days with
+  // events outweigh the ones around them. Outside the month, days keep dots
+  // instead of titles.
   function dayClass(day: Date, date: string) {
     const outside = day.getMonth() !== month.getMonth();
     const weekend = day.getDay() === 0 || day.getDay() === 6;
@@ -80,13 +121,13 @@
           : outside
             ? 'btn-text theme-secondary fg-3'
             : weekend
-              ? 'btn-subtle theme-secondary fg-body'
+              ? 'btn-text theme-secondary fg-2'
               : 'btn-text theme-secondary fg-body';
     return `btn ${variant} month-day flex-grow-1 min-w-0 p-2 d-flex flex-column align-items-stretch justify-content-start gap-1 text-start`;
   }
 </script>
 
-<div class="grid" class:compact-calendar={compact}>
+<div class="grid" class:compact-calendar={compact} class:h-100={fill}>
   <Panel
     title={formatDate(month, settings.locale, {
       month: 'long',
@@ -151,7 +192,7 @@
       {#each weekdays as day}<span class="small fg-2 ps-2">{day}</span>{/each}
     </div>
     <div
-      class="grid"
+      class="grid flex-grow-1"
       style="--columns: 7; --rows: 6; --gap: 0.25rem"
       role="group"
       aria-label="Choose a date"
@@ -185,7 +226,10 @@
               aria-hidden="true"
               ><span class="d-flex align-items-center justify-content-between"
                 ><span class="invisible">{day.getDate()}</span
-                >{#if count > 2}<span class="badge">+{count - 2}</span
+                >{#if count > 2}<span
+                    class={selected === date
+                      ? 'badge'
+                      : 'small fg-2 tabular-nums'}>+{count - 2}</span
                   >{/if}</span
               >{#each dayEvents.slice(0, 2) as event (event.id)}<span
                   class={`badge badge-subtle theme-${calendarRole(event.calendar)} d-block text-truncate text-start`}
@@ -207,16 +251,56 @@
       settings.dateFormat,
     )}
     class="g-col-12 lg:g-col-4"
-    ><Agenda
-      events={eventsOn(selected)}
-      locale={settings.locale}
-      hourCycle={settings.hourCycle}
-      max={compact ? 3 : 6}
-      onmore={() => {
-        small = matchMedia('(max-width: 43rem)').matches;
-        fullAgenda = true;
+    ><!-- One fitted region: the selected day's events come first, and "Later
+         this week" takes what is left. The heading sits in the first later
+         row so it never stands alone. The day's "+N more" control follows the
+         region, so the region shrinks to make room for it. -->
+    <div
+      class="vstack"
+      class:fit-rows={fill}
+      use:fitRows={{
+        enabled: fill,
+        items: '.agenda-list > li, .later-list > li',
+        onfit: (count) => (fittedDay = count),
       }}
-    />
+    >
+      <Agenda
+        events={eventsOn(selected)}
+        locale={settings.locale}
+        hourCycle={settings.hourCycle}
+        max={compact ? 3 : 6}
+        visible={fill ? fittedDay : undefined}
+        onmore={openAgenda}
+      />
+      {#if later.length}<ul
+          class="list-group list-group-flush later-list mt-3"
+          aria-label="Later this week"
+          data-bs-component="list-group"
+        >
+          {#each fill ? later : later.slice(0, 5) as { event, day }, index (event.id)}<li
+              class="list-group-item px-0 py-2"
+            >
+              {#if index === 0}<h3 class="fs-md fw-medium mb-2">
+                  Later this week
+                </h3>{/if}
+              <div class="d-flex gap-3">
+                <span
+                  class="w-6 flex-shrink-0 small fg-2 tabular-nums text-nowrap"
+                  >{formatDate(day, settings.locale, { weekday: 'short' })}
+                  {event.allDay ? '' : time(event.start)}</span
+                ><span
+                  class={`flex-grow-1 min-w-0 text-truncate border-start border-3 border-${calendarRole(event.calendar)} ps-2`}
+                  >{event.title}</span
+                >
+              </div>
+            </li>{/each}
+        </ul>{/if}
+    </div>
+    {#if fill && hiddenDay}<button
+        class="btn btn-link px-0"
+        onclick={openAgenda}
+        >+{hiddenDay} more {hiddenDay === 1 ? 'event' : 'events'}</button
+      >{/if}
     <p class="small fg-2 mt-3 mb-0">
       All calendars and attendees are invented. Select an event for details.
     </p></Panel

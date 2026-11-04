@@ -9,6 +9,7 @@
     weatherLabel,
     weekBounds,
   } from '../lib/weather';
+  import { fitRows } from '../lib/fit';
   import Icon from './Icon.svelte';
   import DayTable from './weather/DayTable.svelte';
   let {
@@ -20,6 +21,7 @@
     full = false,
     previewDays = 3,
     dense = false,
+    fit = false,
     hourCycle = 'locale',
   }: {
     weather: Weather;
@@ -30,6 +32,8 @@
     full?: boolean;
     previewDays?: number;
     dense?: boolean;
+    /** Show as many preview days as the panel fits. */
+    fit?: boolean;
     hourCycle?: Settings['hourCycle'];
   } = $props();
   const today = $derived(todayKey(weather.hours));
@@ -93,47 +97,40 @@
       <Icon name="wifi-off" />
       {problem}
     </div>{/if}
-  <div class="grid">
-    <div class={`g-col-12 md:g-col-5 vstack ${dense ? 'gap-2' : 'gap-4'}`}>
-      <p class="fs-lg fw-semibold m-0">{weather.city}</p>
-      <div class="d-flex align-items-center gap-3">
+  <!-- Conditions and the week share the panel at equal weight; measures
+       are label and value pairs rather than one joined sentence. -->
+  <div class="grid align-items-center my-auto" style="--gap: var(--spacer-7)">
+    <div class={`g-col-12 md:g-col-6 vstack ${dense ? 'gap-3' : 'gap-5'}`}>
+      <p class="fs-lg fw-medium m-0">{weather.city}</p>
+      <div class="d-flex align-items-center gap-4">
         <Icon
           name={icon}
           class={`${dense ? 'text-5xl' : 'text-6xl'} fg-primary`}
         />
-        <p
-          class={`weather-temperature ${dense ? 'text-5xl' : 'text-6xl'} font-monospace tabular-nums fw-medium lh-1 m-0 text-nowrap`}
-        >
-          {Math.round(weather.temperature)}<span class="fs-2xl">°{unit}</span>
-        </p>
         <div class="min-w-0">
-          <p class="fs-lg fw-semibold m-0">{weatherLabel(weather.code)}</p>
-          <p class="fg-2 m-0">
-            Feels like <span class="fg-1 font-monospace tabular-nums"
-              >{degrees(weather.feelsLike)}</span
-            >
-            · Wind
-            <span class="fg-1 font-monospace tabular-nums"
-              >{Math.round(weather.wind)}</span
-            >
-            {speed} ·
-            <span class="fg-1 font-monospace tabular-nums"
-              >{weather.humidity}%</span
-            > humidity
+          <p
+            class={`weather-temperature ${dense ? 'text-5xl' : 'text-6xl'} fw-medium lh-1 m-0 text-nowrap`}
+          >
+            <span class="font-monospace tabular-nums"
+              >{Math.round(weather.temperature)}</span
+            ><span class="fs-2xl fg-2">°{unit}</span>
           </p>
+          <p class="fs-lg m-0 mt-2">{weatherLabel(weather.code)}</p>
         </div>
       </div>
-      <dl class="d-flex flex-wrap column-gap-5 row-gap-2 m-0">
-        <div>
-          <dt class="fw-normal fg-2">
-            <Icon name="droplet" class="fg-info" /> Rain chance
-          </dt>
-          <dd
-            class={`${dense ? 'fs-lg' : 'fs-xl'} font-monospace tabular-nums m-0`}
+      <dl
+        class="weather-measures grid m-0"
+        style="--columns: 3; --gap: var(--spacer-4) var(--spacer-5)"
+      >
+        {#each [{ label: 'Feels like', value: degrees(weather.feelsLike) }, { label: 'Wind', value: `${Math.round(weather.wind)} ${speed}` }, { label: 'Humidity', value: `${weather.humidity}%` }, { label: 'Rain chance', value: `${day.precipitation}%` }] as measure (measure.label)}<div
           >
-            {day.precipitation}%
-          </dd>
-        </div>
+            <dt class="fw-normal fg-2">{measure.label}</dt>
+            <dd
+              class={`${dense ? 'fs-lg' : 'fs-xl'} font-monospace tabular-nums m-0`}
+            >
+              {measure.value}
+            </dd>
+          </div>{/each}
         <div>
           <dt class="fw-normal fg-2"><Icon name="sunrise" /> Sunrise</dt>
           <dd
@@ -155,22 +152,21 @@
           </dd>
         </div>
       </dl>
-      <p class="small fg-2 m-0 mt-auto">
+      <p class="small fg-2 m-0">
         {#if live}Weather by <a
             href="https://open-meteo.com/"
             target="_blank"
             rel="noreferrer">Open-Meteo</a
-          >
-          ·
+          >,
           <a
             href="https://creativecommons.org/licenses/by/4.0/"
             target="_blank"
             rel="noreferrer">CC BY 4.0</a
-          >. Rounded for display.{:else}Simulated forecast · no live location
-          selected.{/if}
+          >. Rounded for display.{:else}Simulated forecast, no live location
+          selected{/if}
       </p>
     </div>
-    <div class="g-col-12 md:g-col-7">
+    <div class="g-col-12 md:g-col-6">
       <DayTable
         {days}
         {today}
@@ -183,44 +179,54 @@
     </div>
   </div>
 {:else}
-  <div class={`vstack ${dense ? 'gap-2' : 'gap-3'}`}>
+  <div class={`vstack flex-grow-1 min-h-0 ${dense ? 'gap-2' : 'gap-3'}`}>
     <div class="d-flex align-items-center gap-3">
       <Icon
         name={icon}
         class={`${dense ? 'text-4xl' : 'text-5xl'} fg-primary`}
       />
       <p
-        class={`${dense ? 'text-4xl' : 'text-5xl'} font-monospace tabular-nums fw-medium lh-1 m-0 text-nowrap`}
+        class={`${dense ? 'text-4xl' : 'text-5xl'} fw-medium lh-1 m-0 text-nowrap`}
       >
-        {Math.round(weather.temperature)}<span class="fs-xl">°{unit}</span>
+        <span class="font-monospace tabular-nums"
+          >{Math.round(weather.temperature)}</span
+        ><span class="fs-xl fg-2">°{unit}</span>
       </p>
       <div class="min-w-0">
-        <p class="fw-semibold m-0">{weatherLabel(weather.code)}</p>
+        <p class="fw-medium m-0">{weatherLabel(weather.code)}</p>
         <p class="small fg-2 m-0">{weather.city}</p>
       </div>
     </div>
-    <p class="fg-2 m-0">
-      Feels like <span class="fg-1 font-monospace tabular-nums"
-        >{degrees(weather.feelsLike)}</span
-      >
-      · Wind
-      <span class="fg-1 font-monospace tabular-nums"
-        >{Math.round(weather.wind)}</span
-      >
-      {speed}{#if !days.length}{' '}·
-        <span class="fg-1 font-monospace tabular-nums"
-          >{day.precipitation}%</span
-        > chance of rain{/if}
+    <p class="fg-2 m-0 d-flex flex-wrap column-gap-4">
+      <span
+        >Feels like <span class="fg-1 font-monospace tabular-nums"
+          >{degrees(weather.feelsLike)}</span
+        ></span
+      ><span
+        >Wind <span class="fg-1 font-monospace tabular-nums"
+          >{Math.round(weather.wind)}</span
+        >
+        {speed}</span
+      >{#if !days.length}<span
+          ><span class="fg-1 font-monospace tabular-nums"
+            >{day.precipitation}%</span
+          > chance of rain</span
+        >{/if}
     </p>
-    {#if days.length}<DayTable
-        {days}
-        {today}
-        {bounds}
-        {units}
-        {locale}
-        dense
-        caption="Forecast for the next days"
-      />{/if}
+    {#if days.length}<div
+        class:fit-rows={fit}
+        use:fitRows={{ enabled: fit, items: 'tbody > tr', onfit: () => {} }}
+      >
+        <DayTable
+          {days}
+          {today}
+          {bounds}
+          {units}
+          {locale}
+          dense
+          caption="Forecast for the next days"
+        />
+      </div>{/if}
     {#if problem}<p class="small m-0 d-flex gap-2" role="status">
         <Icon name="wifi-off" class="fg-warning" />{problem}
       </p>{/if}

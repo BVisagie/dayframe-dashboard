@@ -20,10 +20,14 @@ The single supported scheme is dark, even when the visitor requests light.
 
 ## Type
 
-`ui-monospace, monospace` carries the console, from headings to controls. A
-moderate line height and normal sentence case protect long-session readability.
-Headings use weight and scale rather than tracked capitals. Tabular numbers
-keep quota readings and the clock steady. All information is left aligned.
+Martian Mono carries the console, from headings to controls. Its width axis
+lets panel titles take the wide cut and the hero command the narrow one, so
+one family gives the console labels and a headline. It ships under the SIL
+Open Font License, downloads only while this theme is active and renders the
+same on every OS, unlike `ui-monospace`. A moderate line height and normal
+sentence case protect long-session readability. Headings use weight, width
+and scale rather than tracked capitals. Tabular numbers keep quota readings
+and the clock steady. All information is left aligned.
 
 ## Layout
 
@@ -45,11 +49,11 @@ and keyboard order as the standard dashboard.
 +--------------------------------------------------------------+
 ```
 
-At compact desktop height, show one agent plus a more-agents control, one
-agenda entry and one headline. Taller viewports show three agents plus a
-more-agents control, two agenda entries and three headlines. Keep the
-`0.875rem` root floor (14 CSS pixels at the default browser size); the mono
-face needs fewer visible rows rather than smaller root text.
+Lists show as many rows as their panel fits, with a more-agents or
+more-events control for the rest; short desktops step the command's type down
+two sizes. Keep the `0.875rem` root floor (14 CSS pixels at the default
+browser size); the mono face needs fewer visible rows rather than smaller
+root text.
 
 ## Principles
 
@@ -95,3 +99,9 @@ The mono face wraps excerpts at 70ch, and the weather strip's two-digit hours
 and readings align in columns. Amber and danger series rules carry no state
 meaning, so each publication's name sits beside its rule. Compact height
 keeps one agent reading and a more-agents link, as before. Amber-graded agent cards and the phosphor selection in the month grid keep the console's instrument feel; series badges stay quiet on olive glass.
+
+The November 2026 redesign was reviewed at 1280×720 and 1920×1080. Martian
+Mono's wide panel titles and narrow command read as one console, and the
+hero's amber glass marks the command without a glow. The wider face first
+pushed the view tabs into More at 1280 px, so keycaps start at `2xl` and the
+scenario badge is icon-only below it.
