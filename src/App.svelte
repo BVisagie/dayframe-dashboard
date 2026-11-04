@@ -8,7 +8,12 @@
     SourceStatus,
   } from './lib/types';
   import { simulate } from './lib/data';
-  import { limitingAllowance, primaryAllowance } from './lib/agents';
+  import { fitRows } from './lib/fit';
+  import {
+    conditionCue,
+    limitingAllowance,
+    primaryAllowance,
+  } from './lib/agents';
   import { parseReplayClock } from './lib/clock';
   import { eventsForDate, calendarRole } from './lib/calendar';
   import {
@@ -116,17 +121,20 @@
         60,
   );
   const consoleLayout = $derived(getTheme(settings.theme).layout === 'console');
-  // Short desktops keep two compact readings beside the hero's aside; the
-  // console's mono face gets one reading and a more-agents link.
+  // Desktop lists show as many rows as their panel fits; narrow screens
+  // scroll, so they keep fixed previews instead.
+  const fitting = $derived(viewportWidth >= 1100);
+  let fittedAgents = $state(6);
   const summaryAgentCount = $derived(
-    compactDesktop ? (consoleLayout ? 1 : 2) : consoleLayout ? 3 : 6,
+    fitting ? fittedAgents : consoleLayout ? 3 : 6,
   );
   // At 21:9 the capacity panel spans two columns, so readings take three.
   const ultrawide = $derived(
     viewportWidth >= 1100 && viewportWidth / viewportHeight >= 21 / 9,
   );
   const agentColumns = $derived(
-    summaryAgentCount === 1
+    // The console's mono face needs a full row per reading on short desktops.
+    compactDesktop && consoleLayout
       ? 'g-col-12'
       : viewportWidth >= 1100
         ? ultrawide && !consoleLayout
@@ -265,6 +273,36 @@
         )
       : undefined,
   );
+  // The hero's role tint and status badge describe the situation once.
+  const heroCue = $derived.by(() => {
+    if (attentionAgent && !reminder) return conditionCue(attentionAgent);
+    if (heroEvent)
+      return {
+        label: reminder
+          ? 'Starting soon'
+          : Date.parse(heroEvent.start) <= now.getTime()
+            ? 'Happening now'
+            : 'Next event',
+        icon: 'calendar-event',
+        role: 'primary',
+      };
+    return { label: 'All clear', icon: 'check-circle', role: 'success' };
+  });
+  // A lost connection is a call to act, not a muted reading.
+  const heroRole = $derived(
+    heroCue.role === 'secondary' ? 'warning' : heroCue.role,
+  );
+  // The one number that decides what to do next.
+  const heroCountdown = $derived.by(() => {
+    if (attentionAgent && !reminder)
+      return attentionAgent.status === 'fresh' && attentionAllowance
+        ? { label: 'Resets in', at: attentionAllowance.resetsAt }
+        : null;
+    if (!heroEvent) return null;
+    return Date.parse(heroEvent.start) <= now.getTime()
+      ? { label: 'Ends in', at: heroEvent.end }
+      : { label: 'Starts in', at: heroEvent.start };
+  });
   function initials(name: string): string {
     return name
       .split(' ')
@@ -293,13 +331,11 @@
   const summaryStories = $derived(
     stories
       .filter((story) => settings.categories.includes(story.category))
-      .slice(0, compactDesktop ? 1 : 3),
+      .slice(0, fitting ? 12 : 3),
   );
-  const heading = $derived(
-    view === 'summary'
-      ? 'Your day, in focus'
-      : (views.find((item) => item.id === view)?.name ?? ''),
-  );
+  // The selected pill and each panel title already name what is on screen,
+  // so the view heading is for assistive technology only.
+  const heading = $derived(views.find((item) => item.id === view)?.name ?? '');
 
   function changeSettings(patch: Partial<SettingsType>) {
     settings = { ...settings, ...patch };
@@ -702,6 +738,13 @@
       </nav>
     </div>
     <div class="d-flex align-items-center gap-3 sm:gap-5 ms-auto">
+      {#if settings.scenario !== 'steady'}<span
+          class="badge badge-subtle theme-warning d-none lg:d-inline-flex"
+          data-bs-component="badge"
+          ><Icon name={scenarioIcons[settings.scenario]} />
+          {settings.scenario.charAt(0).toUpperCase() +
+            settings.scenario.slice(1).replaceAll('-', ' ')} scenario</span
+        >{/if}
       <div class="text-end">
         <div
           class="dashboard-clock font-monospace fs-xl fw-semibold lh-1 tabular-nums"
@@ -719,7 +762,9 @@
               day: 'numeric',
             },
             settings.dateFormat,
-          )}{frozen ? ' · replay' : ''}
+          )}{#if frozen}<span class="badge badge-outline theme-secondary ms-2"
+              >Replay</span
+            >{/if}
         </div>
       </div>
       <div class="vr d-none sm:d-block"></div>
@@ -793,19 +838,15 @@
       </div>
     </div>
   </header>
-  <main id="main" class="flex-grow-1" tabindex="-1">
-    <div
-      class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3"
-    >
-      <h1 class="text-2xl fw-semibold m-0">{heading}</h1>
-      {#if settings.scenario !== 'steady'}<span
-          class="badge badge-subtle theme-warning"
-          data-bs-component="badge"
+  <main id="main" class="flex-grow-1 d-flex flex-column" tabindex="-1">
+    <h1 class="visually-hidden">{heading}</h1>
+    {#if settings.scenario !== 'steady'}<p class="lg:d-none mb-3">
+        <span class="badge badge-subtle theme-warning" data-bs-component="badge"
           ><Icon name={scenarioIcons[settings.scenario]} />
           {settings.scenario.charAt(0).toUpperCase() +
             settings.scenario.slice(1).replaceAll('-', ' ')} scenario</span
-        >{/if}
-    </div>
+        >
+      </p>{/if}
     {#if notice}<div
         class="alert theme-info d-flex gap-3 align-items-center"
         role="status"
@@ -826,7 +867,9 @@
           ? 'Offline scenario: showing saved or simulated data. Your settings are available in this browser.'
           : 'Stale scenario: sources need a refresh. The dashboard keeps the last available data visible.'}
       </div>{/if}
-    <div class="tab-content">
+    <!-- A grid's single auto row stretches, so the active pane fills the
+         height left between the navbar and the footer. -->
+    <div class="tab-content flex-grow-1 d-grid">
       <section
         class="tab-pane"
         class:active={startView === 'summary'}
@@ -845,53 +888,55 @@
                     ? 'Happening now'
                     : 'Next on your calendar'}
               kind="hero"
-              class="hero-panel summary-hero"
+              hideTitle
+              class={`hero-panel summary-hero card-subtle theme-${heroRole}`}
             >
+              <!-- The card's role tint carries the situation, so the status
+                   badge, headline and decision number say it only once. -->
               <div
-                class="grid align-items-start mt-2"
+                class="grid align-items-center my-auto"
                 style="--gap: var(--spacer-7)"
               >
-                <div class="g-col-12 md:g-col-7 vstack gap-3 align-items-start">
-                  {#if attentionAgent && !reminder}<p class="small m-0">
-                      <Icon name="exclamation-circle" />
-                      {attentionAgent.status === 'reconnect'
-                        ? 'Connection needs attention'
-                        : 'Agent capacity'}
-                    </p>
-                    <h2 class="hero-title text-3xl fw-semibold m-0">
+                <div class="g-col-12 md:g-col-7 vstack gap-4 align-items-start">
+                  <span
+                    class={`badge theme-${heroRole}`}
+                    data-bs-component="badge"
+                    ><Icon name={heroCue.icon} />{heroCue.label}</span
+                  >
+                  {#if attentionAgent && !reminder}<h2
+                      class="hero-title text-5xl fw-semibold text-balance m-0"
+                    >
                       {attentionAgent.status === 'reconnect'
                         ? `${attentionAgent.name} needs reconnecting`
                         : attentionAllowance?.remainingPercent === 0
                           ? `${attentionAgent.name}'s ${attentionAllowance.label.toLowerCase()} allowance is used up`
                           : `${attentionAgent.name} is running low`}
                     </h2>
-                    <p class="hero-context m-0">
+                    <p class="hero-context fs-lg fg-2 m-0">
                       {#if attentionAgent.status === 'reconnect'}
                         This simulated account has lost its connection. Other
                         agents remain available.
                       {:else if attentionAllowance}
                         {attentionAllowance.remainingPercent === 0
-                          ? `It resets in ${formatCountdown(attentionAllowance.resetsAt, now, settings.locale)}.`
-                          : `${attentionAllowance.remainingPercent}% of the ${attentionAllowance.label.toLowerCase()} allowance remains, and it resets in ${formatCountdown(attentionAllowance.resetsAt, now, settings.locale)}.`}
+                          ? 'Use another agent until it resets.'
+                          : `${attentionAllowance.remainingPercent}% of the ${attentionAllowance.label.toLowerCase()} allowance is left.`}
                         {#if attentionPrimary && attentionPrimary.id !== attentionAllowance.id}
                           The {attentionPrimary.label.toLowerCase()} allowance still
-                          has {attentionPrimary.remainingPercent}% left.
+                          has {attentionPrimary.remainingPercent}%.
                         {/if}
                       {/if}
                     </p>
                     <button
-                      class="btn btn-solid theme-primary mt-2"
+                      class="btn btn-solid theme-primary btn-lg"
                       onclick={() => navigate('agents')}
                       >Review agent capacity</button
                     >
-                  {:else if heroEvent}<p class="small m-0">
-                      <Icon name="calendar-event" />
-                      {formatRelative(heroEvent.start, now, settings.locale)}
-                    </p>
-                    <h2 class="hero-title text-3xl fw-semibold m-0">
+                  {:else if heroEvent}<h2
+                      class="hero-title text-5xl fw-semibold text-balance m-0"
+                    >
                       {heroEvent.title}
                     </h2>
-                    <p class="hero-context m-0">
+                    <p class="hero-context fs-lg fg-2 m-0">
                       <span class="tabular-nums"
                         >{formatTime(heroEvent.start, settings)}–{formatTime(
                           heroEvent.end,
@@ -901,32 +946,47 @@
                       <br />{heroEvent.description}
                     </p>
                     <button
-                      class="btn btn-solid theme-primary mt-2"
+                      class="btn btn-solid theme-primary btn-lg"
                       onclick={() => navigate('calendar')}
                       >View your calendar</button
                     >
-                  {:else}<h2 class="hero-title text-3xl fw-semibold m-0">
+                  {:else}<h2
+                      class="hero-title text-5xl fw-semibold text-balance m-0"
+                    >
                       A clear stretch ahead
                     </h2>
-                    <p class="hero-context m-0">
+                    <p class="hero-context fs-lg fg-2 m-0">
                       No upcoming timed events. Your agent capacity is ready for
                       the next task.
                     </p>
                     <button
-                      class="btn btn-solid theme-primary mt-2"
+                      class="btn btn-solid theme-primary btn-lg"
                       onclick={() => navigate('agents')}
                       >View agent capacity</button
                     >{/if}
                 </div>
-                <div class="g-col-12 md:g-col-5 vstack gap-3">
+                <div class="g-col-12 md:g-col-5 vstack gap-4">
+                  {#if heroCountdown}<div>
+                      <p class="fg-2 m-0">{heroCountdown.label}</p>
+                      <p
+                        class="hero-countdown text-6xl font-monospace fw-medium lh-1 tabular-nums m-0"
+                      >
+                        <time datetime={heroCountdown.at}
+                          >{formatCountdown(
+                            heroCountdown.at,
+                            now,
+                            settings.locale,
+                          )}</time
+                        >
+                      </p>
+                    </div>{/if}
                   {#if attentionAgent && attentionAllowance && !reminder}
                     <div>
-                      <div
-                        class="d-flex justify-content-between gap-2 small mb-1"
-                      >
-                        <span class="fw-semibold"
-                          >{attentionAgent.name} · {attentionAllowance.label}</span
-                        ><span class="tabular-nums"
+                      <div class="d-flex justify-content-between gap-2 mb-1">
+                        <span
+                          >{attentionAgent.name}
+                          {attentionAllowance.label.toLowerCase()}</span
+                        ><span class="fw-medium tabular-nums"
                           >{attentionAllowance.remainingPercent}% left</span
                         >
                       </div>
@@ -940,19 +1000,10 @@
                         data-bs-component="progress"
                       >
                         <div
-                          class={`progress-bar theme-${attentionAgent.status === 'reconnect' ? 'secondary' : attentionAllowance.remainingPercent <= 10 ? 'danger' : 'warning'}`}
+                          class={`progress-bar theme-${attentionAgent.status === 'reconnect' ? 'secondary' : heroRole}`}
                           style:width={`${attentionAllowance.remainingPercent}%`}
                         ></div>
                       </div>
-                      <time
-                        class="small fg-2 d-block mt-1"
-                        datetime={attentionAllowance.resetsAt}
-                        >Resets in {formatCountdown(
-                          attentionAllowance.resetsAt,
-                          now,
-                          settings.locale,
-                        )}</time
-                      >
                     </div>
                   {:else if heroEvent}
                     {#if heroEvent.attendees.length}
@@ -963,7 +1014,8 @@
                           aria-hidden="true"
                         >
                           {#each heroEvent.attendees as name (name)}<span
-                              class="avatar">{initials(name)}</span
+                              class="avatar theme-secondary"
+                              >{initials(name)}</span
                             >{/each}
                         </div>
                         <span class="small"
@@ -971,36 +1023,36 @@
                         >
                       </div>
                     {/if}
-                    <div class="d-flex flex-wrap gap-2">
+                    <div class="d-flex flex-wrap column-gap-4 row-gap-1 fg-2">
                       <span
-                        class={`badge badge-subtle theme-${calendarRole(heroEvent.calendar)}`}
-                        data-bs-component="badge">{heroEvent.calendar}</span
-                      ><span class="badge badge-outline theme-secondary"
-                        ><Icon name="geo-alt" /> {heroEvent.location}</span
-                      >
+                        class={`border-start border-3 border-${calendarRole(heroEvent.calendar)} ps-2`}
+                        >{heroEvent.calendar}</span
+                      ><span><Icon name="geo-alt" /> {heroEvent.location}</span>
                     </div>
-                    {#if followingEvent}<p class="small fg-2 m-0">
-                        Then <span class="tabular-nums"
+                    {#if followingEvent}<p class="fg-2 m-0">
+                        Then <span class="tabular-nums fg-1"
                           >{formatTime(followingEvent.start, settings)}</span
                         >
-                        {followingEvent.title}
+                        <span class="fg-1">{followingEvent.title}</span>
                       </p>{/if}
                   {/if}
                   {#if readyAgents.length && (!heroEvent || (attentionAgent && !reminder))}
                     <div>
-                      <p class="small fw-semibold mb-1">Ready to use</p>
+                      <p class="fw-medium mb-1">
+                        {attentionAgent ? 'Use instead' : 'Ready to use'}
+                      </p>
                       <ul
                         class="list-group list-group-flush"
                         data-bs-component="list-group"
                       >
                         {#each readyAgents as agent (agent.id)}<li
-                            class="list-group-item px-0 py-1 d-flex align-items-center gap-2"
+                            class="list-group-item fg-body px-0 py-2 d-flex align-items-center gap-2"
                           >
                             <span
                               class={`avatar avatar-xs theme-${agent.id}`}
                               aria-hidden="true">{agent.initials}</span
                             ><span class="flex-grow-1">{agent.name}</span><span
-                              class="badge badge-subtle theme-success tabular-nums"
+                              class="small fg-2 tabular-nums"
                               >{limitingAllowance(agent).remainingPercent}% {limitingAllowance(
                                 agent,
                               ).label.toLowerCase()}</span
@@ -1020,7 +1072,8 @@
                 locale={settings.locale}
                 live={!replay && weatherLive}
                 dense={compactDesktop}
-                previewDays={compactDesktop ? 0 : 2}
+                previewDays={fitting ? 7 : 2}
+                fit={fitting}
               />{#snippet action()}<button
                   class="btn btn-text theme-secondary btn-sm"
                   onclick={() => navigate('weather')}
@@ -1029,15 +1082,29 @@
                 >{/snippet}</Panel
             >
             <Panel title="Agent capacity" class="summary-agents"
-              ><div class="grid" style="--gap: 0 1.5rem">
-                {#each simulation.agents.slice(0, summaryAgentCount) as agent (agent.id)}<div
-                    class={agentColumns}
-                  >
-                    <AgentCard {agent} {now} compact locale={settings.locale} />
-                  </div>{/each}
+              ><div
+                class:fit-rows={fitting}
+                use:fitRows={{
+                  enabled: fitting,
+                  items: ':scope > .grid > *',
+                  onfit: (count) => (fittedAgents = count),
+                }}
+              >
+                <div class="grid" style="--gap: 0 1.5rem">
+                  {#each simulation.agents.slice(0, fitting ? simulation.agents.length : summaryAgentCount) as agent (agent.id)}<div
+                      class={agentColumns}
+                    >
+                      <AgentCard
+                        {agent}
+                        {now}
+                        compact
+                        locale={settings.locale}
+                      />
+                    </div>{/each}
+                </div>
               </div>
               {#if summaryAgentCount < simulation.agents.length}<button
-                  class="btn btn-link p-0 mt-2"
+                  class="btn btn-link p-0"
                   onclick={() => navigate('agents')}
                   >+{simulation.agents.length - summaryAgentCount} more agents</button
                 >{/if}
@@ -1051,7 +1118,8 @@
                   events={todaysEvents}
                   locale={settings.locale}
                   hourCycle={settings.hourCycle}
-                  max={compactDesktop ? 1 : 2}
+                  max={2}
+                  fit={fitting}
                   compact
                   onmore={() => navigate('calendar')}
                 />{:else}<p class="fg-2 mb-0">
@@ -1061,7 +1129,12 @@
             <Panel title="Across your feeds" kind="quiet" class="summary-feeds"
               >{#if summaryStories.length}<ul
                   class="list-group list-group-flush"
+                  class:fit-rows={fitting}
                   data-bs-component="list-group"
+                  use:fitRows={{
+                    enabled: fitting,
+                    onfit: () => {},
+                  }}
                 >
                   {#each summaryStories as story (story.id)}<StoryRow
                       {story}
@@ -1151,12 +1224,16 @@
     </div>
   </main>
   <footer
-    class="dashboard-footer border-top mt-2 pt-2 d-flex flex-wrap align-items-start justify-content-between gap-3"
+    class="dashboard-footer border-top mt-5 pt-2 d-flex flex-wrap align-items-center justify-content-between gap-3"
   >
-    <div class="vstack gap-1" style="max-width: 79ch">
+    <!-- Three short statements wrap as units, so wide screens keep one line. -->
+    <div class="d-flex flex-wrap column-gap-5 row-gap-1 min-w-0">
       <p class="m-0">
         <strong>Demo data.</strong> Agent usage, accounts, calendars and non-Bootstrap
-        feeds are simulated. Product names belong to their owners. Dayframe is unaffiliated.
+        feeds are simulated.
+      </p>
+      <p class="m-0">
+        Product names belong to their owners. Dayframe is unaffiliated.
       </p>
       <p class="m-0">
         Built with Bootstrap {stack.bootstrap}, Svelte {stack.svelte} and Vite {stack.vite}.

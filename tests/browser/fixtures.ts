@@ -57,7 +57,7 @@ export async function closeSettings(page: Page) {
 
 export async function expectView(page: Page, view: string) {
   const name = view.charAt(0).toUpperCase() + view.slice(1);
-  await expect(page.locator('main h1')).toHaveText(view === 'summary' ? 'Your day, in focus' : name);
+  await expect(page.locator('main h1')).toHaveText(name);
   // NavOverflow keeps the original stateful button when its visible copy moves into More.
   await expect(page.getByRole('navigation', { name: 'Dashboard views' })
     .locator('.nav-link').filter({ hasText: new RegExp(`^${name}$`) })).toHaveAttribute('aria-current', 'page');

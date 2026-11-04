@@ -16,7 +16,11 @@
      areas add the dashboard hierarchy that its column utilities cannot name. */
   .dashboard-grid {
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-rows: none;
+    /* Bootstrap's grid shares its height between --rows rows. A definite
+       height lets a row whose content needs more keep it while the other
+       takes what is left, instead of both growing to the larger one. */
+    --rows: 2;
+    block-size: 100%;
     grid-template-areas: 'hero hero weather' 'agents calendar feeds';
     --gap: var(--spacer-5);
     align-items: stretch;
@@ -70,6 +74,9 @@
     .dashboard-grid,
     :where([data-layout='console']) .dashboard-grid {
       grid-template-columns: minmax(0, 1fr);
+      /* One scrolling column: each row takes its content's height. */
+      grid-template-rows: none;
+      block-size: auto;
       grid-template-areas: 'hero' 'agents' 'calendar' 'weather' 'feeds';
     }
   }

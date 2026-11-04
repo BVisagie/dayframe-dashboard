@@ -9,6 +9,7 @@
     weatherLabel,
     weekBounds,
   } from '../lib/weather';
+  import { fitRows } from '../lib/fit';
   import Icon from './Icon.svelte';
   import DayTable from './weather/DayTable.svelte';
   let {
@@ -20,6 +21,7 @@
     full = false,
     previewDays = 3,
     dense = false,
+    fit = false,
     hourCycle = 'locale',
   }: {
     weather: Weather;
@@ -30,6 +32,8 @@
     full?: boolean;
     previewDays?: number;
     dense?: boolean;
+    /** Show as many preview days as the panel fits. */
+    fit?: boolean;
     hourCycle?: Settings['hourCycle'];
   } = $props();
   const today = $derived(todayKey(weather.hours));
@@ -183,7 +187,7 @@
     </div>
   </div>
 {:else}
-  <div class={`vstack ${dense ? 'gap-2' : 'gap-3'}`}>
+  <div class={`vstack flex-grow-1 min-h-0 ${dense ? 'gap-2' : 'gap-3'}`}>
     <div class="d-flex align-items-center gap-3">
       <Icon
         name={icon}
@@ -212,15 +216,20 @@
           >{day.precipitation}%</span
         > chance of rain{/if}
     </p>
-    {#if days.length}<DayTable
-        {days}
-        {today}
-        {bounds}
-        {units}
-        {locale}
-        dense
-        caption="Forecast for the next days"
-      />{/if}
+    {#if days.length}<div
+        class:fit-rows={fit}
+        use:fitRows={{ enabled: fit, items: 'tbody > tr', onfit: () => {} }}
+      >
+        <DayTable
+          {days}
+          {today}
+          {bounds}
+          {units}
+          {locale}
+          dense
+          caption="Forecast for the next days"
+        />
+      </div>{/if}
     {#if problem}<p class="small m-0 d-flex gap-2" role="status">
         <Icon name="wifi-off" class="fg-warning" />{problem}
       </p>{/if}

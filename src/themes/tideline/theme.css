@@ -36,7 +36,6 @@
   }
 
   :where([data-theme='tideline']) .summary-hero {
-    --card-border-color: var(--primary-border);
     --card-border-radius: var(--radius-9);
     --card-spacer-x: var(--spacer-7);
     --card-spacer-y: var(--spacer-7);

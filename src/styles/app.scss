@@ -15,6 +15,14 @@
     margin-inline: auto;
     padding: 1.25rem 2.5rem 0.25rem;
   }
+  /* Bootstrap has no "as many rows as fit" pattern. On desktop a fitted list
+     takes its height from the panel rather than its content, and the fitRows
+     action hides the rows that would cross its bottom edge. */
+  .fit-rows {
+    contain: size;
+    flex: 1 1 0;
+    min-block-size: 0;
+  }
   /* Bootstrap has no numeric-figure utility; readings and the clock must not jitter. */
   .tabular-nums {
     font-variant-numeric: tabular-nums;

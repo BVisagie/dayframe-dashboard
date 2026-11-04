@@ -4,6 +4,7 @@
     title,
     class: className = '',
     kind = 'card',
+    hideTitle = false,
     children,
     action,
   }: {
@@ -15,6 +16,8 @@
      * with a header, and `quiet` is an outlined panel on the canvas.
      */
     kind?: 'card' | 'hero' | 'quiet';
+    /** Keeps the section named for assistive technology when its content says it. */
+    hideTitle?: boolean;
     children: Snippet;
     action?: Snippet;
   } = $props();
@@ -33,6 +36,11 @@
       {#if action}{@render action()}{/if}
     </div>
     <div class="card-body">
+      {@render children()}
+    </div>
+  {:else if hideTitle && !action}
+    <div class="card-body">
+      <h2 class="visually-hidden">{title}</h2>
       {@render children()}
     </div>
   {:else}

@@ -44,7 +44,6 @@
   }
 
   :where([data-theme='nebuchadnezzar']) .summary-hero {
-    --card-border-color: var(--primary-border);
     --card-spacer-x: var(--spacer-6);
     --card-spacer-y: var(--spacer-6);
   }
