@@ -23,6 +23,8 @@
     fill?: boolean;
   } = $props();
   let fullAgenda = $state(false);
+  // Rows the day panel's fitted region shows, selected day first.
+  let fittedDay = $state(100);
   let small = $state(false);
   function dateKey(date: Date) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -241,40 +243,53 @@
       settings.dateFormat,
     )}
     class="g-col-12 lg:g-col-4"
-    ><Agenda
-      events={eventsOn(selected)}
-      locale={settings.locale}
-      hourCycle={settings.hourCycle}
-      max={compact ? 3 : 6}
-      onmore={() => {
-        small = matchMedia('(max-width: 43rem)').matches;
-        fullAgenda = true;
+    ><!-- One fitted region: the selected day's events come first and keep
+         their "+N more" control, and "Later this week" takes what is left.
+         The heading sits in the first later row so it never stands alone. -->
+    <div
+      class="vstack"
+      class:fit-rows={fill}
+      use:fitRows={{
+        enabled: fill,
+        items: '.agenda-list > li, .later-list > li',
+        onfit: (count) => (fittedDay = count),
       }}
-    />
-    {#if later.length}<section
-        aria-labelledby="later-title"
-        class="vstack gap-2 flex-grow-1 min-h-0 mt-3"
-      >
-        <h3 id="later-title" class="fs-md fw-medium m-0">Later this week</h3>
-        <ul
-          class="list-group list-group-flush"
-          class:fit-rows={fill}
+    >
+      <Agenda
+        events={eventsOn(selected)}
+        locale={settings.locale}
+        hourCycle={settings.hourCycle}
+        max={compact ? 3 : 6}
+        visible={fill ? fittedDay : undefined}
+        onmore={() => {
+          small = matchMedia('(max-width: 43rem)').matches;
+          fullAgenda = true;
+        }}
+      />
+      {#if later.length}<ul
+          class="list-group list-group-flush later-list mt-3"
+          aria-label="Later this week"
           data-bs-component="list-group"
-          use:fitRows={{ enabled: fill, onfit: () => {} }}
         >
-          {#each fill ? later : later.slice(0, 5) as { event, day } (event.id)}<li
-              class="list-group-item px-0 py-2 d-flex gap-3"
+          {#each fill ? later : later.slice(0, 5) as { event, day }, index (event.id)}<li
+              class="list-group-item px-0 py-2"
             >
-              <span class="w-6 flex-shrink-0 small fg-2 tabular-nums text-nowrap"
-                >{formatDate(day, settings.locale, { weekday: 'short' })}
-                {event.allDay ? '' : time(event.start)}</span
-              ><span
-                class={`flex-grow-1 min-w-0 text-truncate border-start border-3 border-${calendarRole(event.calendar)} ps-2`}
-                >{event.title}</span
-              >
+              {#if index === 0}<h3 class="fs-md fw-medium mb-2">
+                  Later this week
+                </h3>{/if}
+              <div class="d-flex gap-3">
+                <span
+                  class="w-6 flex-shrink-0 small fg-2 tabular-nums text-nowrap"
+                  >{formatDate(day, settings.locale, { weekday: 'short' })}
+                  {event.allDay ? '' : time(event.start)}</span
+                ><span
+                  class={`flex-grow-1 min-w-0 text-truncate border-start border-3 border-${calendarRole(event.calendar)} ps-2`}
+                  >{event.title}</span
+                >
+              </div>
             </li>{/each}
-        </ul>
-      </section>{/if}
+        </ul>{/if}
+    </div>
     <p class="small fg-2 mt-3 mb-0">
       All calendars and attendees are invented. Select an event for details.
     </p></Panel

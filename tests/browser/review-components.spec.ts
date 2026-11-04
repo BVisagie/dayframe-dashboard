@@ -253,7 +253,9 @@ for (const viewport of [
   test(`full agenda ${mobile ? 'drawer' : 'dialog'} closes through Bootstrap and restores its trigger`, async ({
     page,
   }) => {
-    await page.setViewportSize(viewport);
+    // A filled desktop fits the whole selected-day agenda; at 1024×768 the
+    // agenda keeps its six-event cap, so 4 November still overflows.
+    await page.setViewportSize(mobile ? viewport : { width: 1024, height: 768 });
     await visit(page, { view: 'calendar', clock: '2026-11-04T09:30:00Z' });
     const trigger = page.getByRole('button', { name: /^\+\d+ more events?$/ });
     await trigger.click();

@@ -410,7 +410,12 @@ test('calendar changes months, keeps the datepicker input in sync and opens even
   await page.getByRole('button', { name: 'Today', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Tuesday 3 Nov', exact: true })).toBeVisible();
   await expect(input).toHaveValue('03/11/2026');
-  await page.getByRole('button', { name: /^\+\d+ more events$/ }).click();
+  // A filled desktop fits the whole selected-day agenda, so the dialog step
+  // uses 1024×768, where the agenda keeps its six-event cap and 4 November
+  // overflows, then returns to the reference day and viewport.
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await visit(page, { view: 'calendar', clock: '2026-11-04T09:30:00Z' });
+  await page.getByRole('button', { name: /^\+\d+ more events?$/ }).click();
   const agenda = page.getByRole('dialog', { name: /^All events for / });
   await expect(agenda).toBeVisible();
   const details = agenda.getByRole('button', { name: 'Details for Quiet build time', exact: true });
@@ -424,6 +429,8 @@ test('calendar changes months, keeps the datepicker input in sync and opens even
   await expect(page.locator('.popover')).toHaveCount(0);
   await agenda.getByRole('button', { name: 'Close all events', exact: true }).click();
   await expect(agenda).toHaveCount(0);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await visit(page, { view: 'calendar' });
   await page.getByLabel('Jump to a date', { exact: true }).click();
   const picker = page.locator('.vc');
   await expect(picker).toBeVisible();
@@ -633,6 +640,24 @@ for (const { density, viewport, pageSize, secondPage } of [
   });
 }
 
+test('fitted feed pages reach every story exactly once with rows of different heights', async ({ page }) => {
+  // Excerpts and titles wrap differently in the console's wide mono face.
+  for (const [width, height, theme] of [[1280, 720, 'nebuchadnezzar'], [1920, 1080, 'nebuchadnezzar'], [1366, 768, 'default']] as const) {
+    await page.setViewportSize({ width, height });
+    await visit(page, { view: 'feeds', theme });
+    const total = await page.locator('#view-feeds .story-title').count();
+    const next = page.getByRole('navigation', { name: 'Feed pages', exact: true }).getByRole('button', { name: 'Next', exact: true });
+    const seen: string[] = [];
+    for (;;) {
+      seen.push(...await page.locator('#view-feeds .story-title:visible').allTextContents());
+      if (await next.isDisabled()) break;
+      await next.click();
+    }
+    expect(seen, `${width}×${height} ${theme}`).toHaveLength(total);
+    expect(new Set(seen).size, `${width}×${height} ${theme}`).toBe(total);
+  }
+});
+
 test('demo disclosure, Bootstrap information and inspection lens remain available', async ({ page }) => {
   await visit(page);
   await expect(page.locator('footer')).toContainText('Agent usage, accounts, calendars and non-Bootstrap feeds are simulated.');
@@ -700,13 +725,16 @@ test('rotation advances views and pauses during interaction with Settings', asyn
 
 test('rotation pauses while the full agenda dialog is open and resumes after closing', async ({ page }) => {
   await page.clock.install({ time: new Date(referenceClock) });
-  await visit(page, { view: 'calendar' });
+  // A filled desktop fits the whole selected-day agenda; at 1024×768 the agenda
+  // keeps its six-event cap, so 4 November's "+N more" opens the dialog.
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await visit(page, { view: 'calendar', clock: '2026-11-04T09:30:00Z' });
   const dialog = await settings(page, 'Display');
   await dialog.getByLabel('Seconds per view', { exact: true }).fill('10');
   await dialog.getByLabel('Seconds per view', { exact: true }).press('Tab');
   await dialog.getByRole('switch', { name: 'Rotate views', exact: true }).check();
   await closeSettings(page);
-  await page.getByRole('button', { name: /^\+\d+ more events$/ }).click();
+  await page.getByRole('button', { name: /^\+\d+ more events?$/ }).click();
   const agenda = page.getByRole('dialog', { name: /^All events for / });
   await expect(agenda).toBeVisible();
   await page.clock.runFor(12_000);

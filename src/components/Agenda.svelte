@@ -11,6 +11,7 @@
     max = 4,
     compact = false,
     fit = false,
+    visible,
     onmore,
   }: {
     events: CalendarEvent[];
@@ -20,11 +21,19 @@
     compact?: boolean;
     /** Show as many events as the panel fits instead of `max`. */
     fit?: boolean;
+    /** How many events an enclosing fitRows shows; every event is rendered. */
+    visible?: number;
     onmore?: () => void;
   } = $props();
   const ordered = $derived(sortForDay(events));
   let fitted = $state(0);
-  const shown = $derived(fit ? fitted : Math.min(max, events.length));
+  const shown = $derived(
+    visible !== undefined
+      ? Math.min(visible, events.length)
+      : fit
+        ? fitted
+        : Math.min(max, events.length),
+  );
   function time(value: string) {
     return new Intl.DateTimeFormat(locale, {
       hour: 'numeric',
@@ -40,7 +49,7 @@
   data-bs-component="list-group"
   use:fitRows={{ enabled: fit, onfit: (count) => (fitted = count) }}
 >
-  {#each fit ? ordered : ordered.slice(0, max) as event (event.id)}
+  {#each fit || visible !== undefined ? ordered : ordered.slice(0, max) as event (event.id)}
     <li class="list-group-item px-0">
       <div
         class={`d-flex gap-3 border-start border-3 border-${calendarRole(event.calendar)} ps-3`}

@@ -442,6 +442,12 @@ build departs from the plan above:
   view tabs into More at 1280 px.
 - **Short desktops** step the hero's type, gaps and alternatives down so
   Summary fits 1280×720 in every theme and scenario.
+- **Review fixes:** the Calendar day panel fits the selected day's agenda
+  and "Later this week" as one region, and Feeds pages are sized by their
+  tallest story so paging reaches every story once. Because a filled desktop
+  now fits the whole reference agenda, three optional tests open the
+  full-agenda dialog at 1024×768 with the 4 November clock, where the
+  agenda keeps its six-event cap (agreed with the maintainer).
 - **Known, pre-existing:** Weather in the Offline and Stale scenarios still
   scrolls at 1280×720 and 1366×768 (by less than before), and two optional
   Chromium tests ("every agent shows percentage allowances…" and "cold live

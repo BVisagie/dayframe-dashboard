@@ -43,23 +43,13 @@
       )
       .sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt)),
   );
-  // A fitted page renders a generous window and hides what does not fit;
-  // the fitted count then sets the page stride.
-  const WINDOW = 12;
+  // A fitted list renders every story and shows one page of them; each page
+  // holds as many of the tallest row as fit, so boundaries never shift.
   let fitted = $state(4);
-  const pageSize = $derived(fill ? Math.max(1, fitted) : compact ? 2 : 4);
+  const pageSize = $derived(fill ? fitted : compact ? 2 : 4);
   const shown = $derived(
-    filtered.slice(
-      page * pageSize,
-      page * pageSize + (fill ? WINDOW : pageSize),
-    ),
+    fill ? filtered : filtered.slice(page * pageSize, (page + 1) * pageSize),
   );
-  // The last page can fit everything it has, which says nothing about how
-  // many rows the panel holds, so only a hidden row or a full window counts.
-  function measured(count: number) {
-    if (count < shown.length || count === WINDOW || count > fitted)
-      fitted = count;
-  }
   const pageCount = $derived(
     Math.max(1, Math.ceil(filtered.length / pageSize)),
   );
@@ -120,7 +110,12 @@
       class="list-group list-group-flush"
       class:fit-rows={fill && filtered.length > 0}
       data-bs-component="list-group"
-      use:fitRows={{ enabled: fill && filtered.length > 0, onfit: measured }}
+      use:fitRows={{
+        enabled: fill && filtered.length > 0,
+        uniform: true,
+        offset: page * pageSize,
+        onfit: (count) => (fitted = count),
+      }}
     >
       {#each shown as story (story.id)}<StoryRow
           {story}

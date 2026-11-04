@@ -192,8 +192,10 @@ The plan, its unslop audit and the decisions are in
   its height from the panel (`contain: size`), then hide, with the `hidden`
   attribute, the items that would cross its bottom edge. Hidden items leave
   the accessibility tree and tab order; "+N more" controls reach them. It
-  replaces fixed compact caps on Summary, the Calendar day panel's "Later
-  this week" list and the Feeds page size.
+  replaces fixed compact caps on Summary and the Calendar day panel, where
+  the selected day's events come first and "Later this week" takes the rest.
+  Feeds pages use its uniform mode: every page holds as many of the tallest
+  story as fit, so page boundaries never move with row heights.
 - The hero is `card card-subtle theme-<role>` for its situation. The
   `theme-base` `.hero-panel` defaults now read `--theme-bg-subtle` and
   `--theme-border`, falling back to primary. Healthy agents drop their

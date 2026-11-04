@@ -7,6 +7,13 @@ export interface FitOptions {
   onfit: (visible: number) => void;
   /** Items to fit, relative to the node. Defaults to its direct children. */
   items?: string;
+  /**
+   * Pages: size every page by the tallest item, so page boundaries stay fixed
+   * however tall the rows on a given page are. Reports the page capacity.
+   */
+  uniform?: boolean;
+  /** With `uniform`, items before this index belong to earlier pages. */
+  offset?: number;
 }
 
 /*
@@ -31,7 +38,20 @@ export const fitRows: Action<HTMLElement, FitOptions> = (node, initial) => {
     const list = items();
     for (const item of list) item.hidden = false;
     let visible = list.length;
-    if (options.enabled) {
+    if (options.enabled && options.uniform) {
+      const tallest = Math.max(
+        0,
+        ...list.map((item) => item.getBoundingClientRect().height),
+      );
+      const height = node.getBoundingClientRect().height + 0.5;
+      // A page always holds at least one row, so paging can reach every item.
+      visible = tallest ? Math.max(1, Math.floor(height / tallest)) : 1;
+      const offset = options.offset ?? 0;
+      list.forEach(
+        (item, index) =>
+          (item.hidden = index < offset || index >= offset + visible),
+      );
+    } else if (options.enabled) {
       // Half a pixel absorbs sub-pixel rounding at fractional root sizes.
       const limit = node.getBoundingClientRect().bottom + 0.5;
       visible = list.findIndex(
