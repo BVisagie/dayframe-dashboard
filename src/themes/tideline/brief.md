@@ -20,11 +20,13 @@ The semantic state system stays consistent with the other themes.
 
 ## Type
 
-`system-ui, sans-serif` carries the working interface. Headings use the same
-face with a firm weight, compact line height and no ornamental maritime type.
-`ui-monospace, monospace` serves only the clock and numerical readings. This
-keeps the theme systematic rather than turning the dashboard into a poster.
-Labels and prose are left aligned.
+Atkinson Hyperlegible Next carries the working interface. It was drawn for
+legibility at a distance and at small sizes, which is a chartroom's job and
+this dashboard's viewing distance. Headings use the same face with a firm
+weight, compact line height and no ornamental maritime type. Atkinson
+Hyperlegible Mono serves only the clock and numerical readings, so figures
+keep the same voice. Both ship under the SIL Open Font License and download
+only while this theme is active. Labels and prose are left aligned.
 
 ## Layout
 
@@ -46,10 +48,10 @@ and scroll.
 +--------------------------------------------------------------+
 ```
 
-Compact desktop height limits previews to two agents, one agenda entry and
-one headline, with controls to reach the rest. Taller viewports show six
-agents, two agenda entries and three headlines. Row limits and paging keep
-the root floor at `0.875rem` (14 CSS pixels at the default browser size).
+Panels are ruled rather than shaded: card caps sit on the panel surface and
+keep only their dividing rule. Lists show as many rows as their panel fits,
+with controls to reach the rest. Fitted rows and paging keep the root floor
+at `0.875rem` (14 CSS pixels at the default browser size).
 
 ## Principles
 
@@ -63,6 +65,9 @@ the root floor at `0.875rem` (14 CSS pixels at the default browser size).
 
 A themed illustration or wave texture would compete with an always-on
 dashboard, so the nautical reference is entirely structural and chromatic.
+System fonts were the default for every theme and rendered differently per
+OS, so the November 2026 redesign gave Tideline a bundled face chosen for
+legibility rather than character.
 Coral is deep enough for daylight contrast rather than a fashionable pastel.
 This theme changes only its own folder: no view, registry or layout edits.
 
@@ -90,3 +95,10 @@ range bars take teal for mild days and the info blue for cold ones, which
 suits the chartroom; coral, blue and teal story rules read as chart colours,
 not decoration, and the rail's teal header appears only with live data, so a
 replay stays a plain panel. Status-graded agent cards keep coral for the limiting readings only, and the calendar's series badges sit on salt white without competing with the teal selection.
+
+The November 2026 redesign was reviewed at 1280×720 and 1920×1080 in both
+schemes. Atkinson Hyperlegible's open shapes and slashed mono zero keep
+readings unambiguous, and transparent caps make the panels read as ruled
+charts. The hero takes the warning role like the other themes; a coral edge
+for warnings was considered and left out so state colours stay the same
+across themes.

@@ -420,3 +420,29 @@ Each is reviewed against the matching capture before it is accepted, following
    or vendor it into `.agents/skills/unslop/` with its CC BY 4.0 credit and
    name it in `AGENTS.md` beside frontend-design. Vendoring changes the agent
    instructions, so it would be its own small PR.
+
+## Delivery notes
+
+Built on 2026-11-04 with every decision at its recommended option. Where the
+build departs from the plan above:
+
+- **Row sizing** uses Bootstrap's own `.grid` `--rows` token rather than new
+  custom rows; the desktop shell takes `block-size: 100dvh` so percentage
+  heights resolve.
+- **Range bars** are not width-capped. Neutral, half-opacity bars for every
+  day but today removed their weight instead.
+- **Agent cards** keep every allowance's bar, because each carries its own
+  reset; the headline drops the duplicated prose instead.
+- **Calendar app tokens** `--calendar-weekend-bg` and `--calendar-outside-bg`
+  stay in the theme contract although the grid no longer paints them.
+- **Tideline's coral hero edge** was left out so state colours match across
+  themes.
+- **Keycaps** start at `2xl`, and the scenario badge sits beside the date,
+  icon-only below `2xl`, because the console's wider face otherwise pushed the
+  view tabs into More at 1280 px.
+- **Short desktops** step the hero's type, gaps and alternatives down so
+  Summary fits 1280×720 in every theme and scenario.
+- **Known, pre-existing:** Weather in the Offline and Stale scenarios still
+  scrolls at 1280×720 and 1366×768 (by less than before), and two optional
+  Chromium tests ("every agent shows percentage allowances…" and "cold live
+  sources load quietly…") already fail on `main`.
