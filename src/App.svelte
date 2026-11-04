@@ -757,16 +757,18 @@
           {formatTime(now, settings)}
         </div>
         <div class="small fg-2 mt-1">
-          {formatDate(
-            now,
-            settings.locale,
-            {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-            },
-            settings.dateFormat,
-          )}<!-- A scenario is a kind of replay, so its badge takes the replay
+          <time datetime={now.toISOString()}
+            >{formatDate(
+              now,
+              settings.locale,
+              {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+              },
+              settings.dateFormat,
+            )}</time
+          ><!-- A scenario is a kind of replay, so its badge takes the replay
                marker's place beside the date instead of widening the navbar. -->{#if settings.scenario !== 'steady'}<span
               class="badge badge-subtle theme-warning ms-2"
               data-bs-component="badge"

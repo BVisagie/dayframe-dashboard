@@ -486,7 +486,8 @@ for (const [dateFormat, date] of [
     await dialog.getByLabel('Date format', { exact: true }).selectOption(dateFormat);
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('dayframe.settings.v1')!))).toEqual({ ...original, dateFormat });
     await closeSettings(page);
-    await expect(page.locator('header').getByText(`${date} · replay`, { exact: true })).toBeVisible();
+    await expect(page.locator('header').getByText(date, { exact: true })).toBeVisible();
+    await expect(page.locator('header').getByText('Replay', { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: dateFormat === 'locale' ? 'Tuesday, Nov 3' : date, exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'November 2026', exact: true })).toBeVisible();
     await expect(page.getByLabel('Current time', { exact: true })).toHaveText('09:30');
@@ -497,7 +498,8 @@ for (const [dateFormat, date] of [
     await closeSettings(page);
     await page.reload();
     const reloadedDate = dateFormat === 'locale' ? 'mar. 3 nov.' : date;
-    await expect(page.locator('header').getByText(`${reloadedDate} · replay`, { exact: true })).toBeVisible();
+    await expect(page.locator('header').getByText(reloadedDate, { exact: true })).toBeVisible();
+    await expect(page.locator('header').getByText('Replay', { exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: dateFormat === 'locale' ? 'mardi 3 nov.' : date, exact: true })).toBeVisible();
     dialog = await settings(page, 'Display');
     await expect(dialog.getByLabel('Date format', { exact: true })).toHaveValue(dateFormat);
@@ -597,20 +599,23 @@ test('the datepicker stays inside the viewport across themes, scale and resizing
   }
 });
 
-for (const { density, viewport, pageSize } of [
-  { density: 'regular', viewport: { width: 1920, height: 1080 }, pageSize: 4 },
-  { density: 'compact', viewport: { width: 1280, height: 720 }, pageSize: 2 },
+for (const { density, viewport, pageSize, secondPage } of [
+  // Desktop pages hold as many stories as the panel fits at each viewport;
+  // the second page holds the rest of the twelve, up to one page.
+  { density: 'regular', viewport: { width: 1920, height: 1080 }, pageSize: 7, secondPage: 5 },
+  { density: 'compact', viewport: { width: 1280, height: 720 }, pageSize: 4, secondPage: 4 },
 ]) {
   test(`${density} feed categories, pagination and empty-state recovery change visible stories`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await visit(page, { view: 'feeds' });
-    const titles = page.locator('.story-title');
+    // Rows beyond the fitted page stay in the DOM as hidden items.
+    const titles = page.locator('.story-title:visible');
     await expect(titles).toHaveCount(pageSize);
     const first = await titles.allTextContents();
     const pages = page.getByRole('navigation', { name: 'Feed pages', exact: true });
     await expect(pages.getByRole('button', { name: 'Previous', exact: true })).toBeDisabled();
     await pages.getByRole('button', { name: 'Next', exact: true }).click();
-    await expect(titles).toHaveCount(pageSize);
+    await expect(titles).toHaveCount(secondPage);
     expect(await titles.allTextContents()).not.toEqual(first);
     expect((await titles.allTextContents()).filter(title => first.includes(title))).toEqual([]);
     await expect(pages.getByRole('button', { name: 'Page 2', exact: true })).toHaveAttribute('aria-current', 'page');
