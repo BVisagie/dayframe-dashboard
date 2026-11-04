@@ -406,6 +406,19 @@ Verified on 2026-10-22:
 M5 remains open until the maintainer supplies publication links. The
 [roadmap checklist](roadmap.md#launch-checklist) tracks that remaining item.
 
+## Svelte 5.57.3 review
+
+The Svelte patch updates the visible footer version from 5.57.2 to 5.57.3.
+All 18 functional cases passed in pinned Resolute
+[run `41795831386`](https://github.com/BVisagie/dayframe-dashboard/actions/runs/41795831386)
+at `51f6928`. Its 16 screenshot failures reflect that intended credit change.
+The 16 focused baselines use the exact reviewed actual PNGs from its
+`browser-report` artifact (`13305661263`). Dimensions are unchanged. Minor
+antialiasing differences outside the footer remain within the existing
+comparator; assertions, tags and tolerances are unchanged. The other 384
+optional historical baselines have not been recaptured. All nine README
+showcase images were recaptured for the updated visible credit.
+
 ## Weekly maintenance
 
 The [dependency audit](dependencies.md) records the current package, action,

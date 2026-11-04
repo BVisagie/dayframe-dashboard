@@ -19,7 +19,7 @@ All direct pins were checked against their supported release tracks:
 | `@fontsource-variable/martian-mono`               | `5.3.0`                             |
 | `bootstrap`                                       | `6.0.0-alpha.1`                     |
 | `bootstrap-icons`                                 | `1.13.2`                            |
-| `svelte`                                          | `5.57.2`                            |
+| `svelte`                                          | `5.57.3`                            |
 | `vanilla-calendar-pro`                            | `3.4.0`                             |
 | `@axe-core/playwright`                            | `4.14.0`                            |
 | `@eslint/js`                                      | `10.0.1`                            |
