@@ -53,6 +53,9 @@ interface AllowanceProfile {
   scope: AgentAllowance['scope'];
   kind: WindowKind;
   hours?: number;
+  // Session windows start at different hours per agent, so they don't all run
+  // low at the same moment; the dashboard should usually have one exception.
+  phase?: number;
 }
 interface AgentProfile {
   id: string;
@@ -67,13 +70,13 @@ interface AgentProfile {
 // These illustrate allowance shapes, not contractual limits or provider integrations.
 const PROFILES: AgentProfile[] = [
   { id: 'codex', name: 'Codex', initials: 'CX', plan: 'Pro', primaryAllowanceId: 'weekly', hasResetCredits: true, allowances: [
-    { id: 'session', label: 'Session', scope: 'shared', kind: 'session', hours: 5 },
+    { id: 'session', label: 'Session', scope: 'shared', kind: 'session', hours: 5, phase: 2 },
     { id: 'weekly', label: 'Weekly', scope: 'shared', kind: 'weekly' },
   ] },
   { id: 'claude', name: 'Claude', initials: 'CL', plan: 'Max', primaryAllowanceId: 'weekly', allowances: [
-    { id: 'session', label: 'Session', scope: 'shared', kind: 'session', hours: 5 },
+    { id: 'session', label: 'Session', scope: 'shared', kind: 'session', hours: 5, phase: 3 },
     { id: 'weekly', label: 'Weekly', scope: 'shared', kind: 'weekly' },
-    { id: 'fable', label: 'Weekly · Fable', scope: 'model', kind: 'weekly' },
+    { id: 'fable', label: 'Fable weekly', scope: 'model', kind: 'weekly' },
   ] },
   { id: 'cursor', name: 'Cursor', initials: 'CU', plan: 'Pro', primaryAllowanceId: 'monthly', allowances: [
     { id: 'monthly', label: 'Monthly', scope: 'shared', kind: 'monthly' },
@@ -89,8 +92,8 @@ const PROFILES: AgentProfile[] = [
     { id: 'monthly', label: 'Monthly', scope: 'shared', kind: 'monthly' },
   ] },
   { id: 'antigravity', name: 'Antigravity', initials: 'AG', plan: 'Model quotas', primaryAllowanceId: 'pro', allowances: [
-    { id: 'pro', label: 'Pro model', scope: 'model', kind: 'session', hours: 5 },
-    { id: 'fast', label: 'Fast model', scope: 'model', kind: 'session', hours: 5 },
+    { id: 'pro', label: 'Pro model', scope: 'model', kind: 'session', hours: 5, phase: 2 },
+    { id: 'fast', label: 'Fast model', scope: 'model', kind: 'session', hours: 5, phase: 2 },
     { id: 'reasoning', label: 'Reasoning model', scope: 'model', kind: 'weekly' },
   ] },
 ];
@@ -108,7 +111,8 @@ function quotaWindow(time: number, profile: AllowanceProfile): { start: number; 
     };
   }
   const duration = (profile.hours ?? 5) * HOUR;
-  const start = Math.floor(time / duration) * duration;
+  const phase = (profile.phase ?? 0) * HOUR;
+  const start = Math.floor((time - phase) / duration) * duration + phase;
   return { start, end: start + duration };
 }
 
