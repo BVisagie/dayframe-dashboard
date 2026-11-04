@@ -1,11 +1,6 @@
 <script lang="ts">
   import type { Agent } from '../lib/types';
-  import {
-    capacityRole,
-    conditionCue,
-    limitingAllowance,
-    primaryAllowance,
-  } from '../lib/agents';
+  import { capacityRole, conditionCue, limitingAllowance } from '../lib/agents';
   import { formatCountdown, formatNumber, formatRelative } from '../lib/format';
   import Icon from './Icon.svelte';
   let {
@@ -24,12 +19,16 @@
   // The headline must agree with the status badge, so it reads the tightest
   // shared window rather than the plan's named main allowance.
   const limiting = $derived(limitingAllowance(agent));
-  const primary = $derived(primaryAllowance(agent));
   const cue = $derived(conditionCue(agent));
   // A graded card already carries the role's tint, so its badge turns solid to stay distinct.
   const badgeClass = $derived(
     `badge ${cue.graded ? '' : 'badge-subtle'} theme-${cue.role} flex-shrink-0`,
   );
+  // Healthy readings stay neutral so colour marks only the exceptions.
+  const barRole = (remaining: number) => {
+    const role = capacityRole(remaining, agent.status);
+    return role === 'success' ? 'secondary' : role;
+  };
 </script>
 
 {#snippet avatar(size: string)}<span
@@ -40,9 +39,12 @@
     ></span></span
   >{/snippet}
 
-{#snippet badge()}<span class={badgeClass} data-bs-component="badge"
-    ><Icon name={cue.icon} />{cue.label}</span
-  >{/snippet}
+<!-- Only exceptions get a badge; a healthy agent keeps its state as text for
+     assistive technology. -->
+{#snippet badge()}{#if cue.graded}<span
+      class={badgeClass}
+      data-bs-component="badge"><Icon name={cue.icon} />{cue.label}</span
+    >{:else}<span class="visually-hidden">{cue.label}</span>{/if}{/snippet}
 
 {#snippet reading(size: string)}<span
     class={`quota-value fw-semibold lh-1 tabular-nums ${size}`}
@@ -62,7 +64,7 @@
   <article class="py-2" aria-label={`${agent.name} capacity`}>
     <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
       {@render avatar('avatar-sm')}
-      <h3 class="fs-md fw-semibold m-0 me-auto">{agent.name}</h3>
+      <h3 class="fs-md fw-medium m-0 me-auto">{agent.name}</h3>
       {@render badge()}
     </div>
     <div
@@ -82,7 +84,7 @@
       data-bs-component="progress"
     >
       <div
-        class={`progress-bar theme-${cue.role}`}
+        class={`progress-bar theme-${barRole(limiting.remainingPercent)}`}
         style:width={`${limiting.remainingPercent}%`}
       ></div>
     </div>
@@ -101,7 +103,7 @@
       <div
         class={`flex-grow-1 min-w-0 ${dense ? 'd-flex flex-wrap align-items-baseline column-gap-2' : ''}`}
       >
-        <h3 class="fs-md fw-semibold lh-sm m-0">{agent.name}</h3>
+        <h3 class="fs-lg fw-medium lh-sm m-0">{agent.name}</h3>
         <p class="small fg-2 m-0">{agent.plan}</p>
       </div>
       {@render badge()}
@@ -112,46 +114,51 @@
           ? 'd-flex flex-wrap align-items-baseline justify-content-between column-gap-3'
           : ''}
       >
-        {@render reading(dense ? 'text-xl' : 'text-3xl')}
-        <!-- Dense cards drop the main-allowance line; its bar sits just below. -->
-        <p class={`small fg-2 m-0 ${dense ? 'text-end' : 'mt-2'}`}>
-          {@render resets()}{#if !dense && primary.id !== limiting.id}<span
-              class="d-block"
-              >{primary.label} has {formatNumber(
-                primary.remainingPercent,
-                locale,
-              )}% left</span
-            >{/if}
+        {@render reading(dense ? 'text-xl' : 'text-5xl')}
+        <!-- Each allowance's own row below carries its figures, so the
+             headline adds only when the tightest one resets. -->
+        <p class={`fg-2 m-0 ${dense ? 'small text-end' : 'mt-2'}`}>
+          {@render resets()}
         </p>
       </div>
-      {#each agent.allowances as allowance (allowance.id)}
-        <div>
-          <div class="d-flex flex-wrap align-items-baseline column-gap-2 small mb-1">
-            <span class="me-auto">{allowance.label}</span>
-            <time class="fg-2" datetime={allowance.resetsAt}
-              >Resets in {formatCountdown(allowance.resetsAt, now, locale)}</time
-            >
-            <span class="fw-semibold tabular-nums"
-              >{formatNumber(allowance.remainingPercent, locale)}%</span
-            >
-          </div>
-          <div
-            class="progress"
-            style="--progress-height: 0.5rem"
-            role="progressbar"
-            aria-label={`${agent.name} ${allowance.label} remaining`}
-            aria-valuenow={allowance.remainingPercent}
-            aria-valuemin="0"
-            aria-valuemax="100"
-            data-bs-component="progress"
-          >
+      <!-- The readings sit at the foot of the body, beside the footer, so a
+           tall card reads as one instrument rather than a gap. -->
+      <div class="vstack gap-3 mt-auto">
+        {#each agent.allowances as allowance (allowance.id)}
+          <div>
             <div
-              class={`progress-bar theme-${capacityRole(allowance.remainingPercent, agent.status)}`}
-              style:width={`${allowance.remainingPercent}%`}
-            ></div>
+              class="d-flex flex-wrap align-items-baseline column-gap-2 small mb-1"
+            >
+              <span class="me-auto fw-medium">{allowance.label}</span>
+              <time class="fg-2" datetime={allowance.resetsAt}
+                >Resets in {formatCountdown(
+                  allowance.resetsAt,
+                  now,
+                  locale,
+                )}</time
+              >
+              <span class="fw-semibold tabular-nums"
+                >{formatNumber(allowance.remainingPercent, locale)}%</span
+              >
+            </div>
+            <div
+              class="progress"
+              style="--progress-height: 0.5rem"
+              role="progressbar"
+              aria-label={`${agent.name} ${allowance.label} remaining`}
+              aria-valuenow={allowance.remainingPercent}
+              aria-valuemin="0"
+              aria-valuemax="100"
+              data-bs-component="progress"
+            >
+              <div
+                class={`progress-bar theme-${barRole(allowance.remainingPercent)}`}
+                style:width={`${allowance.remainingPercent}%`}
+              ></div>
+            </div>
           </div>
-        </div>
-      {/each}
+        {/each}
+      </div>
     </div>
     <div
       class="card-footer fg-2 small d-flex flex-wrap justify-content-between column-gap-3"

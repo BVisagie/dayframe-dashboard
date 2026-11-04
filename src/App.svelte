@@ -1165,6 +1165,7 @@
             agents={simulation.agents}
             {now}
             dense={compactDesktop}
+            fill={fitting}
             locale={settings.locale}
           />
         {/if}
@@ -1182,6 +1183,7 @@
             {now}
             {settings}
             compact={compactDesktop}
+            fill={fitting}
           />
         {/if}
       </section>
