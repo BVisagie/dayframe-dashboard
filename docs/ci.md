@@ -22,7 +22,7 @@ build.
 Feature-branch pushes do not start a second copy of PR CI. Concurrency groups
 include the event name and branch. A new run cancels an older run only within
 that group; manual dispatches cannot cancel PR or push runs, or be cancelled
-by them. Jobs use Ubuntu 26.04 and exact Node 26.12.1; browser tests run in
+by them. Jobs use Ubuntu 26.04 and exact Node 26.13.0; browser tests run in
 `mcr.microsoft.com/playwright:v1.64.1-resolute`, matching Playwright 1.64.1.
 The workflow pins its OCI digest, and capture guards require Resolute.
 The browser report and build are retained for seven days. Every browser run

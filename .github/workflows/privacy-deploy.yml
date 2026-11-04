@@ -24,7 +24,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '26.12.1'
+          node-version: '26.13.0'
       - name: Fetch candidate and complete repository history as passive data
         env:
           GH_TOKEN: ${{ github.token }}
@@ -50,7 +50,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '26.12.1'
+          node-version: '26.13.0'
       - name: Publish a status on the exact candidate commit
         env:
           GH_TOKEN: ${{ github.token }}
@@ -76,7 +76,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '26.12.1'
+          node-version: '26.13.0'
       - env:
           GH_TOKEN: ${{ github.token }}
         run: node .github/scripts/deploy-gate.mjs
@@ -104,7 +104,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '26.12.1'
+          node-version: '26.13.0'
       # Recheck after acquiring the deployment lock to reject an obsolete run.
       - env:
           GH_TOKEN: ${{ github.token }}
