@@ -32,15 +32,15 @@
     "@sveltejs/vite-plugin-svelte": "7.3.1",
     "@types/node": "26.6.6",
     "@typescript/native": "npm:typescript@7.0.2",
-    "eslint": "10.14.0",
+    "eslint": "10.15.0",
     "globals": "17.14.0",
     "lightningcss": "1.33.0",
-    "postcss": "8.5.32",
-    "prettier": "3.9.10",
-    "prettier-plugin-svelte": "4.1.1",
-    "sass": "1.107.1",
+    "postcss": "8.5.33",
+    "prettier": "3.10.1",
+    "prettier-plugin-svelte": "4.2.0",
+    "sass": "1.108.2",
     "svelte-check": "4.7.8",
     "typescript": "npm:@typescript/typescript6@6.0.2",
-    "vite": "8.3.5"
+    "vite": "8.3.8"
   }
 }
